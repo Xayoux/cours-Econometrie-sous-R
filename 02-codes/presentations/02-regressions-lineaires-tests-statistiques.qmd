@@ -650,7 +650,7 @@ La forme de la relation quadratique dépend du signe des deux coefficients.
 Il est possible de transformer certaines variables en logarithme afin d'obtenir des interprétation en terme d'élasticités (changement en pourcentage) plutôt que des changements en unités. Par exemple, il est souvent plus intéressant d'avoir une interprétation en pourcentage lorsque l'on parle d'augmentation de salaire plutôt que d'augmentation en dollars.
 
 | Nom | Modèle | Interprétation de $\beta$ |
-|------------------|---------------------------|---------------------------|
+|------------------------|------------------------|------------------------|
 | Niveau-Niveau | $Y_i = \alpha + \beta X_i +u_i$ | $\Delta Y_i = \beta_1 \Delta X_i$ |
 | Niveau-log | $Y_i = \alpha + \beta \times log( X_i) +u_i$ | $\Delta Y_i = (\frac{\beta}{100}) \text{%} \Delta X_i$ |
 | Log-Niveau | $log(Y_i) = \alpha + \beta X_i +u_i$ | $\text{%} \Delta Y_i = (100 \beta) \Delta X_i$ |
@@ -1117,6 +1117,12 @@ On peut voir que les résultats sur les écarts-types et p.values ne changent pa
 
 La première régression nous indiquait que le salaire moyen horaire d'un individu augmentait de $0.541$dollars en moyenne lorsque son niveau d'étude augmentait de 1. On peut se demander s'il ne serait pas plus pertinent de réfléchir l'augmentation du salaire en pourcentage plutôt qu'en unité monétaire. D'une part cela rend probablement la compréhension plus facile et d'autre part cela permet d'avoir un effet non-linéaire de l'augmentation monétaire, mais un effet constant en pourcentage.
 
+Le modèle devient donc :
+
+$$
+log(\text{wage}_i) = \alpha + \beta \times \text{educ}_i + u_i
+$$
+
 Pour intégrer une telle non-linéarité, on peut modifier notre jeu de données et intégrer une nouvelle variable `log_wage = log(wage)`. Ou alors on peut intégrer `log(wage)` directement dans notre formule.
 
 ```{r}
@@ -1137,7 +1143,7 @@ Comme nous avons pu le mentionner, il est fort probable que
 
 1.  Le coefficient de l'éducation soit biaisé à cause de variables omises.
 
-2.  D'autres variables soient intéressant dans une analyse s'intéressant aux déterminants du salaire.
+2.  D'autres variables soient intéressantes dans une analyse s'intéressant aux déterminants du salaire.
 
 Il pourrait être pertinent de se dire que le salaire dépend certes de son niveau d'éducation, mais aussi de son expérience professionnelle `exper` et de son nombre d'années avec son employeur actuel `tenure`.
 
@@ -1246,6 +1252,10 @@ Il est commun de vouloir prendre en compte certaines caractéristiques des indiv
 
 Pour tester cela on va introduire une variable binaire *female* qui va prendre la valeur 1 si l'individu est une femme.
 
+$$
+log(wage_i) = \alpha + \beta_1 \text{educ}_i + \beta_2 \text{exper}_i + \beta_3 \text{exper}_i^2 + \beta_4 \text{tenure}_i + \delta_1\text{female}_i + u_i
+$$
+
 ```{r}
 reg5 <- lm(log(wage) ~ educ + exper + I(exper^2) + tenure + female, data = wage1)
 
@@ -1256,17 +1266,25 @@ Une femme (female = 1) aura en moyenne toute chose égale par ailleurs (à carac
 
 On peut également penser qu'il existe un écart permanent entre les individus catégorisés "blanc" et les autres. Pour cela, on intègre la variable *nonwhite* qui prend la valeur 1 si l'individu n'est pas blanc.
 
+$$
+log(wage_i) = \alpha + \beta_1 \text{educ}_i + \beta_2 \text{exper}_i + \beta_3 \text{exper}_i^2 + \beta_4 \text{tenure}_i + \delta_1\text{female}_i + \delta_2 \text{nonwhite}_i + u_i
+$$
+
 ```{r}
 reg6 <- lm(log(wage) ~ educ + exper + I(exper^2) + tenure + female + nonwhite, data = wage1)
 
 (reg6_summary <- summary(reg6))
 ```
 
-Il semblerait qu'il n'y ait pas de différence systématique entre les personnes blanches et les autres puisque la p.value du tests de Student est largement supérieure à 5%.
+Il semblerait qu'il n'y ait pas de différence systématique entre les personnes blanches et les autres puisque la p.value du test de Student est largement supérieure à 5%.
 
 ## Terme d’interaction
 
 Il existe un écart permanent entre le salaire des hommes et des femmes toutes choses égales par ailleurs. Mais on peut supposer que la différence entre les homme et les femmes se fait également sur le rendement de l'éducation. On peut penser qu'il existe des inégalités telles qu'une année d'éducation pour une femme est moins bien valorisée qu'une année d'éducation pour un homme. Pour tester cela on va intégrer une variable d’interaction entre la variable *educ* et la variable *female*.
+
+$$
+log(wage_i) = \alpha + \beta_1 \text{educ}_i + \beta_2 \text{exper}_i + \beta_3 \text{exper}_i^2 + \beta_4 \text{tenure}_i + \delta_1\text{female}_i + \delta_2 \text{educ}_i.\text{female}_i + u_i
+$$
 
 ```{r}
 reg7 <- lm(log(wage) ~ educ + exper + I(exper^2) + tenure + female + educ*female, data = wage1)
@@ -1292,9 +1310,13 @@ Prises conjointement les deux variables sont significatives au seuil de 5% et m�
 
 ## Ajout d'une variable qualitative à plusieurs modalités
 
-Il est possible d'inclure dans le modèle une variable qualitative à plusieurs niveaux. La base de données *wage1* comprend les variables *northcen*, *south* et *west* qui indiquent si un individu vit dans la région nord-centrales des US, vit dans la région sud ou dans la région ouest. Il s'agit de trois variables binaires que l'on peut intégrer dans le modèle et que l'on interprétera par rapport aux habitants de la région est.
+Il est possible d'inclure dans le modèle une variable qualitative à plusieurs niveaux. La base de données *wage1* comprend les variables *northcen*, *south* et *west* qui indiquent si un individu vit dans la région nord-centrales des US, vit dans la région sud ou dans la région ouest. Il s'agit de trois variables binaires que l'on peut intégrer dans le modèle et que l'on interprétera par rapport aux habitants de la région est (donné par la valeur de la constante).
 
-Cependant, les variables qualitatives seront assez rarement pré-traités comme ceci. il est plus courant d'avoir une variable contenant différentes chaines de caractères indiquant les différentes modalités. Nous allons recréer une telle variable afin de montrer que cela s'utilise très facilement.
+$$
+log(wage_i) = \alpha + \beta_1 \text{educ}_i + \beta_2 \text{exper}_i + \beta_3 \text{exper}_i^2 + \beta_4 \text{tenure}_i + \delta_1\text{female}_i + \delta_2 \text{northcen} + \delta_3 \text{south} + \delta_4 \text{west} + u_i
+$$
+
+Cependant, les variables qualitatives seront assez rarement pré-traitées comme ceci. il est plus courant d'avoir une variable contenant différentes chaînes de caractères indiquant les différentes modalités. Nous allons recréer une telle variable afin de montrer que cela s'utilise très facilement.
 
 ```{r}
 wage1_modif <- 
@@ -1328,6 +1350,7 @@ levels(wage1_modif$region)
 La varialle de référence qui sera utilisée dans la régression correspond au premier niveau affiché. Ici ce sera *west*. Pour pouvoir comparer le résultat avec les variables dummy il faudrait que la variable de référence soit *east*.
 
 ```{r}
+# Définir l'ordre voulu pour les régions
 region_order <- c("east", "west", "south", "north-central")
 
 wage1_modif <- 
