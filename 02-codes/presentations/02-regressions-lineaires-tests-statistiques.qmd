@@ -21,9 +21,9 @@ Où :
 
 -   $X_i$ : représente la variable explicative/exogène
 
--   $\alpha$ : représente la constante de la droite
+-   $\alpha$ : représente la constante de la droite : *l'ordonnée à l'origine*
 
--   $\beta$ : représente le paramètre de pente de la droite
+-   $\beta$ : représente le paramètre de pente de la droite *: le coefficient directeur*
 
 -   $u_i$ : représente le terme d'erreur : ce qui n'est pas expliqué par le modèle
 
@@ -40,11 +40,11 @@ wooldridge::vote1 |>
   ggplot2::theme()
 ```
 
-Le modèle $Y_i = \alpha + \beta X_i + u_i$ correspond au modèle dans la population. On fait l'hypothèse que la variable $Y_i$ est expliquée par la variable $X_i$ de manière linéaire. Le terme $u_i$ représente les erreurs du modèle, c'est à dire tous les éléments que l'on ne capte pas et qui font varier (de manière non systématique) la variable $Y_i$.
+Le modèle $Y_i = \alpha + \beta X_i + u_i$ correspond au modèle *théorique* dans la population. On fait l'hypothèse que la variable $Y_i$ est expliquée par la variable $X_i$ de manière linéaire. Le terme $u_i$ représente les erreurs du modèle, c'est à dire tous les éléments que l'on ne capte pas et qui font varier (de manière non systématique) la variable $Y_i$.
 
-Ce modèle n'est pas estimable puisque l'on ne dispose jamais de données pour l'entièreté de la population. On ne dispose que d'échantillons de cette population. On cherche donc des estimateurs $\hat{\alpha}$ et $\hat{\beta}$ afin de décrire le mieux possible cette relation hypothétique entre $Y_i$ et $X_i$.
+Ce modèle n'est pas estimable puisque l'on ne dispose jamais de données pour l'entièreté de la population : on ne dispose que d'échantillons de cette population. On cherche donc des estimateurs $\hat{\alpha}$ et $\hat{\beta}$ afin de décrire le mieux possible cette relation hypothétique entre $Y_i$ et $X_i$.
 
-La méthode classique consiste à utiliser la méthode des Moindres Carrés Ordinaires (MCO / OLS) qui consiste à trouver les estimateurs $\hat{\alpha}$ et $\hat{\beta}$ qui vont minimiser la distance entre les vraies valeurs $Y_i$ et les valeurs estimées de la droite $\hat{Y}_i$ au carré.
+La méthode classique consiste à utiliser la méthode des **Moindres Carrés Ordinaires (MCO / OLS)** qui consiste à trouver les estimateurs $\hat{\alpha}$ et $\hat{\beta}$ qui vont minimiser la distance entre les vraies valeurs $Y_i$ et les valeurs estimées de la droite $\hat{Y}_i$ au carré.
 
 Si on définit les valeurs estimées de la variable endogène et les résidus à partir du modèle de la population comme suit et notés respectivement $\hat{Y}_i$ et $\hat{u}_i$ :
 
@@ -124,7 +124,7 @@ $$
 
 -   $\mathbf{X}$ : une matrice de taille $\left( N \times K \right)$ qui comprend les variables explicatives/exogènes. En cas d'ajout d'une constante, la taille passe à $\left( N \times K+1 \right)$.
 
--   $\boldsymbol{\beta}$ : un vecteur de taille $\left( K \times 1 \right)$ qui comprend la valeur du coefficient associé à chaque variable. En cas d'ajout de constante, la taille passe à $(K \times 1 + 1)$.
+    -   $\boldsymbol{\beta}$ : un vecteur de taille $\left( K \times 1 \right)$ qui comprend la valeur du coefficient associé à chaque variable. En cas d'ajout de constante (notée $\alpha$), la taille passe à $(K \times 1 + 1)$.
 
 -   $\boldsymbol{u}$ : un vecteur de taille $\left( N \times 1 \right)$ qui contient les erreurs du modèle.
 
@@ -171,9 +171,9 @@ $$
 
 ### Hypothèses
 
-Si les hypothèses suivantes sont respectées, alors les estimateurs MCO seront des estimateurs non biaisés et de variance minimale. On dit que ce sont des estimateurs BLUE : Best Linear Unbiased Estimator.
+Si les hypothèses suivantes sont respectées, alors les estimateurs MCO seront des estimateurs non biaisés et de variance minimale. On dit que ce sont des estimateurs **BLUE : Best Linear Unbiased Estimator**.
 
--   H1 : $E(u) = 0$. L'espérance de l'erreur est nulle. En moyenne le modèle ne commet pas d'erreur. Il ne sous-estime ni ne surestime la valeur de la variable endogène de manière systématique. Cette hypothèse est nécessaire pour les tests d'hypothèse et prouver l'absence de biais des estimateurs MCO
+-   H1 : $E(u) = 0$. L'espérance de l'erreur est nulle. En moyenne le modèle ne commet pas d'erreur. Il ne sous-estime ni ne surestime la valeur de la variable endogène de manière systématique. Cette hypothèse est nécessaire pour les tests d'hypothèse et prouver l'absence de biais des estimateurs MCO.
 
 -   H2 : $X$ est une matrice certaine, c'est à dire non aléatoire, elle est observée sans erreur. On note cette hypothèse : $E \left( u_i | x_i \right) = 0$. Cela signifie qu'il n'y a aucun lien statistique entre les erreurs et la variable explicative. On n'a oublié aucune variable (qui se retrouverait donc dans les erreurs) qui soit corrélée de quelque manière que ce soit avec une variable explicative. Si cette hypothèse est violée, l'estimateur MCO n'est plus convergent et devient biaisé.
 
@@ -183,7 +183,7 @@ Si les hypothèses suivantes sont respectées, alors les estimateurs MCO seront 
 
 -   H4 : $E \left( uu' \right) = \sigma^2_u I_T$. Les erreurs ne doivent pas être autocorrélées dans le temps (dans le cas de séries temporelles) ou entre les individus (dans le cas d'une coupe transversale). Les erreurs doivent également avoir une variance constante, et cette variance ne doit pas dépendre des variables explicatives. Si cette hypothèse est violée, les estimateurs MCO ne sont plus de variance minimale.
 
-    De manière générale la matrice de variance-covariance des erreurs s'écrit :
+    De manière générale, la matrice de variance-covariance des erreurs s'écrit :
 
 $$
 E \left( u u' \right)=\begin{bmatrix}\operatorname{Var}(u_1) & \operatorname{Cov}(u_1, u_2) & \cdots & \operatorname{Cov}(u_1, u_N) \\[4pt]
@@ -213,9 +213,9 @@ $$
 
 ## Tests de significativité des coefficients
 
-Comme on ne dispose que d'un échantillon de la population, nous n'avons qu'une estimation de $\beta_k$ notée $\hat{\beta}_k$. On cherche donc à inférer la vraie valeur $\beta$ à partir de son estimation $\hat{\beta}$. Pour cela on va utiliser le test de student qui permet de tester si la vraie valeur dans la population $\beta$ est égale ou différente à une certaine constante $a$.
+Comme on ne dispose que d'un échantillon de la population, nous n'avons qu'une estimation de $\beta_k$ notée $\hat{\beta}_k$. S'il est aisé de voir si $\hat{\beta}_k$ est différent de 0 (ou de n'importe quelle autre constante $a$) ou non, ce n'est pas le cas de $\beta_k$ le vrai coefficient dans la population. Le test de Student va chercher à savoir si pour un certain niveau de risque, le vrai coefficient de la population est différent de 0 (ou d'une constante $a$) à partir de l'estimation obtenue et de sa dispersion.
 
-Ce qui nous intéresse généralement est de savoir si la variable $X_{ik}$ a un effet ou non dans la population soit : $\beta = 0$. Mais on peut aussi s'intéresser à des cas différents.
+Ce qui nous intéresse généralement est de savoir si la variable $X_{ik}$ a un effet ou non dans la population soit : $\beta_k = 0$. Mais on peut aussi s'intéresser à des cas différents.
 
 Pour tester cela, on utilise le test de Student avec le jeu d'hypothèse suivant :
 
@@ -234,11 +234,11 @@ $$
 t_{\hat{\beta}} = \frac{\hat{\beta}-\beta}{\hat{\sigma}_{\hat{\beta}}}
 $$
 
-Sous l'hypothèse nulle $H_0$, avec un risque de $\alpha$% on sait que cette statistique suit une loi de Student à $N-K-1$ degrés de libertés ($N-K$ si pas de constante) : $t_{\hat{\beta}} \sim t_{\alpha/2} \left( N-K-1 \right)$ . Le degré de confiance du test $\alpha$ correspond au risque de première espèce (Faux-positif) c'est à dire au risque de rejeter $H_0$ alors que cette hypothèse est vraie.
+Sous l'hypothèse nulle $H_0$, avec un risque de $\alpha$% on sait que cette statistique suit une loi de Student à $N-K-1$ degrés de libertés ($N-K$ si pas de constante) : $t_{\hat{\beta}} \sim t_{\alpha/2} \left( N-K-1 \right)$. Le degré de confiance du test $\alpha$ correspond au risque de première espèce (Faux-positif) c'est à dire au risque de rejeter $H_0$ alors que cette hypothèse est vraie.
 
 La règle de décision est la suivante :
 
--   Si Si $\left| t_{\hat{\beta}} \right|$ est supérieur à la valeur critique tabulée, alors on rejette H0. Le coefficient $\beta$ est statistiquement différent de $a$.
+-   Si $\left| t_{\hat{\beta}} \right|$ est supérieur à la valeur critique tabulée, alors on rejette $H_0$. Le coefficient $\beta$ est statistiquement différent de $a$.
 
 -   Si $\left| t_{\hat{\beta}} \right|$ est inférieur à la valeur critique tabulée, alors on ne peut pas rejeter l'hypothèse nulle. Le coefficient $\beta$ n'est pas statistiquement différent de $a$.
 
@@ -255,7 +255,7 @@ $$
 
 Dans ce cas la loi suivie par la statistique est : $t_{\hat{\beta}} \sim t_{\alpha} \left( N-K-1 \right)$ .
 
-Il est également possible de calculer le iniveau de significativité à partir duquel l'hypothèse nulle ne peut plus être rejetée. C'est ce que l'on appel la p-value. Plus cette probabilité est faible, plus le risque de commettre un Faux-positif est faible. On rejettera alors l'hypothèse nulle dès lors que la p.value est inférieure à un seuil donné. Si la p.value est supérieure à ce seuil, on ne pourra pas rejeter l'hypothèse nulle (règle de décision inversée par rapport aux valeurs critiques).
+Il est également possible de calculer le niveau de significativité à partir duquel l'hypothèse nulle ne peut plus être rejetée. C'est ce que l'on appel la **p-value**. Plus cette probabilité est faible, plus le risque de commettre un Faux-positif est faible. On rejettera alors l'hypothèse nulle dès lors que la p.value est inférieure à un seuil donné. Si la p.value est supérieure à ce seuil, on ne pourra pas rejeter l'hypothèse nulle (règle de décision inversée par rapport aux valeurs critiques).
 
 ## Significativité du modèle
 
@@ -269,13 +269,15 @@ $$
 \end{align}
 $$
 
+Cette équation de la variance nous indique que la Somme des Carrés Totaux (SCT) est égale à la Somme des Carrés Expliqués (SCE) plus la Somme des Carrés des Résidus (SCR). Autrement dit, la variation de notre variable endogène se décompose en une partie expliquée par le modèle et une partie que l'on explique pas et qui se retrouve dans les résidus.
+
 Le $R^2$ ou coefficient d'ajustement est une mesure qui permet de déterminer le pourcentage de variance de la variable endogène qui est expliqué par le modèle. Il est donné par :
 
 $$
 R^2 = \frac{\text{SCE}}{\text{SCT}} = 1 - \frac{\text{SCR}}{\text{SCT}} \in \left[ 0,1 \right]
 $$
 
-Ce coefficient est cependant biaisée en cas de régression linéaire multiple. l'ajout d'une variable supplémentaire fait forcément augmenter le $R^2$ le rendant inutile pour la comparaison entre deux modèles ayant un nombre de variables explicatives différent.
+Ce coefficient est cependant biaisé en cas de régression linéaire multiple. L'ajout d'une variable supplémentaire fait forcément augmenter le $R^2$ le rendant inutile pour la comparaison entre deux modèles ayant un nombre de variables explicatives différent.
 
 Pour cela on utilise le coefficient de détermination ajusté $\overline{R}^2$ :
 
@@ -285,7 +287,7 @@ $$
 
 Ce coefficient s'interprète de la même manière que le $R^2$ et permet de comparer des modèles avec un nombre de variables explicatives différent. Il est à noter que ces modèles doivent avoir la même variable endogène et le même nombre d'observations.
 
-On peut tester si le modèle dans son ensemble a un pouvoir explicatif en utilisant un test de Fisher définit comme :
+On peut tester si le modèle dans son ensemble a un pouvoir explicatif en utilisant un test de Fisher défini comme suit :
 
 $$
 \left\{    \begin{array}{ll}       H_0 : R^2 = 0  \\       H_1 : R^2 > 0     \end{array}\right.
@@ -311,7 +313,7 @@ On peut également calculer une p.value :
 
 ## Tests de significativité groupé des coefficients
 
-Il est possible de vouloir tester si de manière jointe plusieurs coefficients ont un effet sur la variable endogène. Lorsque différentes variables sont fortement corrélées entre elles (comme les mêmes modalités d'une variable qualitatives ou les variables qualitatives avec leurs termes d'interactions), la variance des estimateurs augmente. On aura ainsi tendance à rejeter la significativité individuelle de ces variables. Cependant on peut être intéressé au fait de savoir si cet ensemble de variables, pas forcément significatives de manière individuelle, a un impact sur la variable expliquée une fois prises toutes ensembles.
+Il est possible de vouloir tester si de manière jointe plusieurs coefficients ont un effet sur la variable endogène. Lorsque différentes variables sont fortement corrélées entre elles (comme les mêmes modalités d'une variable qualitative ou les variables qualitatives avec leurs termes d'interactions), la variance des estimateurs augmente. On aura ainsi tendance à rejeter la significativité individuelle de ces variables. Cependant on peut être intéressé par le fait de savoir si cet ensemble de variables, pas forcément significatives de manière individuelle, a un impact sur la variable expliquée une fois considérées toutes ensembles.
 
 Pour cela on va utiliser le test de Fisher sur un sous-groupe de variables.
 
@@ -321,7 +323,7 @@ $$
 Y_i = \alpha + \beta_1 X_{1i} + \beta_2 X_{2i} + \beta_3 X_{3i} + u_i
 $$
 
-Supposons que les variables $X_2$ et $X_3$ ne soient pas significatives prises individuellement et que ces variables présentent un fort degré de corrélation entre elles. On peut vouloir tester si prises ensemble ces variables ont un pouvoir explicatif sur $Y_i$ ou si elles sont "inutiles".
+Supposons que les variables $X_2$ et $X_3$ ne soient pas significatives prises individuellement et que ces variables présentent un fort degré de corrélation entre elles. On peut vouloir tester si, prises ensemble, ces variables ont un pouvoir explicatif sur $Y_i$ ou si elles sont "inutiles".
 
 On cherche donc à tester si :
 
@@ -334,7 +336,7 @@ H_1 : \beta_2 \neq 0 \text{ } | \text{ } \beta_3 \neq 0
 \right.
 $$
 
-Pour cela on va estimer en plus du premier modèle (que l'on appelle le modèle non-contraint) un second modèle que l'on nomme modèle contraint et qui va intégrer les contraintes imposées dans l'hypothèse nulle. On estime donc le modèle suivant :
+Pour cela on va estimer en plus du premier modèle (que l'on appelle le modèle non-contraint) un second modèle que l'on nomme **modèle contraint** et qui va intégrer les contraintes imposées dans l'hypothèse nulle. On estime donc le modèle suivant :
 
 $$
 Y_i = \alpha + \beta_1 X_{1i} + e_i
@@ -376,7 +378,7 @@ Parmi les sources les plus courantes d'hétéroscédasticité, on peut citer :
 
 -   une mauvaise forme fonctionnelle
 
--   la nature des données (ex : moyennes d'observations issues d'échantillon de tailles différentes)
+-   la nature des données (ex : moyennes d'observations issues d'échantillons de tailles différentes)
 
 Pour tester la présence d'hétéroscédasticité, différents tests sont disponibles comme :
 
@@ -429,7 +431,7 @@ $$
 h_i = \frac{\hat{u}_i^2}{\hat{\sigma}^2_{MV}}
 $$
 
--   Après avoir spécifier les variables $Z_{1i}, \cdots, Z_{pi}$, on régresse $h_i$ sur ces variables
+-   Après avoir spécifié les variables $Z_{1i}, \cdots, Z_{pi}$, on régresse $h_i$ sur ces variables
 
 $$
 h_i = a_0 + a_1 Z_{1i} + \cdots + a_p X_{pi} + e_i
@@ -493,9 +495,6 @@ $$
 La règle de décision est la suivante :
 
 -   Si $NR^2 > \chi^2_{2k}$ (ou p.value inférieure à un seuil donné) : on rejette l'hypothèse nulle d'homoscédasticité. Les erreurs sont hétéroscédastiques, la variance des estimateurs MCO n'est donc pas minimale.
-
-<!-- -->
-
 -   Si $NR^2 < \chi^2_{2k}$ (ou p.value supérieure à un seuil donné) : on ne peut pas rejeter l'hypothèse nulle d'homoscédasticité. Les erreurs sont homoscédastiques.
 
 #### Test ARCH
@@ -542,14 +541,11 @@ $$
 La règle de décision est la suivante :
 
 -   Si $TR^2 > \chi^2_{l}$ (ou p.value inférieure à un seuil donné) : on rejette l'hypothèse nulle d'homoscédasticité. Les erreurs sont conditionnellement hétéroscédastiques, la variance des estimateurs MCO n'est donc pas minimale.
-
-<!-- -->
-
 -   Si $TR^2 < \chi^2_{l}$ (ou p.value supérieure à un seuil donné) : on ne peut pas rejeter l'hypothèse nulle d'homoscédasticité. Les erreurs sont homoscédastiques.
 
 #### Estimation
 
-Si la forme de l'hétéroscédasticité est connue, il est possible d'utiliser des méthodes telles que les Moindres Carrés Pondérés pour la prendre en compte. Généralement en pratique, on ne connait pas la forme de l'hétéroscédasticité.
+Si la forme de l'hétéroscédasticité est connue, il est possible d'utiliser des méthodes telles que les **Moindres Carrés Pondérés** pour la prendre en compte. Généralement en pratique, on ne connaît pas la forme de l'hétéroscédasticité.
 
 Dans ce cas, il est possible d'utiliser l'estimateur de la matrice de variance-covariance de White ou encore celui de Newey et West. Il s'agit de corrections apportées à la matrice de variance-covariance pour tenir compte de l'hétéroscédasticité. Les coefficients du modèle de régression ne changent pas. Seuls les écarts-types estimés changent.
 
@@ -559,7 +555,7 @@ L'hypothèse de normalité des erreurs est nécessaire afin de procéder à une 
 
 #### Test de Jarque et Berra (1980)
 
-Ce test se base sur la définition des coefficients de skewness $S$ (assymétrie de la distribution) et de kurtosis $K$ (épaisseur des queues de distribution) :
+Ce test se base sur la définition des coefficients de skewness $S$ (asymétrie de la distribution) et de kurtosis $K$ (épaisseur des queues de distribution) :
 
 $$
 \begin{align}
@@ -611,7 +607,7 @@ Asymptotiquement les estimateurs MCO disposent de bonnes propriétés. Asymptoti
 
 ### Modèles quadratiques
 
-On rappelle que le coté "linéaire" de la régression linéaire implique la linéarité dans les *paramètres*. Il n'existe aucune restriction sur la forme que doit prendre $Y$ ou $X$.
+On rappelle que l'aspect "linéaire" de la régression linéaire implique la linéarité dans les *paramètres*. Il n'existe aucune restriction sur la forme que doit prendre $Y$ ou $X$.
 
 Ainsi le modèle suivant ne peut être conceptualisé sous la forme d'un modèle de régression linéaire :
 
@@ -625,7 +621,7 @@ $$
 Y_i = \alpha + \beta_1 X_i + \beta_2 X_i^2 + u_i
 $$
 
-Une telle forme fonctionnelle permet de prendre en compte de manière simple des non-linéarité. Cela permet de capter des effets marginaux croissants ou décroissants et non plus constants. Cela permet d'avoir une relation en cloche telle que $X_i$ va faire augmenter $Y_i$ jusqu’à un certain point, puis va le faire diminuer.
+Une telle forme fonctionnelle permet de prendre en compte de manière simple des non-linéarités. Cela permet de capter des effets marginaux croissants ou décroissants et non plus constants. Cela permet d'avoir une relation en cloche telle que $X_i$ va faire augmenter $Y_i$ jusqu’à un certain point, puis va le faire diminuer.
 
 Dans un tel modèle, on ne peut plus estimer l'impact global qu'une augmentation de $X_i$ entraîne sur $Y_i$. Il faut regarder la variation de $Y_i$ pour une valeur donnée de $X_i$.
 
@@ -692,9 +688,9 @@ où :
 
 -   $\mathbf{1}_{2i} = 1$ pour le groupe de référence (femme) et 0 sinon.
 
-Si le modèle inclue les deux variables indicatrices ainsi que la constante, il n'est plus identifiable puisque ces trois variables sont parfaitement colinéaires entre elles : elles s'expliquent parfaitement par une combinaison linéaire : $\alpha = \mathbf{1}_{1i} + \mathbf{1}_{2i}$.
+Si le modèle inclut les deux variables indicatrices ainsi que la constante, il n'est plus identifiable puisque ces trois variables sont parfaitement colinéaires entre elles : elles s'expliquent parfaitement par une combinaison linéaire : $\alpha = \mathbf{1}_{1i} + \mathbf{1}_{2i}$.
 
-Si qualité que l'on souhaite étudier a de multiples modalités (catégorie socio-professionnelle) , alors on intègre une variable par modalité (-1 s'il y a une constante). L'interprétation des coefficients se fera toujours par rapport à la variable de référence.
+Si la qualité que l'on souhaite étudier a de multiples modalités (catégorie socio-professionnelle) , alors on intègre une variable par modalité (-1 s'il y a une constante). L'interprétation des coefficients se fera toujours par rapport à la variable de référence.
 
 Pour tester si une variable qualitative à $j$ modalités est intéressante à inclure, on peut effectuer un test de Fisher avec l'hypothèse nulle : $\delta_1 = \delta_2 = \cdots = \delta_{j-1} = 0$.
 
@@ -742,7 +738,7 @@ $$
 Ce modèle suppose une relation dans la population linéaire entre l'éducation d'un individu et son salaire. Le terme $u_i$ comprend tous les facteurs pouvant affecter le salaire d'un individu et n'étant pas compris dans cette relation.
 
 ```{r}
-# Représenter graphique les données sous forme d'un nuage de points
+# Représenter graphiquement les données sous forme d'un nuage de points
 wage1 |> 
   ggplot(aes(x = educ, y = wage)) +
   geom_point() +
@@ -782,7 +778,7 @@ La fonction `lm()` retourne une liste contenant différents objets. Pour connaî
 names(reg1)
 ```
 
-On peut voir que notre objet `reg1` contenant notre régression linéaire comprend 12 objets aux noms assez explicites que l'on va pouvoir appelé pour différents usages.
+On peut voir que notre objet `reg1` contenant notre régression linéaire comprend 12 objets aux noms assez explicites que l'on va pouvoir appeler pour différents usages.
 
 ```{r}
 # Extraire les coefficients estimés
@@ -800,7 +796,7 @@ names(reg1_summary)
 reg1_summary$coefficients
 ```
 
-Ici ce sont les coefficients ainsi que les écarts-types, t-stat et p.values qui sont retournées dans un objet de classe `matrix`. Lorsque l'on effectue des manipulations, des tests ou des procédures en tour genre nécessitant d'utiliser les estimations, il est possible de simplement afficher les coefficients puis de les noter à la main. Cette méthode est déconseillée puisqu'elle implique d'avoir à modifier manuellement au moindre changement, sans compter que cela devient très vite un calvaire si le nombre d'estimations et de coefficients grandis.
+Ici ce sont les coefficients ainsi que les écarts-types, t-stat et p.values qui sont retournées dans un objet de classe `matrix`. Lorsque l'on effectue des manipulations, des tests ou des procédures en tour genre nécessitant d'utiliser les estimations, il est possible de simplement afficher les coefficients puis de les noter à la main. Cette méthode est déconseillée puisqu'elle implique d'avoir à modifier manuellement au moindre changement, sans compter que cela devient très vite un calvaire si le nombre d'estimations et de coefficients grandit.
 
 Etant un objet `matrix`, les règles de manipulation classiques sont faisables :
 
@@ -901,7 +897,7 @@ result <- if_else(p_value <= alpha, "significatif", "non-significatif")
 print(glue("le résultat du test de student unilatéral est : {result} avec une p.value de {p_value} pour un risque de {alpha * 100}%"))
 ```
 
-On va maintenant chercher à détermine si le coefficient de l'éducation est significativement différent de 0.5 ou pas :
+On va maintenant chercher à déterminer si le coefficient de l'éducation est significativement différent de 0.5 ou pas :
 
 $$
 \left\{    
@@ -949,7 +945,7 @@ print(glue("La statistique de test est {abs(t_stat)}"))
 print(glue("La p.value du test est {round(p_value, 3)}"))
 ```
 
-On ne peut pas dire que le coefficient de l'éducation soit significativement différent de 0.5. Si dans votre projet il est fréquent que vous ayez à effectuer des tests de Student avec d'autres types d'hypothèse, créez vous votre propre fonction afin de ne pas avoir à répéter ce type de code en permanence.
+On ne peut pas dire que le coefficient de l'éducation soit significativement différent de 0.5. Si dans votre projet il est fréquent que vous ayez à effectuer des tests de Student avec d'autres types d'hypothèse, créez votre propre fonction afin de ne pas avoir à répéter ce type de code en permanence.
 
 ### Tester la normalité des résidus
 
@@ -1002,7 +998,7 @@ On peut également représenter la distribution des résidus et la comparer avec
     )
 ```
 
-Il semble au vu des graphiques précédents que nos résidus ne suivent pas une loi normale. Ils semblent être caractérisés par une asymétrie à droite ainsi que des queues de distribution plus épaisses impliquant des valeurs extrêmes plus fréquentes. On rappelle que la loi normale est caractérisée par un coefficient de skewness égal à 0 et un coefficient de kurtosis égal à 3.
+Il semble, au vu des graphiques précédents, que nos résidus ne suivent pas une loi normale. Ils semblent être caractérisés par une asymétrie à droite ainsi que des queues de distribution plus épaisses impliquant des valeurs extrêmes plus fréquentes. On rappelle que la loi normale est caractérisée par un coefficient de skewness égal à 0 et un coefficient de kurtosis égal à 3.
 
 ```{r}
 moments::skewness(reg1$residuals) # Coefficient de skewness des résidus
@@ -1029,7 +1025,7 @@ moments::jarque.test(reg1$residuals)
 
 Le test nous indique que les résidus ne semblent pas avoir des coefficients de skewness et de kurtosis égaux à ceux de la loi normale pour un niveau de risque très faible. On peut en conclure que nos résidus ne suivent pas une loi normale.
 
-On peut également tester l’hypothèse nulle que les données proviennent d'une population normalement échantillonnée avec le test de Shapiro-Wilk. On peut utiliser la fonction `check_normality()` du package `performance` pour faire cela, mais cela ne renvoi qu'un message et on ne peut pas extraire le résultat du test ce qui peut être handicapant dans certains cas.
+On peut également tester l’hypothèse nulle que les données proviennent d'une population normalement échantillonnée avec le test de Shapiro-Wilk. On peut utiliser la fonction `check_normality()` du package `performance` pour faire cela, mais cela ne renvoit qu'un message et on ne peut pas extraire le résultat du test ce qui peut être handicapant dans certains cas.
 
 ```{r}
 performance::check_normality(reg1)
@@ -1041,7 +1037,7 @@ Encore une fois, ce test rejette la normalité des résidus pour un niveau de ri
 
 Cela n'est cependant pas un gros problème pour notre estimation puisque asymptotiquement nos estimateurs disposent de bonnes propriétés et que les tests statistiques usuels restent valides asymptotiquement. Or nous avons 526 observations ce qui est suffisant généralement pour utiliser les propriétés asymptotiques.
 
-Attention car la non normalité des résidus signifie quand même que tous les éléments générateurs des données n'ont pas été pris en compte ce qui peut être dérangeant notamment pour faire de la prévision puisqu'on sous-estime l'apparition de valeurs extrêmes.
+Attention car la non-normalité des résidus signifie quand même que tous les éléments générateurs des données n'ont pas été pris en compte ce qui peut être dérangeant notamment pour faire de la prévision puisque l'on sous-estime l'apparition de valeurs extrêmes.
 
 ### Tester l'homogénéité de la variance
 
@@ -1083,7 +1079,7 @@ Les tests de Breusch-Pagan et de White indiquent avec un risque faible que les r
 
 ### Indépendance des variables explicatives
 
-Afin que les estimateurs soient sans biais il est nécessaire qu'il n'existe aucun lien statistique entre les résidus et ces variables (si une variable est corrélée avec les résidus alors seul le coefficient de cette variable sera biaisé). Cela signifie qu'il faut s'assurer que notre modèle inclue toutes les variables pouvant expliquer $Y_i$ et étant corrélées avec $X_{ki}$. Si une telle variable a été omise alors le coefficient de la variable explicative sera biaisée puisque l'on ne peut pas savoir si l'évolution observée de la variable $X_{ki}$ est du à sa propre évolution ou à celle de la variable omise.
+Afin que les estimateurs soient sans biais il est nécessaire qu'il n'existe aucun lien statistique entre les résidus et ces variables (si une variable est corrélée avec les résidus alors seul le coefficient de cette variable sera biaisé). Cela signifie qu'il faut s'assurer que notre modèle inclue toutes les variables pouvant expliquer $Y_i$ et étant corrélées avec $X_{ki}$. Si une telle variable a été omise alors le coefficient de la variable explicative sera biaisée puisque l'on ne peut pas savoir si l'évolution observée de la variable $X_{ki}$ est dû à sa propre évolution ou à celle de la variable omise.
 
 On peut utiliser certaines techniques pour tester si nos variables sont exogènes (test de Hausman avec les variables instrumentales) mais il s'agit surtout d'une histoire d'argumentation sur le choix des variables inclues dans le modèle ou non.
 
@@ -1091,7 +1087,7 @@ Dans notre cas on peut légitimement penser que notre coefficient associé à *e
 
 ## Régression robuste à l'hétéroscédasticité
 
-Nous venons de montrer que nos résidus ne sont pas caractérisés par une variance constance rendant ainsi la variance des estimateurs MCO non-minimale.
+Nous venons de montrer que nos résidus ne sont pas caractérisés par une variance constante rendant ainsi la variance des estimateurs MCO non-minimale.
 
 La méthode la plus pratique consiste à corriger les écarts-types de l'hétéroscédasticité et à utiliser ce que l'on appelle des "erreurs standards robustes".
 
@@ -1115,7 +1111,7 @@ On peut voir que les résultats sur les écarts-types et p.values ne changent pa
 
 ## Changement de forme fonctionnelle
 
-La première régression nous indiquait que le salaire moyen horaire d'un individu augmentait de $0.541$dollars en moyenne lorsque son niveau d'étude augmentait de 1. On peut se demander s'il ne serait pas plus pertinent de réfléchir l'augmentation du salaire en pourcentage plutôt qu'en unité monétaire. D'une part cela rend probablement la compréhension plus facile et d'autre part cela permet d'avoir un effet non-linéaire de l'augmentation monétaire, mais un effet constant en pourcentage.
+La première régression nous indiquait que le salaire moyen horaire d'un individu augmentait de $0.541$ dollars en moyenne lorsque son niveau d'étude augmentait de 1. On peut se demander s'il ne serait pas plus pertinent de réfléchir l'augmentation du salaire en pourcentage plutôt qu'en unité monétaire. D'une part cela rend probablement la compréhension plus facile et d'autre part cela permet d'avoir un effet non-linéaire de l'augmentation monétaire, mais un effet constant en pourcentage.
 
 Le modèle devient donc :
 
@@ -1183,7 +1179,7 @@ reg4 <- lm(log(wage) ~ educ + exper + I(exper**2) + tenure, data = wage1)
 (reg4_summary <- summary(reg4))
 ```
 
-Dans un tel modèle, l'interprétation des coefficients `educ` et `tenure` ne change pas. Par contre il n'est plus possible d'interpréter `exper` de la même manière puisqu'il y a désormais deux termes à prendre en compte. Il est possible de calculer les effets marginaux de manière manuelle. La fonction `effect()` du package `effect` permet de faire cela automatiquement. Basiquement elle prend comme argument le nom de la variable dont on veut mesurer l'effet et le modèle de régression associé.
+Dans un tel modèle, l'interprétation des coefficients `educ` et `tenure` ne change pas. Par contre il n'est plus possible d'interpréter `exper` de la même manière puisqu'il y a désormais deux termes à prendre en compte. Il est possible de calculer les effets marginaux de manière manuelle. La fonction `effect()` du package `effect` permet de faire cela automatiquement. Basiquement, elle prend comme argument le nom de la variable dont on veut mesurer l'effet et le modèle de régression associé.
 
 ```{r}
 # Affciher l'effet non linéaire de la variable expérience
@@ -1192,7 +1188,7 @@ effects::effect("exper", reg4) |>
   plot()
 ```
 
-On peut voir que l'expérience a tout d'abord un effet positif sur le salaire puis un effet négatif en fin de carrière toutes choses égales par ailleurs. Attention la valeur sur l'axe des ordonnées ne peut pasq être interpréter comme une valeur de coefficient. Par exemple, pour 10 années d'expérience $log(\text{wage}) = 1.639$ mais cela NE SIGNIFIE PAS qu'avoir 10 ans d'expérience fait augmenter le salaire de 163.9%. Pour avoir l'information de l'augmentation du salaire pour une année d'étude supplémentaire on utilise la formule :
+On peut voir que l'expérience a tout d'abord un effet positif sur le salaire puis un effet négatif en fin de carrière toutes choses égales par ailleurs. Attention la valeur sur l'axe des ordonnées ne peut pas être interpréter comme une valeur de coefficient. Par exemple, pour 10 années d'expérience $log(\text{wage}) = 1.639$ mais cela NE SIGNIFIE PAS qu'avoir 10 ans d'expérience fait augmenter le salaire de 163.9%. Pour avoir l'information de l'augmentation du salaire pour une année d'étude supplémentaire on utilise la formule :
 
 $$
 \Delta \widehat{log(\text{wage})} \approx (\beta_2 + 2 \beta_3 \text{exper}) \times \Delta \text{exper}
@@ -1347,7 +1343,7 @@ Dans la fonction `forcats::fct()` si l'argument `levels` n'est pas indiqué, alo
 levels(wage1_modif$region)
 ```
 
-La varialle de référence qui sera utilisée dans la régression correspond au premier niveau affiché. Ici ce sera *west*. Pour pouvoir comparer le résultat avec les variables dummy il faudrait que la variable de référence soit *east*.
+La variable de référence qui sera utilisée dans la régression correspond au premier niveau affiché. Ici ce sera *west*. Pour pouvoir comparer le résultat avec les variables dummy il faudrait que la variable de référence soit *east*.
 
 ```{r}
 # Définir l'ordre voulu pour les régions
