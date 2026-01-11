@@ -1,4 +1,7 @@
 # Importer (et télécharger si nécessaire) les packages ------------------------
+# PAckage pour télécharger depuis github
+library(devtools)
+
 # Packages pour la manipulation de données
 library(tidyverse)
 library(readr)
@@ -6,9 +9,11 @@ library(here)
 library(modelsummary)
 library(janitor)
 library(glue)
+library(conflicted)
 
 # Package pour les données utilisées dans Wooldrige
 require(wooldridge)
+library(pdfetch)
 
 # PAckages pour les tests statistiques
 library(performance)
@@ -19,6 +24,17 @@ library(whitestrap)
 library(car)
 library(effects)
 library(forcats)
+library(forecast)
+library(fDMA)
+library(runner)
+
+# PAckage maison pour le test ADF
+library(dobby)
+
+# Gérer les conflits de fonction entre package
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::lag)
+conflicts_prefer(dplyr::select)
 
 # Importer les différents paths -----------------------------------------------
 source(here("02-codes", "utils", "paths.R"))
