@@ -27,16 +27,16 @@ Où :
 
 -   $u_i$ : représente le terme d'erreur : ce qui n'est pas expliqué par le modèle
 
-```{r, echo=FALSE}
-# Tracer graphiquement une droite de régression linéaire
-wooldridge::vote1 |> 
-  ggplot2::ggplot(ggplot2::aes(x = shareA, y = voteA)) +
-  ggplot2::geom_point() +
-  ggplot2::geom_smooth(formula = y ~ x, method = "lm", se = FALSE) +
-  ggplot2::labs(
-    x = "Part des dépenses de campagne en %",
-    y = "Part des votes en %"
-  ) +
+```{r, echo = FALSE}
+# Tracer graphiquement une droite de régression linéaire} 
+wooldridge::vote1 |>    
+  ggplot2::ggplot(ggplot2::aes(x = shareA, y = voteA)) +   
+  ggplot2::geom_point() +   
+  ggplot2::geom_smooth(formula = y ~ x, method = "lm", se = FALSE) +   
+  ggplot2::labs(     
+    x = "Part des dépenses de campagne en %",     
+    y = "Part des votes en %"   
+  ) +   
   ggplot2::theme()
 ```
 
@@ -707,6 +707,28 @@ Dans ce cas, il existe une différence systématique entre les personnes du grou
 La constante ainsi que la pente de la droite diffèrent selon les groupes.
 
 Pour tester si $Y_i$ suit le même modèle pour les différents groupes étudiés, on va effectuer un test de Fisher dans lequel l'hypothèse nulle sera : $\delta_1 = \delta_2 = 0$.
+
+## Prédiction
+
+Un modèle de régression linéaire peut-être utilisé afin de prédire la variable endogène pour des valeurs définies des variables exogènes.
+
+Ainsi pour un modèle :
+
+$$
+Y_i = \alpha + \beta_1 X_{i1} + \beta_2 X_{i2} + \cdots + \beta_k X_{ik} + u_i
+$$
+
+On souhaite trouver la valeur moyenne de $Y_i$ étant donné que les régresseurs prennent des valeurs spécifiques $c_1, c_2, \cdots, c_k$ :
+
+$$
+\theta_0 = E(Y_i | X_{i1} = c_1, X_{i2} = c_2, \cdots, X_{ik} = c_k) = \alpha + \beta_1 c_1 + \beta_2 c_2 + \cdots + \beta_k c_k
+$$
+
+Le point estimé est donc :
+
+$$
+\hat{\theta}_0 = \hat{\alpha} + \hat{\beta}_1 c_1 + \hat{\beta}_2 c_2 + \cdots + \hat{\beta}_k c_k
+$$
 
 # Codes
 
@@ -1422,6 +1444,41 @@ lm(
 ```
 
 Seulement parfois on ne peut/veut pas supprimer une variable de noter modèle puisque l'on estime que cette variable est importante. On estime par exemple que l'expérience a une relation quadratique qui est indispensable à prendre en compte. Dans ce cas on peut utiliser les tests de Fischer pour tester si conjointement les variables colinéaires ont un impact significatif sur le modèle.
+
+## Prédiction
+
+On souhaite prédire le salaire qu'aurait un homme "moyen" habitant dans l'est dans l'échantillon. Pour cela on va créer un dataframe qui contiendra les valeurs moyennes des prédicteurs puis on utilisera la fonction `predict` pour obtenir notre prédiction.
+
+```{r}
+df_indiv_moyen <- 
+  wage1_modif |> 
+  summarize(
+    across(
+      .cols = c(educ, exper, tenure),
+      ~ mean(.x)
+    ),
+    female = 0,
+    region = "east"
+  )
+
+predict(reg8, df_indiv_moyen)
+```
+
+On peut voir qu'un homme "moyen" habitant dans l'est aurait un salaire en log prédit de $1.93$ environ, soit un salaire horaire prédit de $exp(1.93) \approx 6.87$ dollars.
+
+On peut aussi faire de multiples prédictions d'un coup. Par exemple on peut regarder le salaire prédit des individus caractéristiques à différents quantiles.
+
+```{r}
+df_indiv_quantile <-
+  tibble(
+    educ = quantile(wage1$educ, probs = seq(0.1, 0.9, by = 0.1)),
+    exper = quantile(wage1$exper, probs = seq(0.1, 0.9, by = 0.1)),
+    tenure = quantile(wage1$tenure, probs = seq(0.1, 0.9, by = 0.1))
+  )
+
+# PAsser directement à l'exponentielle pour avoir une interprétation en salaire horaire
+exp(predict(reg4, df_indiv_quantile))
+```
 
 ## Tables de régression
 
