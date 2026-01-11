@@ -1,0 +1,48 @@
+---
+title: "02-exercices-regressions-lineraires"
+format: html
+---
+
+# Exercice 1 : Notes et présence en cours
+
+Données : Dataframe `attend` du package `wooldridge`.
+
+Objectif : Estimer l'effet de la présence en cours sur la réussite à un examen.
+
+## Question 1
+
+*Importer les données et découvrir les variables. Quelles sont les potentielles variables endogènes pour répondre à notre objectif ? Quelle serait la principale variable exogène ?*
+
+## Question 2
+
+*Quel est l'effet attendu de la présence scolaire sur le résultat à l'examen ?*
+
+## Question 3
+
+*Représenter graphiquement la relation entre la réussite et la présence en cours. Quelle est la corrélation entre les deux variables ?*
+
+## Question 4
+
+*Estimer la régression linéaire simple entre la réussite et à la présence en classe. Quel est l'effet estimé de la présence sur la réussite ? Cet effet est-il significatif ? Qu'en est-il de la constante ?*
+
+## Question 5
+
+*Les hypothèses de l'estimation par MCO sont-elles respectées ? Que faut-il en conclure pour notre estimation ?*
+
+## Question 6
+
+*Pourquoi pourrait-il être intéressant d'ajouter l'assiduité dans la remise des devoirs à la régression ? Et pour les anciennes notes à l'université ? Et pour les résultats du test d'entrée à l'université (ACT) ? Quelles sont les relations à attendre avec la réussite à l'examen ?*
+
+## Question 7
+
+Estimer cette régression linéaire, interpréter les coefficients et tester les hypothèses des estimateurs MCO. Que peut-on en conclure ?
+
+## Question 8
+
+*L'impact de la présence est-il le même pour un freshman que pour un autre élève ?* Le modèle au global est-il le même ?
+
+## Exercice2 : Estimation de la valeur d'une maison
+
+Données : `hprice2` du package `wooldridge`.
+
+*Vous travailler pour une agence immobilière qui vous demande d'analyser ses données afin d'expliquer rationnellement les prix de vente des maisons actuellement à la vente. Votre agence souhaite savoir si d'une part la criminalité d'un quartier joue sur le prix du bien immobilier. elle souhaite d'autre part avoir le modèle qui explique le plus possible le prix des maisons (prévoyez des preuves que ce modèle est meilleur que les autres) afin que vous puissiez trouver les maisons qui sont les plus sous-évaluées et qui pourraient ainsi être achetées puis revendues plus cher par l'agence.*
