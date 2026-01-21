@@ -1,9 +1,3 @@
----
-title: "README"
-author: "Romain CAPLIEZ"
-output: html_document
----
-
 # README
 
 ## R version
