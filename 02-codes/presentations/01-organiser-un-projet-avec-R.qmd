@@ -17,18 +17,20 @@ Il existe deux manières générales d'écrire les chemins d'accès : absolues e
 
 Généralement pour éviter d'avoir à changer tous les chemins d'accès d'un fichier, on définit un répertoire de travail à partir duquel on va pouvoir écrire les chemins d'accès en relatif.
 
-```{r}
+```{r, eval = FALSE}
 # Sans définir de répetoire de travail 
 # Ce chemin d'accès est personnel et doit être changé à chaque changement d'ordinateur
 readr::read_csv("D:/cours/Econométrie sous R/01-raw-data/iris.csv") |>
   head()
 ```
 
-```{r}
+```{r, eval = FALSE}
 # En définissant un répetoire de travail 
 # Il suffit maintenant de juste modifier ce chemin d'accès par utilisateur
-setwd("D:/cours/Econométrie sous R")  
+setwd("D:/cours/Econométrie sous R") #ne fonctionne pas à cause du projet R : on ne change pas de répertoire de travail
+```
 
+```{r, eval = FALSE}
 # On peut écrire le chemin d'accès de manière relative à ce répertoire de tavail 
 # Ces chemins d'accès n'auront pas besoin d'être modifiés si l'organisation interne du dossier n'est pas modifiée
 readr::read_csv("01-raw-data/iris.csv") |>    
@@ -60,13 +62,14 @@ here::here()
 Chaque argument passé à cette fonction est une chaîne de caractère qui correspond à un sous-dossier ou un fichier. La fonction `here` va créer le chemin absolu jusqu'à ce sous-dossier ou ce fichier.
 
 ```{r}
-here("01-raw-data")
+here::here("01-raw-data")
 ```
 
 ```{r}
 # Importer le dataframe iris avec la fonction here
 readr::read_csv(
-  here("01-raw-data", "iris.csv")
+  here::here("01-raw-data", "iris.csv"),
+  show_col_types = FALSE
 ) |> 
   head()
 ```
