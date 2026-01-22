@@ -1,4 +1,4 @@
-{install.packages("devtools")
+install.packages("devtools")
 install.packages("tidyverse")
 install.packages("readr")
 install.packages("here")
@@ -21,4 +21,3 @@ install.packages("fDMA")
 install.packages("runner")
 
 devtools::install_github("https://github.com/Xayoux/dobby.git")
-}
