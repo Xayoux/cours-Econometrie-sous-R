@@ -4,6 +4,5 @@
 .httr-oauth
 .DS_Store
 .quarto
-*.html
 02-codes/presentations/*_files
 02-codes/exercices/*_files

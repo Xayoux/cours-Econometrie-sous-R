@@ -35,6 +35,7 @@ library(dobby)
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::lag)
 conflicts_prefer(dplyr::select)
+conflicts_prefer(ggplot2::stat_qq_line)
 
 # Importer les différents paths -----------------------------------------------
 source(here("02-codes", "utils", "paths.R"))

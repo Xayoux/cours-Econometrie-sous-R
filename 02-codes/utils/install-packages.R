@@ -19,5 +19,7 @@ install.packages("forcats")
 install.packages("forecast")
 install.packages("fDMA")
 install.packages("runner")
+install.packages("see")
+install.packages("LSTS")
 
 devtools::install_github("https://github.com/Xayoux/dobby.git")

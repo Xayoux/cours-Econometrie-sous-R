@@ -1,0 +1,89 @@
+---
+title: "Basics"
+format: html
+editor: visual
+---
+
+# Télécharger R et R studio
+
+Si R est déjà installé, vérifier la version de R installée sur l'ordinateur. Pour cela : lancer Rstudio si R studio est installé et regarder la version en haut de la console :
+
+![](images/version-R-console.png)
+
+Si Rstudio n'est pas installé : exécuter R et regarder la version :
+
+![](images/version-R-terminal.png)
+
+Si la version installée est inférieure à la 4.5 (4.4 etc...) ou si R n'est pas installé : Télécharger et installer le langage de programmation R : <https://cran.rstudio.com>
+
+Ensuite télécharger et installer Rstudio : <https://posit.co/download/rstudio-desktop/>
+
+Pour ceux qui avaient une ancienne version de R : Changer la version de R utilisée par Rstudio si la version n'est pas la bonne :
+
+-   Aller dans Tools (outils)
+
+-   Global options
+
+-   General
+
+-   Basic
+
+-   Changer la version R
+
+![](images/tools-global-options.png)
+
+![](images/change-R-version.png)
+
+Normalement vous devriez avoir une version de R supérieure à la 4.5
+
+Pour les utilisateurs de windows télécharger Rtools 4.5 : <https://cran.r-project.org/bin/windows/Rtools/rtools45/rtools.html>
+
+# Télécharger le cours
+
+Aller sur la page github : <https://github.com/Xayoux/cours-Econometrie-sous-R>
+
+Cliquer sur le bouton "Code" puis sur "Download Zip"
+
+![](images/dl-cours.png)
+
+Ensuite : clic droit -\> Extraire Tout à l'endroit voulu.
+
+# Setup Rstudio
+
+Ouvrir le dossier de cours et exécuter le fichier "*Econométrie sous R.Rproj"*. Cela va ouvrir Rstudio. IMPORTANT : ne pas ouvrir d'une autre manière pour ce cours.
+
+Dans Rstudio aller dans
+
+-   Tools
+
+-   Global Options
+
+-   General -\> Basic
+
+-   Décocher "Restore .Rdata into workspace at startup"
+
+-   Mettre "Save Workspace to .RData on exit : " sur "Never"
+
+Ensuite aller dans :
+
+-   Tools
+
+-   Global Options
+
+-   Code
+
+-   Editing
+
+-   Cocher "Use native pipe operator"
+
+-   Aller dans la section Display
+
+-   Et cocher les 3 cases dans la partie "Syntax"
+
+# Installer les packages
+
+Ouvrez le fichier : "02-codes/utils/install-packages.R" et exécuter chaque ligne (CTRL + ENTREE) pour installer les packages.
+
+Vérifier qu'il n'y a pas d'erreurs.
+
+Ensuite pour revérifier : ouvrez le fichier : "02-codes/utils/setup.R" et exécuter les commandes `library()`. Vérifier qu'il n'y a pas d'erreurs.
