@@ -31,7 +31,7 @@ Modéliser la série avec un AR(1) et étudier les propriétés des résidus. Qu
 
 Modéliser la série avec un AR(8) et étudier les propriétés des résidus. Que peut-on en déduire ?
 
-## Question 7 
+## Question 7
 
 Quel est le meilleur modèle selon le critère BIC en in-sample ? (Important : imposer la recherche aux modèles stationnaires. Etudier les propriétés des résidus. Que peut-on en déduire ?
 
@@ -44,3 +44,9 @@ Représenter les valeurs prédites et les comparer avec les vraies valeurs de la
 Prédire les valeurs des 5 prochains trimestres et commenter.
 
 # Exercice 2 : Prédire la population de Lynx aux USA
+
+Données : `lynx` disponibles de base dans R.
+
+*Vous devez prédire la population de lynx aux Etats-Unis sur les 5 prochaines années. Proposez au minimum trois modèles concurrents. Quel est le modèle le plus adapté à la prévision ? Semble-t-il être plus fiable que de l'aléatoire ?*
+
+*Finissez par utiliser la fonction `forecast::dm.test()` afin de tester si la prédiction de votre meilleur modèle est significativement meilleure que l'aléatoire. Qu'en est-il par rapport aux autres modèles ?*
