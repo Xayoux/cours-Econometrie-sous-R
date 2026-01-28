@@ -138,3 +138,31 @@ linearHypothesis(
 ```{r}
 coeftest(model_5, vcov = hccm(model_5, type = "hc0"))
 ```
+
+```{r}
+list_exported_models <-
+  ls(pattern = "^model_*") |>
+  mget() |>
+  set_names(ls(pattern = "^model_*"))
+```
+
+```{r}
+modelsummary::modelsummary(
+  list_exported_models, 
+  stars = TRUE,
+  gof_map = c("nobs", "adj.r.squared", "aic")
+  ) 
+```
+
+```{r}
+cm <- c("cigs", "cigs:white", "faminc", "log(faminc)", "white", "male", "motheduc",
+        "fatheduc")
+
+modelplot(
+  list_exported_models, 
+  coef_omit = 'Interc', 
+  coef_map = cm, 
+  vcov = \(x) hccm(x, type = "hc0")
+  ) +
+geom_vline(xintercept = 0, color = "black", linewidth = 1.2)
+```
