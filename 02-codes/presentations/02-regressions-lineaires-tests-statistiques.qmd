@@ -3,6 +3,7 @@ title: "Régression linéaire et tests statistiques"
 author: "Romain CAPLIEZ"
 format: html
 editor: visual
+toc: TRUE
 ---
 
 # Théorie
@@ -646,7 +647,7 @@ La forme de la relation quadratique dépend du signe des deux coefficients.
 Il est possible de transformer certaines variables en logarithme afin d'obtenir des interprétation en terme d'élasticités (changement en pourcentage) plutôt que des changements en unités. Par exemple, il est souvent plus intéressant d'avoir une interprétation en pourcentage lorsque l'on parle d'augmentation de salaire plutôt que d'augmentation en dollars.
 
 | Nom | Modèle | Interprétation de $\beta$ |
-|----|----|----|
+|------------------------|------------------------|------------------------|
 | Niveau-Niveau | $Y_i = \alpha + \beta X_i +u_i$ | $\Delta Y_i = \beta_1 \Delta X_i$ |
 | Niveau-log | $Y_i = \alpha + \beta \times log( X_i) +u_i$ | $\Delta Y_i = (\frac{\beta}{100}) \text{%} \Delta X_i$ |
 | Log-Niveau | $log(Y_i) = \alpha + \beta X_i +u_i$ | $\text{%} \Delta Y_i = (100 \beta) \Delta X_i$ |
