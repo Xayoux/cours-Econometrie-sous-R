@@ -1,0 +1,73 @@
+---
+title: "ARDL et cointégration"
+author: "Romain CAPLIEZ"
+format: html
+editor: visual
+toc: TRUE
+---
+
+# Théorie
+
+Comme vu au cours du chapitre 3, une série temporelle peut être expliquée par ses propres valeurs passées et les chocs quelle a subi au cours du passé. Cependant, compter uniquement sur l'information disponible par cette série peut être limité. Ajouter de l'information supplémentaire peut être utile afin d'étudier des liens de causalité ou bien afin d'améliorer la qualité de la prévision effectuée.
+
+Il ets possible d'enrichir les processus autoprojectifs en intégrant des informations apportées par des variables exogènes.
+
+## Modèles à Retards Distribués (DL)
+
+Les modèles à retards distribués sont des modèles dynamiques de séries temporelles dans lequels la dynamique de la variable $Y$ peut être expliquée par des valeurs contemporainres et/ou retardées des variables explicatives $X$.
+
+Ce type de modèle permet d'incorporer une dynamique plus riche et d'obtenir des effets marginaux (parfois causaux) des variables $X$ sur la variable $Y$.
+
+Suivant si l'on considère un nombre fini ou infini de valeurs retardées pour la variable explicative, on parlera de modèles à retards distribués finis ou infinis. En pratique seuls les modèles à retards finis peuvent être estimés.
+
+Un modèle à retards distribués finis d'ordre $DL(q_1, \dots, q_k)$ s'écrit sous sa forme générale :
+
+$$
+Y_t = \alpha + \sum_{i = 1}^k \sum_{j=0}^{q_j} \beta_{ij} X_{i, t-j} + \varepsilon_t
+$$
+
+Chaque variable $X$ peut avoir un nombre de retards qui lui est propre afin de capter au mieux la dynamique de la série $Y$.
+
+Ces modèles souffrent souvent d'une forte multicolinéarité puisque les retards d'une variable $X_{it}$ sont souvent corrélés entre eux, ce qui réduit la précision des estimateurs.
+
+Il est également courant que ce type de modèle n'arrive pas à capter toute la dynamique de la variable dépendante $Y_t$, à moins d'intégrer de nombreux retards pour chaque variable $X$. Les résidus restent souvent auto-corrélés rendant la variance des estimateurs non-minimale.
+
+## Modèles Auto-Régressifs à Retards Distribués (ARDL)
+
+Afin de rendre les modèles plus parcimonieux et essayer de capter la majeure partie de la dynamique de la variable dépendante, il est courant d'introduire une/des valeurs retardées de la variable $Y$ en plus des valeurs retardées des variables $X$. Cela permet de tenir plus facilement compte du caractère auto-corrélées de la majeure partie des séries temporelles étudiées en économie.
+
+Sous sa forme générale, un $ARDL(p, q_1, \cdots, q_k)$ s'écrit :
+
+$$
+Y_t = \alpha + \sum_{l = 1}^p \phi_l Y_{t-l} + \sum_{i = 1}^k \sum_{j=0}^{q_i} \beta_{ij} X_{i, t-j} + \varepsilon_t
+$$
+
+De manière classique, $\varepsilon_t$ doit être un bruit blanc (non-auto-corrélé et de variance constante).
+
+De la même manière que pour les modèles $ARMA$, il existe différentes façon (non-exclusives) de déterminer les retards $p$ et $q_i$ d'un modèle $ARDL$ :
+
+-   Tester la significativité des paramètres $\phi_p$ et des différents $\beta_{i,q_i} \hspace{0.2cm} \forall \hspace{0.2cm} i = \{1, \dots, k\}$ .
+
+-   Utiliser les critères d'informations (AIC, BIC,...) qui vont chercher la spécification qui permet le mieux de reproduire les données en ajoutant une contrainte de parcimonie.
+
+-   Utiliser les tests d'autocorrélation des résidus (Ljung-Box) : augmenter l'ordre autorégressif jusqu'à ce que les résidus du modèle soient compatibles avec un bruit blanc.
+
+Les modèles $ARDL$ peuvent être estimés à partir de la méthode des MCO.
+
+## Multiplicateurs et effets marginaux
+
+### Introduction et exemple
+
+L'effet marginal d'une variable $X$ sur $Y$ est facilement déterminable dans le cadre d'un modèle statique (toutes les variables sont prises à la même date). Ainsi dans le modèle suivant :
+
+$$
+Y_t = \alpha + \beta X_t + \varepsilon_t
+$$
+
+L'effet marginal de $X$ sur $Y$ (l'impact d'une augmentation d'une unité de $X$ sur $Y$) est donné par :
+
+$$
+\frac{\partial Y_t}{\partial X_t} = \beta
+$$
+
+La réponse de la variable $Y_t$ à un changement d'une unité de la variavke $X_t$ est supposée être immédiate et complète à la fin de la période de mesure.
