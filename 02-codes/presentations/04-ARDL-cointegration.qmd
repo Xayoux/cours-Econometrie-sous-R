@@ -32,6 +32,69 @@ Ces modèles souffrent souvent d'une forte multicolinéarité puisque les retard
 
 Il est également courant que ce type de modèle n'arrive pas à capter toute la dynamique de la variable dépendante $Y_t$, à moins d'intégrer de nombreux retards pour chaque variable $X$. Les résidus restent souvent auto-corrélés rendant la variance des estimateurs non-minimale.
 
+## Multiplicateurs et effets marginaux
+
+### Dans un modèle statique
+
+L'effet marginal d'une variable $X$ sur $Y$ est facilement déterminable dans le cadre d'un modèle statique (toutes les variables sont prises à la même date). Ainsi dans le modèle suivant :
+
+$$ Y_t = \alpha + \beta X_t + \varepsilon_t $$
+
+L'effet marginal de $X_t$ sur $Y_t$ (l'impact d'une augmentation d'une unité de $X$ sur $Y$) est donné par :
+
+$$ \frac{\partial Y_t}{\partial X_t} = \beta $$
+
+La réponse de la variable $Y_t$ à un changement d'une unité de la variavle $X_t$ est supposée être immédiate et complète à la fin de la période de mesure.
+
+### Dans un modèle à retards distribués
+
+Considérons le modèle à retards distribués d'ordre 2 suivant :
+
+$$
+Y_t = \alpha + \beta_0 X_t + \beta_1 X_{t-1} + \beta_2 X_{t-2} + u_t
+$$
+
+Pour interpréter, les coefficients de cette équation, supposons que $X$ soit constant et égal à $c$ (on se trouve sur une relation d'équilibre). On suppose une augmentation temporaire de $X$ d'une unité à la période $t$. On a donc :
+
+$$
+X_{t-2} = c \hspace{0.2cm}; X_{t-1} = c \hspace{0.2cm}; X_{t} = c +1 \hspace{0.2cm}; X_{t+1} = c \hspace{0.2cm}; X_{t+2} = c
+$$
+
+Afin de mettre l'accent sur l'effet toute chose égale par ailleurs, on considère que $u_t = 0$. On a :
+
+$$
+\begin{align}
+Y_{t-1} &= \alpha + \beta_0 c + \beta_1 c + \beta_2 c \\
+Y_t &= \alpha + \beta_0 \left( c+1 \right) + \beta_2 c + \beta_3 c \\
+Y_{t+1} &= \alpha + \beta_0 c + \beta_1 \left( c+1 \right) + \beta_3 c \\
+Y_{t+2} &= \alpha + \beta_0 c + \beta_1 c + \beta_2 \left( c+1 \right) \\
+Y_{t+3} &= \alpha + \beta_0 c + \beta_1 c + \beta_2 c
+\end{align}
+$$
+
+En considérant les deux premières équations, on obtient : $Y_t - Y_{t-1} = \beta_0$ où $\beta_0$ représente le changement immédiat de $Y$ suite à une hausse de l'unité $X$ à la période $t$, ce que l'on peut noter $\frac{\partial Y_t}{\partial X_t}$ et est communément appelé le multiplicateur de court-terme.
+
+De la même manière $Y_{t+1} - Y_{t-1} = \frac{\partial Y_{t+1}}{\partial X_t} = \beta_1$ et correspond à la variation de $Y$ une période après le changement temporaire de $X$.
+
+$Y_{t+2} - Y_{t-1} = \frac{\partial Y_{t+2}}{\partial X_t} = \beta_2$ correspond à la variation de $Y$ une période après le changement temporaire de $X$. A la période $t+1$, $Y$ reprend sa valeur initiale car on a supposé que seuls deux retards de $X$ pouvaient avoir un impact sur $Y$. Ces multiplicateur sont aussi appelés *Delays multipliers*.
+
+On peut également s'intéresser au changement de $Y$ à la suite d'une augmentation permanente de $X$. Considérons que $X$ augmente d'une unité de manière permanente à la période $t$ soit :
+
+$$
+X_{t-2} = c \hspace{0.2cm}; X_{t-1} = c \hspace{0.2cm}; X_{t} = c +1 \hspace{0.2cm}; X_{t+1} = c+1 \hspace{0.2cm}; X_{t+2} = c+1
+$$
+
+On a donc :
+
+$$
+\begin{align}Y_{t-1} &= \alpha + \beta_0 c + \beta_1 c + \beta_2 c \\
+Y_t &= \alpha + \beta_0 \left( c+1 \right) + \beta_2 c + \beta_3 c \\
+Y_{t+1} &= \alpha + \beta_0 \left( c+1 \right) + \beta_1 \left( c+1 \right) + \beta_3 c \\
+Y_{t+2} &= \alpha + \beta_0 \left( c+1 \right) + \beta_1 \left( c+1 \right) + \beta_2 \left( c+1 \right)\end{align}
+$$
+
+A la suite de l'augmentation permanente de $X$, après une période $Y$ a augmenté de $\beta_0 + \beta_1$. Après deux périodes, $Y$ a augmenté de $\beta_0 + \beta_1 + \beta_2$. La somme des coefficients de $X$ et de ses deux retards représente la variation de long-terme de $XY$ suite à un changement permanent de $X$. On l'appelle le multiplicateur de long-terme. Les valeurs intermédiaires sont appelées *Interim multipliers*.
+
 ## Modèles Auto-Régressifs à Retards Distribués (ARDL)
 
 Afin de rendre les modèles plus parcimonieux et essayer de capter la majeure partie de la dynamique de la variable dépendante, il est courant d'introduire une/des valeurs retardées de la variable $Y$ en plus des valeurs retardées des variables $X$. Cela permet de tenir plus facilement compte du caractère auto-corrélées de la majeure partie des séries temporelles étudiées en économie.
@@ -54,20 +117,79 @@ De la même manière que pour les modèles $ARMA$, il existe différentes façon
 
 Les modèles $ARDL$ peuvent être estimés à partir de la méthode des MCO.
 
-## Multiplicateurs et effets marginaux
+## Cointégration
 
-### Introduction et exemple
+De manière générale, il n'est pas correct d'utiliser des variables non-stationnaires (caractérisées par un processus $I(1)$) dans des modèles de régression. En effet, lorsque de telles variables sont utilisées les estimateurs MCO ne sont généralement plus convergent. De plus lorsque deux variables $I(1)$ sont régressées l'une sur l'autre, il a été montré qu'une régression MCO indiquera souvent l'existence d'une relation statistique entre ces deux variables, même lorsqu'elles n'ont aucune raison d'être liées. Il s'agit du problème de *corrélation fallacieuse*.
 
-L'effet marginal d'une variable $X$ sur $Y$ est facilement déterminable dans le cadre d'un modèle statique (toutes les variables sont prises à la même date). Ainsi dans le modèle suivant :
-
-$$
-Y_t = \alpha + \beta X_t + \varepsilon_t
-$$
-
-L'effet marginal de $X$ sur $Y$ (l'impact d'une augmentation d'une unité de $X$ sur $Y$) est donné par :
+Si $Y_t$ et $X_t$ sont des processus $I(1)$ aucunement liés entre eux, alors la régression suivante est fallacieuse et risque d'indiquer l'existence d'une relation qui n'existe pas :
 
 $$
-\frac{\partial Y_t}{\partial X_t} = \beta
+Y_t = \alpha + \beta X_t + u_t
 $$
 
-La réponse de la variable $Y_t$ à un changement d'une unité de la variavke $X_t$ est supposée être immédiate et complète à la fin de la période de mesure.
+Généralement, pour contrer ce problème, on va stationnariser les variables en les prenant en première différence par exemple. Ainsi le modèle à estimer devient :
+
+$$
+\Delta Y_t = \gamma+ \delta\Delta X_t + e_t
+$$
+
+Avec $\Delta Y_t = Y_t - Y_{t-1}$. Mais cette régression n'est ps équivalente à la précente. $\gamma$ donne une information bien différente de $\beta$. La deuxième régression explique la différence de $Y$ en terme de différence de $X$ ce qui n'a rien à voir avec l'explication de $Y$ en fonction de $X$.
+
+La notion de cointégration introduire par **Engle et Granger (1987)** permet dans certain cas de résoudre ce problème de régression fallacieuse.
+
+En général, si $Y_t$ et $X_t$ sont des processus $I(1)$, alors $Y_t - \beta X_t$ sera un processus $I(1)$ pour n'importe quelle valeur de $\beta$.
+
+Cependant, il est possible que pour une certaine valeur $\beta \neq 0$, alors $Y_t - \beta X_t$ soit un processus $I(0)$. Si un tel $\beta$ existe, alors on dira que $Y$ et $X$ sont cointégrés et $\beta$ sera appelé le paramètre de cointégration. Dans ce cas, les deux séries possèdent une relation de long-terme commune. Il peut y avoir des déviations par rapport à cet équilibre de long-terme, mais il existe des forces économiques qui vont ramener les deux variables vers leur relation d'équilibre. La différence entre les deux variables a tendance à revenir vers sa valeur moyenne. Dans ce cas, la régression entre $Y_t$ et $X_t$ peut se faire sans être fallacieuse.
+
+En revanche, puisque $X_t$ est un processus $I(1)$, les procédures d'inférence usuelles ne s'appliquent pas nécessairement. De manière analogue aux modèles de régression linéaire, plusieurs hypothèses sont nécessaires à l'obtention d'une distribution normale du paramètre $\beta$ et d'une distribution exacte de la statistique de Student. La plupart peuvent se corriger en augmentant la taille de l'échantillon (normalité des résidus) ou en corrigeant les écarts-types obtenus (sphéricité des erreurs), ce n'est pas le cas pour l'hypothèse d'exogénéité stricte des régresseurs. Cette hypothèse implique dans le cas de séries temporelles fortement persistantes (dont font partis les processus $I(1)$) que les régresseurs $X$ ne soient liés d'aucune manière que ce soit avec les erreurs pour toutes les périodes de temps possibles. Il s'agit d'une hypothèse extrêmement forte qu'il est difficile de montrer sa validité en pratique.
+
+Pour contrecarrer (en partie) ce problème, il est possible d'inclure $\Delta X_t$ ainsi que d'éventuels retards de cette variable dans l'équation de régression afin de purger la corrélation entre $X$ et $u$. Dans son cas le plus simple, la régression devient :
+
+$$
+Y_t = \alpha + \beta X_t + \Delta X_t + \varepsilon_t
+$$
+
+Le choix d'inclure ou non des retards additionnels est une question empirique qu'il convient de justifier.
+
+## Modèles à correction d'erreur
+
+Le concept de cointégration permet également d'enrichir les types de modèles dynamiques à notre disposition. Si $Y_t$ et $X_t$ sont des processus $I(1)$ non-cointégrés, alors la modélisation doit être une modélisation en différence première (généralement). Considérons le modèle ARDL suivant :
+
+$$
+\Delta Y_t = \alpha + \phi \Delta Y_{t-1} + \gamma_0 \Delta X_t + \gamma_1 \Delta X_{t-1} + u_t
+$$
+
+Dans le cas où $Y_t$ et $X_t$ sont cointégrés, nous disposons de variables supplémentaires que l'on peut inclure dans cette équation. En effet dans ce cas : $Y_t - \beta X_t$ est un processus $I(0)$, et ses retards peuvent sans problèmes être inclus dans une régression. L'équation devient donc :
+
+$$
+\begin{align}
+\Delta Y_t &= \alpha + \phi \Delta Y_{t-1} + \gamma_0 \Delta X_t + \gamma_1 \Delta X_{t-1} + \delta (Y_{t-1} - \beta X_{t-1}) + u_t \\
+\Leftrightarrow \Delta Y_t &= \alpha + \phi \Delta Y_{t-1} + \gamma_0 \Delta X_t + \gamma_1 \Delta X_{t-1} + \delta \text{ECT} + u_t
+\end{align}
+$$
+
+Le terme $(Y_{t-1} - \beta X_{t-1})$ est appelé le terme à correcteur d'erreur (*Error Correction Term*), et ce type de modélisation est appelée Modèle à Correction d'Erreur.
+
+Ce type de modèles permet d'étudier la dynamique de court terme dans la relation entre $Y$ et $X$. Si $\delta < 0$ et si $Y_{t-1} > \beta X_{t-1}$, alors $Y$ a dépassé l'équilibre durant la période précédente. Puisque $\delta < 0$, le terme à correction d'erreur fait en sorte que $Y$ est ramené vers l'équilibre en diminuant. A l'inverse, si $Y_{t-1} < \beta X_{t-1}$, alors $Y$ était inférieur à la valeur d'équilibre à la période précédente. Dans ce cas, le terme à correction d'erreur induit une variation positive de $Y$ vers l'équilibre.
+
+Le temps que mettent les séries à revenir à leur équilibre est donné par $\frac{1}{\delta}$.
+
+## Procédure d'Engle-Granger
+
+La procédure d'Engle-Granger est une procédure en deux étapes pour estimer des modèles à correction d'erreur.
+
+Dans un premier temps, si les séries $Y$ et $X$ sont des processus $I(1)$, alors il convient de régresser $Y$ sur $X$ :
+
+$$
+Y_t = \alpha + \beta X_t + e_t
+$$
+
+On récupère ensuite la série des résidus $\hat{e}_t$ et l'on teste la stationnarité de cette série. Généralement on utilise le test ADF. Attention, les valeurs critiques pour tester la stationnarité de cette série sont différentes de celles utilisées classiquement.
+
+Si $\hat{e}_t$ est bien un processus $I(0)$, alors on peut estimer le modèle en niveau (en incluant $\Delta X_t$ et ses retards et/ou ses valeurs avancées ainsi que les retards de $Y_t$ si besoin) et obtenir les coefficients de long-terme de la série. On peut ensuite estimer le modèle à correction d'erreur dans lequel le terme à correction d'erreur correspond à la série des résidus $\hat{e}_t$ :
+
+$$
+\Delta Y_t = \alpha + \phi \Delta Y_{t-1} + \gamma_0 \Delta X_t + \gamma_1 \Delta X_{t-1} + \delta \hat{e}_t + u_t
+$$
+
+Ce modèle nous permet d'obtenir des effets de court-terme avec les coefficients des variables en différence, ainsi que la vitesse d'ajustement des séries suite à un écart à leur relation de long-terme.
