@@ -31,7 +31,7 @@ $$
 
 Une série stationnaire au second ordre doit avoir une variance finie, une moyenne constante au cours du temps et son auto-covariance doit dépendre uniquement de la différence des temps $h$.
 
-La non-staionnarité a des conséquences fortes au niveau économétriques. Les méthodes habituelles ne sont plus valables puisque les estimateurs ne sont plus convergents, ils convergent vers une variable aléatoire et non plus leur vraie valeur. Egalement, les distribution asymptotiques ne sont plus standards.
+La non-stationnarité a des conséquences fortes au niveau économétriques. Les méthodes habituelles ne sont plus valables puisque les estimateurs ne sont plus convergents, ils convergent vers une variable aléatoire et non plus leur vraie valeur. Egalement, les distribution asymptotiques ne sont plus standards.
 
 De plus, si l'on régresse une série non stationnaire sur une autre série non-stationnaire, on obtient (sauf cointégration) une régression fallacieuse, c'est à dire que l'on va croire à un pouvoir explicatif de la variable exogène, alors qu'en réalité la corrélation est simplement due au temps qui passe. Voir le site [spurious-correlations](#0) pour des exemples de corrélations fallacieuses.
 
