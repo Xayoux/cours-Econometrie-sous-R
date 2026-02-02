@@ -10,7 +10,41 @@ toc: TRUE
 
 Comme vu au cours du chapitre 3, une série temporelle peut être expliquée par ses propres valeurs passées et les chocs quelle a subi au cours du passé. Cependant, compter uniquement sur l'information disponible par cette série peut être limité. Ajouter de l'information supplémentaire peut être utile afin d'étudier des liens de causalité ou bien afin d'améliorer la qualité de la prévision effectuée.
 
-Il ets possible d'enrichir les processus autoprojectifs en intégrant des informations apportées par des variables exogènes.
+Il est possible d'enrichir les processus autoprojectifs en intégrant des informations apportées par des variables exogènes.
+
+## Hypothèses classiques des MCO en séries temporelles
+
+Tout comme pour les données en coupe transversales, il existe des hypothèses permettant d'assurer que les estimateurs MCO en séries temporelles soient sans biais et de variance minimale tout en permettant de mener une analyse d'inférence.
+
+-   **Hypothèse TS.1** **:** **Linéarité des paramètres**
+
+Le processus stochastique $\{(x_{t,1}, x_{t,2}, \dots, x_{t,k}, y_t)\}$ : $t=1, 2, \dots, n$ suit un modèle linéaire dans ses paramètres :
+
+$$
+y_t = \alpha + \beta_1 X_{1t} + \dots + \beta_k X_{kt} + u_t
+$$
+
+Où $u_t$ correspond à la série des erreurs et $n$ le nombre de périodes temps (observations) de l'échantillon.
+
+-   **Hypothèse TS.2 : Absence de colinéarité parfaite**
+
+Dans l'échantillon (et donc dans le processus temporel sous-jacent), aucune variable explicative n'est une constante ou une combinaison linéaire parfaite d'autres variables explicatives.
+
+Cette hypothèse autorise une certaine corrélation entre les variables explicatives tant que celles-ci ne sont pas parfaitement corrélées dans l'échantillon.
+
+Si cette hypothèse n'est pas vérifiée le modèle n'est pas identifiable.
+
+-   **Hypothèse TS.3 : Espérance conditionnelle nulle**
+
+Pour chaque $t$, l'espérance mathématique du terme d'erreur $u_t$ compte tenu des variables explicatives pour toutes les périodes est égale à 0.
+
+$$
+E(u_t|\mathbf{X}) = 0, \hspace{0.2cm} t = 1, 2, \dots, n
+$$
+
+Cette hypothèse indique que l'erreur à l'instant $t$ ne doit pas être corrélée de quelque manière que ce soit avec les variables explicatives pour chaque période de temps. Les variables doivent être strictement exogènes. Ce qui est une hypothèse plus stricte que la seule exogénéité contemporaine $E(u_t|\mathbf{X}_t) = 0, \hspace{0.2cm} t = 1, 2, \dots, n$.
+
+Sous les hypothèses TS.1 à TS.3 les estimateurs MCO en série temporelle sont sans biais.
 
 ## Modèles à Retards Distribués (DL)
 
@@ -176,7 +210,9 @@ Le temps que mettent les séries à revenir à leur équilibre est donné par $\
 
 ## Procédure d'Engle-Granger
 
-La procédure d'Engle-Granger est une procédure en deux étapes pour estimer des modèles à correction d'erreur.
+La procédure d'Engle-Granger est une procédure en deux étapes pour estimer des modèles à correction d'erreur. Attention la procédure présentée ici n'est valide que pour deux séries toutes les deux caractérisées par un processus $I(1)$.
+
+### 1ère étape : Tester l'existence de la cointégration
 
 Dans un premier temps, si les séries $Y$ et $X$ sont des processus $I(1)$, alors il convient de régresser $Y$ sur $X$ :
 
@@ -184,12 +220,287 @@ $$
 Y_t = \alpha + \beta X_t + e_t
 $$
 
-On récupère ensuite la série des résidus $\hat{e}_t$ et l'on teste la stationnarité de cette série. Généralement on utilise le test ADF. Attention, les valeurs critiques pour tester la stationnarité de cette série sont différentes de celles utilisées classiquement.
-
-Si $\hat{e}_t$ est bien un processus $I(0)$, alors on peut estimer le modèle en niveau (en incluant $\Delta X_t$ et ses retards et/ou ses valeurs avancées ainsi que les retards de $Y_t$ si besoin) et obtenir les coefficients de long-terme de la série. On peut ensuite estimer le modèle à correction d'erreur dans lequel le terme à correction d'erreur correspond à la série des résidus $\hat{e}_t$ :
+On récupère ensuite la série des résidus $\hat{e}_t$ et l'on teste la stationnarité de cette série. Généralement on utilise le test ADF avec un modèle sans constante mais avec ou sans tendance. On estime la relation :
 
 $$
-\Delta Y_t = \alpha + \phi \Delta Y_{t-1} + \gamma_0 \Delta X_t + \gamma_1 \Delta X_{t-1} + \delta \hat{e}_t + u_t
+\Delta \hat{e}_t = \phi \hat{e}_{t-1} + \sum_{i=1}^p \phi_i \Delta \hat{e}_{t-i} + u_t
+$$
+
+avec $\hat{e}_t = \hat{Y}_t - \hat{\alpha} - \hat{\beta}X_t$. On teste ensuite :
+
+$$
+\left\{    
+\begin{array}{ll}       
+H_0 : \phi = 0 \text{ ; } \hat{e}_t \text{ non stationnaire}  \\       
+H_1 : \phi < 0 \text{ ; } \hat{e}_t \text{ stationnaire}     
+\end{array}
+\right.
+$$
+
+Avec la statistique de test :
+
+$$
+t_{\hat{\phi}} = \frac{\hat{\phi}}{\hat{\sigma}_{\hat{\phi}}}
+$$
+
+Attention, les valeurs critiques pour tester la stationnarité de cette série sont différentes de celles utilisées classiquement.
+
+| Type de test  |  1%   |  5%   |  10%  |
+|:-------------:|:-----:|:-----:|:-----:|
+| Sans tendance | -3.90 | -3.34 | -3.04 |
+| Avec tendance | -4.32 | -3.78 | -3.50 |
+
+La règle de décision est la suivante :
+
+-   Si $t_{\hat{\phi}} < t$ : on rejette l'hypothèse nulle. Les résidus sont stationnaires. Les séries $Y_t$ et $X_t$ sont cointégrées.
+
+-   Si $t_{\hat{\phi}} > t$ : on ne peut pas rejeter la l'hypothèse nulle. Les résidus ne sont pas stationnaires. Les séries $Y_t$ et $X_t$ ne sont pas cointégrées.
+
+### 2ème étape : Estimer le modèle à correction d'erreur
+
+Si $\hat{e}_t$ est bien un processus $I(0)$, alors les séries $Y_t$ et $X_t$ sont cointégrées et caractérisées par une relation de long terme. La régression de l'une l'autre n'est plus une régression fallacieuse. On peut donc estimer le modèle en niveau (en incluant $\Delta X_t$ et ses retards et/ou ses valeurs avancées ainsi que les retards de $Y_t$ si besoin) et obtenir les coefficients de long-terme de la série.
+
+On peut ensuite estimer le modèle à correction d'erreur dans lequel le terme à correction d'erreur correspond à la série des résidus $\hat{e}_t$ :
+
+$$
+\Delta Y_t = \alpha + \phi \Delta Y_{t-1} + \gamma_0 \Delta X_t + \gamma_1 \Delta X_{t-1} + \delta \hat{e}_{t-1} + u_t
 $$
 
 Ce modèle nous permet d'obtenir des effets de court-terme avec les coefficients des variables en différence, ainsi que la vitesse d'ajustement des séries suite à un écart à leur relation de long-terme.
+
+## Extension de la cointégration
+
+La cointégration à la Granger peut évidemment être généralisée avec un nombre de variables supérieures à 2. Mais cette méthode requiert tout de même que l'ensemble des variables soient intégrées du même ordre. [**Pesaran et al (2001)**](https://onlinelibrary.wiley.com/doi/full/10.1002/jae.616?casa_token=PNv1tRySyY0AAAAA%3A871E331d0NLVpRpeJ4TghehXlefBXEznk49q2vbrkuWUMKenTGGqaPc_rK95X3aWp34rPcw8leVRkog) ont développé une méthodologie permettant de tester l'existence d'une relation entre les niveaux de $K$ variables que celles-ci soient intégrées d'ordre 1 et/ou d'ordre 0.
+
+La méthodologie repose sur l'estimation de 3 modèles :
+
+### Modèle ARDL général
+
+La forme générale d'un $ARDL(p, q_1, \dots, q_k)$ est donnée par :
+
+$$
+Y_t = c_0 + c_1t + \sum_{i=1}^pb_{y,i}Y_{t-i} + \sum_{j=1}^k \sum_{l=0}^{q_j}b_{j,l}X_{j,t-l} + \varepsilon_t
+$$
+
+Ce modèle régresse la variable $Y_t$ sur une constante $c_0$, une possible tendance linéaire $c_1$, ses $p$ valeurs passées ainsi que les valeurs contemporaines et passées des variables $X_t$. Le choix des ordres $p, q_1, \dots, q_j$ est une question empirique.
+
+Les multiplicateurs de court-terme sont donnés par les coefficients associés aux valeurs contemporaines des variables $X_{j,t}$. ces multiplicateurs indiquent la réponse de $Y_t$ suite à une variation temporaire d'une unité de $X_{j,t}$.
+
+$$
+\text{SR}_{\text{ARDL}} = \frac{\partial Y_t}{\partial X_{j,t}} = b_{j,0} \hspace{0.3cm} j \in \left\{ 1, \cdots, k \right\}
+$$
+
+Les multiplicateurs $\text{Delay}_{x_{j,s}}$ indiquent la réponse de la variable $Y_{t+s}$ suite à une variation temporaire de la variable $X_{j,t}$. Il s'agit d'une réponse directe. Il s'agit du coefficient associé au $s^{\text{ième}}$ retard de la variable $X_{j}$ auquel viennent s'ajouter les effets directs sur les périodes antérieures pondérées par les effet auto-régressifs de la variable $Y$.
+
+$$
+\text{Delay}_{x_{j,s}} = \frac{\partial Y_{t+s}}{\partial X_{j,t}} = b_{j,s} + \sum_{i=1}^{min \left\{ p,s \right\}} b_{y,i} \frac{\partial Y_{t+\left( s-i \right)}}{\partial X_{j,t}} \hspace{0.6cm} ; \hspace{0.3cm} b_{j,s} = 0 \hspace{0.3cm} \forall \hspace{0.3cm} s>q
+$$
+
+Les multiplicateurs $\text{Interim}_{x_{j,s}}$ indiquent la réponse de la variable $Y_{t+s}$ suite à une variation permanente de la variable $X_{j,t}$. Il s'agit de la somme des multiplicateurs $\text{Delay}_{x_{j,i}}$ avec $i = \{1, \dots, s\}$.
+
+$$
+\text{Interim}_{x_{j,s}} = \sum_{i=0}^s \text{Delay}_{x_{j,s}}
+$$
+
+Les multiplicateurs de long-terme indiquent la réponse totale de la variable $Y$ suite à un choc permanent sur la variable $X_{j,t}$. Il s'agit de la somme des coefficients associés à la variable $X_t$ et à ses retards divisé par 1 moins la somme des coefficients auto-régressifs de la variable $Y$.
+
+$$
+\text{LR}_{\text{ARDL}} = \frac{\partial Y_{t+\infty}}{\partial X_{j,t}} = \theta_j = \frac{\sum_{l=0}^{q_j} b_{j,l}}{1 - \sum_{i=1}^p b_{y,i}} \hspace{0.6cm} ; \hspace{0.3cm} j  \in  \left\{ 1, \cdots, k \right\}
+$$
+
+Le vecteur de coefficients $\hat{\theta}_j$ permet de construire l'équation de long-terme associé aux niveaux des variables :
+
+$$
+\hat{Y}_t^{\text{LT}} = \hat{\alpha} + \sum_{j=1}^k \hat{\theta}_j X_{j,t}
+$$
+
+### Modèle Unrestricted Error Correction Model (UECM)
+
+La formule d'un modèle UECM dérivé du modèle ARDL précédent est la suivante :
+
+$$
+\Delta Y_t = c_0 + c_1t + \pi_y Y_{t-1} + \sum_{j=1}^k \pi_j X_{j,t-1} + \sum_{i=1}^{p-1}\psi_{y,i} \Delta Y_{t-i} + \sum_{j=1}^k \sum_{l=1}^{q_j - 1} \psi_{j,l} \Delta X_{j,t-l} + \sum_{j=1}^k \omega_j \Delta X_{j,t} + \varepsilon_t
+$$
+
+Ce modèle met en relation la première différence de la variable $Y_t$ avec les retards de sa première différence ainsi que les retards de la première différence des variables $X_t$ comme un $ARDL$ classique avec des variables en première différence. Les coefficients associés à ces variables en différences premières représentes la relation de court-terme entre $Y$ et $X$. Cependant le modèle UECM va également inclure les niveaux des variable $Y$ et $X_j$ retardés d'une période afin d'inclure les relations de long-terme entre les variables.
+
+A partir de ce modèle il est possible de calculer les multiplicateurs de court-terme et de long-terme. Ces multiplicateurs sont strictement égaux aux multiplicateurs calculés à partir du modèle $ARDL$ en niveaux.
+
+Les multiplicateurs de court-terme sont donnés par les coefficients associés aux valeurs contemporaines des premières différences de $X_j$.
+
+$$
+\text{SR}_{\text{UECM}} = \text{SR}_{\text{ARDL}} = \frac{\partial Y_t}{\partial X_{j,t}} = \omega_j \hspace{0.6cm} j \in \left\{ 1, \cdots, k \right\}
+$$
+
+Les multiplicateurs de long-terme sont donnés par la division du coefficient associé à la variable $X_{j,t}$ en niveau avec le coefficient associé à $Y_t$ en niveau multiplié par moins 1.
+
+$$
+\text{LR}_{\text{UECM}} = \text{LR}_{\text{ARDL}} = \frac{\partial Y_{t+\infty}}{\partial X_{j,t}} = \theta_j = \frac{\pi_j}{-\pi_y} \hspace{0.6cm} j \in \left\{ 1, \cdots, k \right\}
+$$
+
+De la même manière que pour le modèle $ARDL$, le vecteur de coefficient de long-terme $\hat{\theta}_j$ peut être utilisé pour construire l'équation de long-terme des variables en niveau :
+
+$$
+\hat{Y}_t^{\text{LT}} = \hat{\alpha} + \sum_{j=1}^k \hat{\theta}_j X_{j,t}
+$$
+
+Ce modèle apporte une précision supplémentaire par rapport au modèle $ARDL$ puisqu'il indique également la vitesse de convergence des séries suite à un écart à la relation d'équilibre à travers le coefficient $\pi_y$. En effet, si $Y_{t-1}$ augmente de 1 tandis que toutes les variables restent inchangées, cela signifie que $Y_{t-1}$ s'est écarté de sa valeur de long-terme. Le coefficient $\pi_y$ indique la force de rappel qui va ramener $Y_t$ vers sa valeur de long-terme. $\frac{1}{\pi_y}$ indique le temps nécessaire pour $Y$ retourne à sa valeur de long-terme suite à un déséquilibre.
+
+### Modèle Restricted Error Correction Model (RECM)
+
+A partir du modèle $ARDL$ il est également possible de construire une modélisation $RECM$ de la forme suivante :
+
+$$
+\Delta Y_t = c_0 + c_1t + \sum_{i=1}^{p-1} \psi_{y,i} \Delta Y_{t-i} + \sum_{j=1}^k \sum_{l=1}^{q_{j-1}} \Delta X_{j, t-l} + \sum_{j=1}^k \omega_j \Delta X_{j,t} + \pi_y \text{ECT}_t = \varepsilon_t
+$$
+
+Ce modèle relie la première différence de la variable $Y$ avec les premières différences (retardées) des variable $X_j$. La différence avec le modèle UECM réside dans le fait que les variables en niveau ont été retirées et inclues dans le terme $\text{ECT}_t$. cela permet de gagner des degrés de liberté puisqu'il y a moins de coefficients à estimer. On augmente donc la précision de nos estimateurs en diminuant leur variance estimée. Il permet également d'obtenir plus de flexibilité concernant l'inclusion de tendance ou de constante (voir plus loin).
+
+Il faut remarquer que ce modèle permet d'obtenir les même coefficients de court-terme que les modèles $ARDL$ et $UECM$ à partir des coefficients $\omega_j$. La force de rappel donnée par le coefficient $\pi_j$ est également la même que dans le modèle $UECM$.
+
+Lors de la construction de ce modèle, 5 cas sont possibles (et vont conditionner les tests statistiques) :
+
+-   **Cas 1 : Sans constante ni tendance dans les équation de court- et long-terme**
+
+Dans ce cas, on va contrainte qu'il n'y ait ni tendance ni constante à la fois dans l'équation en différence et dans le terme à correction d'erreur. On a donc :
+
+$$
+\begin{align}
+&c_0 = c_1 = 0 \\
+\\
+&\text{ECT}_t = Y_{t-1} - \left( \sum_{j=1}^k \theta_j X_{j, t-1} \right)
+\end{align}
+$$
+
+Le terme à correction d'erreur en $t$ est donné la différence entre la valeur de $Y_{t-1}$ et sa valeur de long-terme en $t-1$ (sans constante ni tendance) calculée à partir des multiplicateurs de long-terme $\theta_j$. Il s'agit de la valeur du déséquilibre de $Y$ avec sa valeur de long-terme.
+
+-   **Cas 2 : Sans tendance ni constante dans l'équation de court-terme ; sans tendance mais avec constante dans l'équation de long-terme**
+
+Dans ce cas, on va contraindre à ce qu'il n'y ait ni constante ni tendance dans l'équation en différence, mais on va inclure une constante dans le terme à correction d'erreur. On a donc :
+
+$$
+\begin{align}
+&c_0 = c_1 = 0 \\
+\\
+&\text{ECT}_t = Y_{t-1} - \left( \mu + \sum_{j=1}^k \theta_j X_{j, t-1} \right)
+\end{align}
+$$
+
+-   **Cas 3 : Sans tendance mais avec constante dans l'équation de court-terme ; sans tendance et sans constante dans l'équation de long-terme**
+
+Dans ce cas, on va contraire à ce qu'il y ait une constante mais pas de tendance dans l'équation en différence. On ne va inclure ni tendance ni constante dans le terme à correction d'erreur. On a donc :
+
+$$
+\begin{align}
+&c_1 = 0 \\
+\\
+&\text{ECT}_t = Y_{t-1} - \left( \sum_{j=1}^k \theta_j X_{j, t-1} \right)
+\end{align}
+$$
+
+-   **Cas 4 : Sans tendance mais avec constante dans l'équation de court-terme ; sans constante et avec tendance dans l'équation de long-terme**
+
+Dans ce cas, on va contraindre à ce qu'il y ait une constante mais pas de tendance dans l'équation en différence. On va inclure une tendance linéaire dans le terme à correction d'erreur mais pas de constante. On a donc :
+
+$$
+\begin{align}
+&c_1 = 0 \\
+\\
+&\text{ECT}_t = Y_{t-1} - \left( \delta(t-1) + \sum_{j=1}^k \theta_j X_{j, t-1} \right)
+\end{align}
+$$
+
+-   **Cas 5 : Avec tendance et constante dans l'équation de court-terme ; Sans tendance ni constante dans l'équation de long-terme**
+
+Dans ce cas, on va contraindre à ce qu'il y ait une constante et une tendance dans l'équation en différence et à ce qu'il n'y ait ni constante ni tendance dans le terme à correction d'erreur. On a donc :
+
+$$
+\text{ECT}_t = Y_{t-1} - \left( \sum_{j=1}^k \theta_j X_{j, t-1} \right)
+$$
+Il faut bien noter que tous ces cas ne sont pas tous utilisables pour une même modélisation. En effet, on ne peut pas imposer une contrainte (ou une absence de contrainte) sur des paramètres qui n'ont pas été inclus dans le modèle $ARDL$ ou $UECM$ sous-jacent. Par exemple, si le modèle $ARDL$ n'inclue pas de tendance linéaire, il n'est pas possible d'utiliser les cas où on impose une tendance linéaire dans l'équation de court- ou long-terme puisque cette tendance n'existe pas dans le modélisation initiale.
+
+### Bound F test / Bound t test
+
+Les tests initiaux de cointégration ne fonctionnent généralement que si toutes les variables sont intégrées du même ordre ce qui dans un certain nombre de cas pratiques n'est pas réaliste. **Pesaran et al (2001)** ont développé deux tests statistique afin de tester s'il existe une relation de long-terme entre les variables en niveau et ce même si toutes les variables ne sont intégrées du même ordre.
+
+Les valeurs critiques de ces tests ne sont pas standards. **Pesaran et al (2001)** ont tabulés des valeurs critiques lorsque toutes les variables sont intégrées d'ordre 0 et lorsque toutes les variables sont intégrées d'ordre 1. Cela donne un intervalle permettant de déterminer si un ensemble de variables $I(0)$ et $I(1)$ possèdent une relation de long-terme ou non.
+
+Le premier test est un test de Wald (sorte d'équivalent au test de Fisher) qui va tester les coefficients associés aux variables en niveau sont tous conjointement différents de 0.
+
+Ainsi à partir du modèle :
+
+$$
+\Delta Y_t = c_0 + c_1t + \pi_y Y_{t-1} + \sum_{j=1}^k \pi_j X_{j,t-1} + \sum_{i=1}^{p-1}\psi_{y,i} \Delta Y_{t-i} + \sum_{j=1}^k \sum_{l=1}^{q_j - 1} \psi_{j,l} \Delta X_{j,t-l} + \sum_{j=1}^k \omega_j \Delta X_{j,t} + \varepsilon_t
+$$
+
+On va tester (en fonction du cas de modèle $RECM$ choisi) :
+
+-   **Cas 1, 3, 5**
+
+$$
+\left\{    
+\begin{array}{ll}       
+H_0 : \pi_y = \pi_1 = \dots = \pi_k = 0  \\       
+H_1 : \pi_y \neq \pi_1 \neq \dots \neq \pi_k \neq 0     
+\end{array}
+\right.
+$$
+
+-   **Cas 2 :**
+
+$$
+\left\{    
+\begin{array}{ll}       
+H_0 : \pi_y = \pi_1 = \dots = \pi_k = c_0 = 0  \\       
+H_1 : \pi_y \neq \pi_1 \neq \dots \neq \pi_k \neq c_0 \neq 0     
+\end{array}
+\right.
+$$
+
+-   **Cas 4**
+
+$$
+\left\{    
+\begin{array}{ll}       
+H_0 : \pi_y = \pi_1 = \dots = \pi_k = c_1 = 0  \\       
+H_1 : \pi_y \neq \pi_1 \neq \dots \neq \pi_k \neq c_1 \neq 0     
+\end{array}
+\right.
+$$
+
+Sous l'hypothèse nulle, ne présentent pas de relation de long-terme en niveau. Elles ne sont pas cointégrées. On estime donc un $ARDL$ en première différence classique. Sous l'hypothèse alternative, il existe une relation de long-terme entre les variables en niveau. On peut donc estimer un modèle à correction d'erreur.
+
+Une fois la statistique de test obtenue (non reportée ici) notée $F$, il faut la comparer aux valeurs critiques tabulés notées $F_{I(0)}$ pour la valeur critique obtenue lorsque toutes les variables sont $I(0)$ et $F_{I(1)}$ pour la valeur critique obtenue lorsque toutes les variables sont $I(1)$. Cela donne l'intervalle : $[F_{I(0)} \hspace{0.2cm}; \hspace{0.2cm} F_{I(1)}]$. La règle de décision est la suivante :
+
+-   Si $F < F_{I(0)}$ alors on ne peut pas rejeter $H_0$. Il semblerait qu'il n'existe pas de relation en niveau entre les variables peu importe que les variables soient toutes $I(0)$, $I(1)$ ou mutuellement cointégrées.
+
+-   Si $F > F_{I(1)}$} alors on peut rejeter l'hypothèse nulle. Il semblerait qu'il existe une relation en niveau entre les variables peu importe quelles soient toutes $I(0)$, $I(1)$ ou mutuellement cointégrées
+
+-   Si $F \in [F_{I(0)} \hspace{0.2cm}; \hspace{0.2cm} F_{I(1)}]$ alors on ne peut pas tirer de conclusion à partir de ce test. Il faut regarder variable par variables leur ordre d'intégration avant de faire des tests d'inférence.
+
+Le deuxième test proposé par **Pesaran et al (2001)** est un dérivé du test de Student qui va tester si la force de rappel de long-terme est significativement différente de 0 dans un modèle $UECM$.
+
+Ainsi à partir du modèle :
+
+$$ 
+\Delta Y_t = c_0 + c_1t + \pi_y Y_{t-1} + \sum_{j=1}^k \pi_j X_{j,t-1} + \sum_{i=1}^{p-1}\psi_{y,i} \Delta Y_{t-i} + \sum_{j=1}^k \sum_{l=1}^{q_j - 1} \psi_{j,l} \Delta X_{j,t-l} + \sum_{j=1}^k \omega_j \Delta X_{j,t} + \varepsilon_t 
+$$
+
+On va tester :
+
+$$
+\left\{    
+\begin{array}{ll}       
+H_0 : \pi_y = 0  \\       
+H_1 : \pi_y  \neq 0     
+\end{array}
+\right.
+$$
+
+Une fois la statistique de test obtenue (non reportée ici) notée $t$, il faut la comparer aux valeurs critiques tabulés notées $t_{I(0)}$ pour la valeur critique obtenue lorsque toutes les variables sont $I(0)$ et $t_{I(1)}$ pour la valeur critique obtenue lorsque toutes les variables sont $I(1)$. Cela donne l'intervalle : $[t_{I(0)} \hspace{0.2cm}; \hspace{0.2cm} t_{I(1)}]$. La règle de décision est la suivante :
+
+-   Si $t < t_{I(0)}$ alors on ne peut pas rejeter $H_0$. Il semblerait qu'il n'existe pas de force de rappel de long-terme. Ce qui semblerait indiquer l'absence de relation en niveau entre les variables peu importe que les variables soient toutes $I(0)$, $I(1)$ ou mutuellement cointégrées.
+
+-   Si $t > t_{I(1)}$} alors on peut rejeter l'hypothèse nulle. Il semblerait qu'il existe une force de rappel de long-terme. Ce qui semblerait indiquer la présence de relation en niveau entre les variables peu importe quelles soient toutes $I(0)$, $I(1)$ ou mutuellement cointégrées
+
+-   Si $t \in [t_{I(0)} \hspace{0.2cm}; \hspace{0.2cm} t_{I(1)}]$ alors on ne peut pas tirer de conclusion à partir de ce test. Il faut regarder variable par variables leur ordre d'intégration avant de faire des tests d'inférence.

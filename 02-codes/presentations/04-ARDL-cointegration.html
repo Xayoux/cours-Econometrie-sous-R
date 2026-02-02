@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Romain CAPLIEZ">
+
+<title>ARDL et cointégration</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="04-ARDL-cointegration_files/libs/clipboard/clipboard.min.js"></script>
+<script src="04-ARDL-cointegration_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="04-ARDL-cointegration_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="04-ARDL-cointegration_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="04-ARDL-cointegration_files/libs/quarto-html/popper.min.js"></script>
+<script src="04-ARDL-cointegration_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="04-ARDL-cointegration_files/libs/quarto-html/anchor.min.js"></script>
+<link href="04-ARDL-cointegration_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="04-ARDL-cointegration_files/libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="04-ARDL-cointegration_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="04-ARDL-cointegration_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="04-ARDL-cointegration_files/libs/bootstrap/bootstrap-9e3ffae467580fdb927a41352e75a2e0.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#théorie" id="toc-théorie" class="nav-link active" data-scroll-target="#théorie">Théorie</a>
+  <ul class="collapse">
+  <li><a href="#hypothèses-classiques-des-mco-en-séries-temporelles" id="toc-hypothèses-classiques-des-mco-en-séries-temporelles" class="nav-link" data-scroll-target="#hypothèses-classiques-des-mco-en-séries-temporelles">Hypothèses classiques des MCO en séries temporelles</a></li>
+  <li><a href="#modèles-à-retards-distribués-dl" id="toc-modèles-à-retards-distribués-dl" class="nav-link" data-scroll-target="#modèles-à-retards-distribués-dl">Modèles à Retards Distribués (DL)</a></li>
+  <li><a href="#multiplicateurs-et-effets-marginaux" id="toc-multiplicateurs-et-effets-marginaux" class="nav-link" data-scroll-target="#multiplicateurs-et-effets-marginaux">Multiplicateurs et effets marginaux</a>
+  <ul class="collapse">
+  <li><a href="#dans-un-modèle-statique" id="toc-dans-un-modèle-statique" class="nav-link" data-scroll-target="#dans-un-modèle-statique">Dans un modèle statique</a></li>
+  <li><a href="#dans-un-modèle-à-retards-distribués" id="toc-dans-un-modèle-à-retards-distribués" class="nav-link" data-scroll-target="#dans-un-modèle-à-retards-distribués">Dans un modèle à retards distribués</a></li>
+  </ul></li>
+  <li><a href="#modèles-auto-régressifs-à-retards-distribués-ardl" id="toc-modèles-auto-régressifs-à-retards-distribués-ardl" class="nav-link" data-scroll-target="#modèles-auto-régressifs-à-retards-distribués-ardl">Modèles Auto-Régressifs à Retards Distribués (ARDL)</a></li>
+  <li><a href="#cointégration" id="toc-cointégration" class="nav-link" data-scroll-target="#cointégration">Cointégration</a></li>
+  <li><a href="#modèles-à-correction-derreur" id="toc-modèles-à-correction-derreur" class="nav-link" data-scroll-target="#modèles-à-correction-derreur">Modèles à correction d’erreur</a></li>
+  <li><a href="#procédure-dengle-granger" id="toc-procédure-dengle-granger" class="nav-link" data-scroll-target="#procédure-dengle-granger">Procédure d’Engle-Granger</a>
+  <ul class="collapse">
+  <li><a href="#ère-étape-tester-lexistence-de-la-cointégration" id="toc-ère-étape-tester-lexistence-de-la-cointégration" class="nav-link" data-scroll-target="#ère-étape-tester-lexistence-de-la-cointégration">1ère étape : Tester l’existence de la cointégration</a></li>
+  <li><a href="#ème-étape-estimer-le-modèle-à-correction-derreur" id="toc-ème-étape-estimer-le-modèle-à-correction-derreur" class="nav-link" data-scroll-target="#ème-étape-estimer-le-modèle-à-correction-derreur">2ème étape : Estimer le modèle à correction d’erreur</a></li>
+  </ul></li>
+  <li><a href="#extension-de-la-cointégration" id="toc-extension-de-la-cointégration" class="nav-link" data-scroll-target="#extension-de-la-cointégration">Extension de la cointégration</a>
+  <ul class="collapse">
+  <li><a href="#modèle-ardl-général" id="toc-modèle-ardl-général" class="nav-link" data-scroll-target="#modèle-ardl-général">Modèle ARDL général</a></li>
+  <li><a href="#modèle-unrestricted-error-correction-model-uecm" id="toc-modèle-unrestricted-error-correction-model-uecm" class="nav-link" data-scroll-target="#modèle-unrestricted-error-correction-model-uecm">Modèle Unrestricted Error Correction Model (UECM)</a></li>
+  <li><a href="#modèle-restricted-error-correction-model-recm" id="toc-modèle-restricted-error-correction-model-recm" class="nav-link" data-scroll-target="#modèle-restricted-error-correction-model-recm">Modèle Restricted Error Correction Model (RECM)</a></li>
+  <li><a href="#bound-f-test-bound-t-test" id="toc-bound-f-test-bound-t-test" class="nav-link" data-scroll-target="#bound-f-test-bound-t-test">Bound F test / Bound t test</a></li>
+  </ul></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">ARDL et cointégration</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Romain CAPLIEZ </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="théorie" class="level1">
+<h1>Théorie</h1>
+<p>Comme vu au cours du chapitre 3, une série temporelle peut être expliquée par ses propres valeurs passées et les chocs quelle a subi au cours du passé. Cependant, compter uniquement sur l’information disponible par cette série peut être limité. Ajouter de l’information supplémentaire peut être utile afin d’étudier des liens de causalité ou bien afin d’améliorer la qualité de la prévision effectuée.</p>
+<p>Il est possible d’enrichir les processus autoprojectifs en intégrant des informations apportées par des variables exogènes.</p>
+<section id="hypothèses-classiques-des-mco-en-séries-temporelles" class="level2">
+<h2 class="anchored" data-anchor-id="hypothèses-classiques-des-mco-en-séries-temporelles">Hypothèses classiques des MCO en séries temporelles</h2>
+<p>Tout comme pour les données en coupe transversales, il existe des hypothèses permettant d’assurer que les estimateurs MCO en séries temporelles soient sans biais et de variance minimale tout en permettant de mener une analyse d’inférence.</p>
+<ul>
+<li><strong>Hypothèse TS.1</strong> <strong>:</strong> <strong>Linéarité des paramètres</strong></li>
+</ul>
+<p>Le processus stochastique <span class="math inline">\(\{(x_{t,1}, x_{t,2}, \dots, x_{t,k}, y_t)\}\)</span> : <span class="math inline">\(t=1, 2, \dots, n\)</span> suit un modèle linéaire dans ses paramètres :</p>
+<p><span class="math display">\[
+y_t = \alpha + \beta_1 X_{1t} + \dots + \beta_k X_{kt} + u_t
+\]</span></p>
+<p>Où <span class="math inline">\(u_t\)</span> correspond à la série des erreurs et <span class="math inline">\(n\)</span> le nombre de périodes temps (observations) de l’échantillon.</p>
+<ul>
+<li><strong>Hypothèse TS.2 : Absence de colinéarité parfaite</strong></li>
+</ul>
+<p>Dans l’échantillon (et donc dans le processus temporel sous-jacent), aucune variable explicative n’est une constante ou une combinaison linéaire parfaite d’autres variables explicatives.</p>
+<p>Cette hypothèse autorise une certaine corrélation entre les variables explicatives tant que celles-ci ne sont pas parfaitement corrélées dans l’échantillon.</p>
+<p>Si cette hypothèse n’est pas vérifiée le modèle n’est pas identifiable.</p>
+<ul>
+<li><strong>Hypothèse TS.3 : Espérance conditionnelle nulle</strong></li>
+</ul>
+<p>Pour chaque <span class="math inline">\(t\)</span>, l’espérance mathématique du terme d’erreur <span class="math inline">\(u_t\)</span> compte tenu des variables explicatives pour toutes les périodes est égale à 0.</p>
+<p><span class="math display">\[
+E(u_t|\mathbf{X}) = 0, \hspace{0.2cm} t = 1, 2, \dots, n
+\]</span></p>
+<p>Cette hypothèse indique que l’erreur à l’instant <span class="math inline">\(t\)</span> ne doit pas être corrélée de quelque manière que ce soit avec les variables explicatives pour chaque période de temps. Les variables doivent être strictement exogènes. Ce qui est une hypothèse plus stricte que la seule exogénéité contemporaine <span class="math inline">\(E(u_t|\mathbf{X}_t) = 0, \hspace{0.2cm} t = 1, 2, \dots, n\)</span>.</p>
+<p>Sous les hypothèses TS.1 à TS.3 les estimateurs MCO en série temporelle sont sans biais.</p>
+</section>
+<section id="modèles-à-retards-distribués-dl" class="level2">
+<h2 class="anchored" data-anchor-id="modèles-à-retards-distribués-dl">Modèles à Retards Distribués (DL)</h2>
+<p>Les modèles à retards distribués sont des modèles dynamiques de séries temporelles dans lequels la dynamique de la variable <span class="math inline">\(Y\)</span> peut être expliquée par des valeurs contemporainres et/ou retardées des variables explicatives <span class="math inline">\(X\)</span>.</p>
+<p>Ce type de modèle permet d’incorporer une dynamique plus riche et d’obtenir des effets marginaux (parfois causaux) des variables <span class="math inline">\(X\)</span> sur la variable <span class="math inline">\(Y\)</span>.</p>
+<p>Suivant si l’on considère un nombre fini ou infini de valeurs retardées pour la variable explicative, on parlera de modèles à retards distribués finis ou infinis. En pratique seuls les modèles à retards finis peuvent être estimés.</p>
+<p>Un modèle à retards distribués finis d’ordre <span class="math inline">\(DL(q_1, \dots, q_k)\)</span> s’écrit sous sa forme générale :</p>
+<p><span class="math display">\[
+Y_t = \alpha + \sum_{i = 1}^k \sum_{j=0}^{q_j} \beta_{ij} X_{i, t-j} + \varepsilon_t
+\]</span></p>
+<p>Chaque variable <span class="math inline">\(X\)</span> peut avoir un nombre de retards qui lui est propre afin de capter au mieux la dynamique de la série <span class="math inline">\(Y\)</span>.</p>
+<p>Ces modèles souffrent souvent d’une forte multicolinéarité puisque les retards d’une variable <span class="math inline">\(X_{it}\)</span> sont souvent corrélés entre eux, ce qui réduit la précision des estimateurs.</p>
+<p>Il est également courant que ce type de modèle n’arrive pas à capter toute la dynamique de la variable dépendante <span class="math inline">\(Y_t\)</span>, à moins d’intégrer de nombreux retards pour chaque variable <span class="math inline">\(X\)</span>. Les résidus restent souvent auto-corrélés rendant la variance des estimateurs non-minimale.</p>
+</section>
+<section id="multiplicateurs-et-effets-marginaux" class="level2">
+<h2 class="anchored" data-anchor-id="multiplicateurs-et-effets-marginaux">Multiplicateurs et effets marginaux</h2>
+<section id="dans-un-modèle-statique" class="level3">
+<h3 class="anchored" data-anchor-id="dans-un-modèle-statique">Dans un modèle statique</h3>
+<p>L’effet marginal d’une variable <span class="math inline">\(X\)</span> sur <span class="math inline">\(Y\)</span> est facilement déterminable dans le cadre d’un modèle statique (toutes les variables sont prises à la même date). Ainsi dans le modèle suivant :</p>
+<p><span class="math display">\[ Y_t = \alpha + \beta X_t + \varepsilon_t \]</span></p>
+<p>L’effet marginal de <span class="math inline">\(X_t\)</span> sur <span class="math inline">\(Y_t\)</span> (l’impact d’une augmentation d’une unité de <span class="math inline">\(X\)</span> sur <span class="math inline">\(Y\)</span>) est donné par :</p>
+<p><span class="math display">\[ \frac{\partial Y_t}{\partial X_t} = \beta \]</span></p>
+<p>La réponse de la variable <span class="math inline">\(Y_t\)</span> à un changement d’une unité de la variavle <span class="math inline">\(X_t\)</span> est supposée être immédiate et complète à la fin de la période de mesure.</p>
+</section>
+<section id="dans-un-modèle-à-retards-distribués" class="level3">
+<h3 class="anchored" data-anchor-id="dans-un-modèle-à-retards-distribués">Dans un modèle à retards distribués</h3>
+<p>Considérons le modèle à retards distribués d’ordre 2 suivant :</p>
+<p><span class="math display">\[
+Y_t = \alpha + \beta_0 X_t + \beta_1 X_{t-1} + \beta_2 X_{t-2} + u_t
+\]</span></p>
+<p>Pour interpréter, les coefficients de cette équation, supposons que <span class="math inline">\(X\)</span> soit constant et égal à <span class="math inline">\(c\)</span> (on se trouve sur une relation d’équilibre). On suppose une augmentation temporaire de <span class="math inline">\(X\)</span> d’une unité à la période <span class="math inline">\(t\)</span>. On a donc :</p>
+<p><span class="math display">\[
+X_{t-2} = c \hspace{0.2cm}; X_{t-1} = c \hspace{0.2cm}; X_{t} = c +1 \hspace{0.2cm}; X_{t+1} = c \hspace{0.2cm}; X_{t+2} = c
+\]</span></p>
+<p>Afin de mettre l’accent sur l’effet toute chose égale par ailleurs, on considère que <span class="math inline">\(u_t = 0\)</span>. On a :</p>
+<p><span class="math display">\[
+\begin{align}
+Y_{t-1} &amp;= \alpha + \beta_0 c + \beta_1 c + \beta_2 c \\
+Y_t &amp;= \alpha + \beta_0 \left( c+1 \right) + \beta_2 c + \beta_3 c \\
+Y_{t+1} &amp;= \alpha + \beta_0 c + \beta_1 \left( c+1 \right) + \beta_3 c \\
+Y_{t+2} &amp;= \alpha + \beta_0 c + \beta_1 c + \beta_2 \left( c+1 \right) \\
+Y_{t+3} &amp;= \alpha + \beta_0 c + \beta_1 c + \beta_2 c
+\end{align}
+\]</span></p>
+<p>En considérant les deux premières équations, on obtient : <span class="math inline">\(Y_t - Y_{t-1} = \beta_0\)</span> où <span class="math inline">\(\beta_0\)</span> représente le changement immédiat de <span class="math inline">\(Y\)</span> suite à une hausse de l’unité <span class="math inline">\(X\)</span> à la période <span class="math inline">\(t\)</span>, ce que l’on peut noter <span class="math inline">\(\frac{\partial Y_t}{\partial X_t}\)</span> et est communément appelé le multiplicateur de court-terme.</p>
+<p>De la même manière <span class="math inline">\(Y_{t+1} - Y_{t-1} = \frac{\partial Y_{t+1}}{\partial X_t} = \beta_1\)</span> et correspond à la variation de <span class="math inline">\(Y\)</span> une période après le changement temporaire de <span class="math inline">\(X\)</span>.</p>
+<p><span class="math inline">\(Y_{t+2} - Y_{t-1} = \frac{\partial Y_{t+2}}{\partial X_t} = \beta_2\)</span> correspond à la variation de <span class="math inline">\(Y\)</span> une période après le changement temporaire de <span class="math inline">\(X\)</span>. A la période <span class="math inline">\(t+1\)</span>, <span class="math inline">\(Y\)</span> reprend sa valeur initiale car on a supposé que seuls deux retards de <span class="math inline">\(X\)</span> pouvaient avoir un impact sur <span class="math inline">\(Y\)</span>. Ces multiplicateur sont aussi appelés <em>Delays multipliers</em>.</p>
+<p>On peut également s’intéresser au changement de <span class="math inline">\(Y\)</span> à la suite d’une augmentation permanente de <span class="math inline">\(X\)</span>. Considérons que <span class="math inline">\(X\)</span> augmente d’une unité de manière permanente à la période <span class="math inline">\(t\)</span> soit :</p>
+<p><span class="math display">\[
+X_{t-2} = c \hspace{0.2cm}; X_{t-1} = c \hspace{0.2cm}; X_{t} = c +1 \hspace{0.2cm}; X_{t+1} = c+1 \hspace{0.2cm}; X_{t+2} = c+1
+\]</span></p>
+<p>On a donc :</p>
+<p><span class="math display">\[
+\begin{align}Y_{t-1} &amp;= \alpha + \beta_0 c + \beta_1 c + \beta_2 c \\
+Y_t &amp;= \alpha + \beta_0 \left( c+1 \right) + \beta_2 c + \beta_3 c \\
+Y_{t+1} &amp;= \alpha + \beta_0 \left( c+1 \right) + \beta_1 \left( c+1 \right) + \beta_3 c \\
+Y_{t+2} &amp;= \alpha + \beta_0 \left( c+1 \right) + \beta_1 \left( c+1 \right) + \beta_2 \left( c+1 \right)\end{align}
+\]</span></p>
+<p>A la suite de l’augmentation permanente de <span class="math inline">\(X\)</span>, après une période <span class="math inline">\(Y\)</span> a augmenté de <span class="math inline">\(\beta_0 + \beta_1\)</span>. Après deux périodes, <span class="math inline">\(Y\)</span> a augmenté de <span class="math inline">\(\beta_0 + \beta_1 + \beta_2\)</span>. La somme des coefficients de <span class="math inline">\(X\)</span> et de ses deux retards représente la variation de long-terme de <span class="math inline">\(XY\)</span> suite à un changement permanent de <span class="math inline">\(X\)</span>. On l’appelle le multiplicateur de long-terme. Les valeurs intermédiaires sont appelées <em>Interim multipliers</em>.</p>
+</section>
+</section>
+<section id="modèles-auto-régressifs-à-retards-distribués-ardl" class="level2">
+<h2 class="anchored" data-anchor-id="modèles-auto-régressifs-à-retards-distribués-ardl">Modèles Auto-Régressifs à Retards Distribués (ARDL)</h2>
+<p>Afin de rendre les modèles plus parcimonieux et essayer de capter la majeure partie de la dynamique de la variable dépendante, il est courant d’introduire une/des valeurs retardées de la variable <span class="math inline">\(Y\)</span> en plus des valeurs retardées des variables <span class="math inline">\(X\)</span>. Cela permet de tenir plus facilement compte du caractère auto-corrélées de la majeure partie des séries temporelles étudiées en économie.</p>
+<p>Sous sa forme générale, un <span class="math inline">\(ARDL(p, q_1, \cdots, q_k)\)</span> s’écrit :</p>
+<p><span class="math display">\[
+Y_t = \alpha + \sum_{l = 1}^p \phi_l Y_{t-l} + \sum_{i = 1}^k \sum_{j=0}^{q_i} \beta_{ij} X_{i, t-j} + \varepsilon_t
+\]</span></p>
+<p>De manière classique, <span class="math inline">\(\varepsilon_t\)</span> doit être un bruit blanc (non-auto-corrélé et de variance constante).</p>
+<p>De la même manière que pour les modèles <span class="math inline">\(ARMA\)</span>, il existe différentes façon (non-exclusives) de déterminer les retards <span class="math inline">\(p\)</span> et <span class="math inline">\(q_i\)</span> d’un modèle <span class="math inline">\(ARDL\)</span> :</p>
+<ul>
+<li><p>Tester la significativité des paramètres <span class="math inline">\(\phi_p\)</span> et des différents <span class="math inline">\(\beta_{i,q_i} \hspace{0.2cm} \forall \hspace{0.2cm} i = \{1, \dots, k\}\)</span> .</p></li>
+<li><p>Utiliser les critères d’informations (AIC, BIC,…) qui vont chercher la spécification qui permet le mieux de reproduire les données en ajoutant une contrainte de parcimonie.</p></li>
+<li><p>Utiliser les tests d’autocorrélation des résidus (Ljung-Box) : augmenter l’ordre autorégressif jusqu’à ce que les résidus du modèle soient compatibles avec un bruit blanc.</p></li>
+</ul>
+<p>Les modèles <span class="math inline">\(ARDL\)</span> peuvent être estimés à partir de la méthode des MCO.</p>
+</section>
+<section id="cointégration" class="level2">
+<h2 class="anchored" data-anchor-id="cointégration">Cointégration</h2>
+<p>De manière générale, il n’est pas correct d’utiliser des variables non-stationnaires (caractérisées par un processus <span class="math inline">\(I(1)\)</span>) dans des modèles de régression. En effet, lorsque de telles variables sont utilisées les estimateurs MCO ne sont généralement plus convergent. De plus lorsque deux variables <span class="math inline">\(I(1)\)</span> sont régressées l’une sur l’autre, il a été montré qu’une régression MCO indiquera souvent l’existence d’une relation statistique entre ces deux variables, même lorsqu’elles n’ont aucune raison d’être liées. Il s’agit du problème de <em>corrélation fallacieuse</em>.</p>
+<p>Si <span class="math inline">\(Y_t\)</span> et <span class="math inline">\(X_t\)</span> sont des processus <span class="math inline">\(I(1)\)</span> aucunement liés entre eux, alors la régression suivante est fallacieuse et risque d’indiquer l’existence d’une relation qui n’existe pas :</p>
+<p><span class="math display">\[
+Y_t = \alpha + \beta X_t + u_t
+\]</span></p>
+<p>Généralement, pour contrer ce problème, on va stationnariser les variables en les prenant en première différence par exemple. Ainsi le modèle à estimer devient :</p>
+<p><span class="math display">\[
+\Delta Y_t = \gamma+ \delta\Delta X_t + e_t
+\]</span></p>
+<p>Avec <span class="math inline">\(\Delta Y_t = Y_t - Y_{t-1}\)</span>. Mais cette régression n’est ps équivalente à la précente. <span class="math inline">\(\gamma\)</span> donne une information bien différente de <span class="math inline">\(\beta\)</span>. La deuxième régression explique la différence de <span class="math inline">\(Y\)</span> en terme de différence de <span class="math inline">\(X\)</span> ce qui n’a rien à voir avec l’explication de <span class="math inline">\(Y\)</span> en fonction de <span class="math inline">\(X\)</span>.</p>
+<p>La notion de cointégration introduire par <strong>Engle et Granger (1987)</strong> permet dans certain cas de résoudre ce problème de régression fallacieuse.</p>
+<p>En général, si <span class="math inline">\(Y_t\)</span> et <span class="math inline">\(X_t\)</span> sont des processus <span class="math inline">\(I(1)\)</span>, alors <span class="math inline">\(Y_t - \beta X_t\)</span> sera un processus <span class="math inline">\(I(1)\)</span> pour n’importe quelle valeur de <span class="math inline">\(\beta\)</span>.</p>
+<p>Cependant, il est possible que pour une certaine valeur <span class="math inline">\(\beta \neq 0\)</span>, alors <span class="math inline">\(Y_t - \beta X_t\)</span> soit un processus <span class="math inline">\(I(0)\)</span>. Si un tel <span class="math inline">\(\beta\)</span> existe, alors on dira que <span class="math inline">\(Y\)</span> et <span class="math inline">\(X\)</span> sont cointégrés et <span class="math inline">\(\beta\)</span> sera appelé le paramètre de cointégration. Dans ce cas, les deux séries possèdent une relation de long-terme commune. Il peut y avoir des déviations par rapport à cet équilibre de long-terme, mais il existe des forces économiques qui vont ramener les deux variables vers leur relation d’équilibre. La différence entre les deux variables a tendance à revenir vers sa valeur moyenne. Dans ce cas, la régression entre <span class="math inline">\(Y_t\)</span> et <span class="math inline">\(X_t\)</span> peut se faire sans être fallacieuse.</p>
+<p>En revanche, puisque <span class="math inline">\(X_t\)</span> est un processus <span class="math inline">\(I(1)\)</span>, les procédures d’inférence usuelles ne s’appliquent pas nécessairement. De manière analogue aux modèles de régression linéaire, plusieurs hypothèses sont nécessaires à l’obtention d’une distribution normale du paramètre <span class="math inline">\(\beta\)</span> et d’une distribution exacte de la statistique de Student. La plupart peuvent se corriger en augmentant la taille de l’échantillon (normalité des résidus) ou en corrigeant les écarts-types obtenus (sphéricité des erreurs), ce n’est pas le cas pour l’hypothèse d’exogénéité stricte des régresseurs. Cette hypothèse implique dans le cas de séries temporelles fortement persistantes (dont font partis les processus <span class="math inline">\(I(1)\)</span>) que les régresseurs <span class="math inline">\(X\)</span> ne soient liés d’aucune manière que ce soit avec les erreurs pour toutes les périodes de temps possibles. Il s’agit d’une hypothèse extrêmement forte qu’il est difficile de montrer sa validité en pratique.</p>
+<p>Pour contrecarrer (en partie) ce problème, il est possible d’inclure <span class="math inline">\(\Delta X_t\)</span> ainsi que d’éventuels retards de cette variable dans l’équation de régression afin de purger la corrélation entre <span class="math inline">\(X\)</span> et <span class="math inline">\(u\)</span>. Dans son cas le plus simple, la régression devient :</p>
+<p><span class="math display">\[
+Y_t = \alpha + \beta X_t + \Delta X_t + \varepsilon_t
+\]</span></p>
+<p>Le choix d’inclure ou non des retards additionnels est une question empirique qu’il convient de justifier.</p>
+</section>
+<section id="modèles-à-correction-derreur" class="level2">
+<h2 class="anchored" data-anchor-id="modèles-à-correction-derreur">Modèles à correction d’erreur</h2>
+<p>Le concept de cointégration permet également d’enrichir les types de modèles dynamiques à notre disposition. Si <span class="math inline">\(Y_t\)</span> et <span class="math inline">\(X_t\)</span> sont des processus <span class="math inline">\(I(1)\)</span> non-cointégrés, alors la modélisation doit être une modélisation en différence première (généralement). Considérons le modèle ARDL suivant :</p>
+<p><span class="math display">\[
+\Delta Y_t = \alpha + \phi \Delta Y_{t-1} + \gamma_0 \Delta X_t + \gamma_1 \Delta X_{t-1} + u_t
+\]</span></p>
+<p>Dans le cas où <span class="math inline">\(Y_t\)</span> et <span class="math inline">\(X_t\)</span> sont cointégrés, nous disposons de variables supplémentaires que l’on peut inclure dans cette équation. En effet dans ce cas : <span class="math inline">\(Y_t - \beta X_t\)</span> est un processus <span class="math inline">\(I(0)\)</span>, et ses retards peuvent sans problèmes être inclus dans une régression. L’équation devient donc :</p>
+<p><span class="math display">\[
+\begin{align}
+\Delta Y_t &amp;= \alpha + \phi \Delta Y_{t-1} + \gamma_0 \Delta X_t + \gamma_1 \Delta X_{t-1} + \delta (Y_{t-1} - \beta X_{t-1}) + u_t \\
+\Leftrightarrow \Delta Y_t &amp;= \alpha + \phi \Delta Y_{t-1} + \gamma_0 \Delta X_t + \gamma_1 \Delta X_{t-1} + \delta \text{ECT} + u_t
+\end{align}
+\]</span></p>
+<p>Le terme <span class="math inline">\((Y_{t-1} - \beta X_{t-1})\)</span> est appelé le terme à correcteur d’erreur (<em>Error Correction Term</em>), et ce type de modélisation est appelée Modèle à Correction d’Erreur.</p>
+<p>Ce type de modèles permet d’étudier la dynamique de court terme dans la relation entre <span class="math inline">\(Y\)</span> et <span class="math inline">\(X\)</span>. Si <span class="math inline">\(\delta &lt; 0\)</span> et si <span class="math inline">\(Y_{t-1} &gt; \beta X_{t-1}\)</span>, alors <span class="math inline">\(Y\)</span> a dépassé l’équilibre durant la période précédente. Puisque <span class="math inline">\(\delta &lt; 0\)</span>, le terme à correction d’erreur fait en sorte que <span class="math inline">\(Y\)</span> est ramené vers l’équilibre en diminuant. A l’inverse, si <span class="math inline">\(Y_{t-1} &lt; \beta X_{t-1}\)</span>, alors <span class="math inline">\(Y\)</span> était inférieur à la valeur d’équilibre à la période précédente. Dans ce cas, le terme à correction d’erreur induit une variation positive de <span class="math inline">\(Y\)</span> vers l’équilibre.</p>
+<p>Le temps que mettent les séries à revenir à leur équilibre est donné par <span class="math inline">\(\frac{1}{\delta}\)</span>.</p>
+</section>
+<section id="procédure-dengle-granger" class="level2">
+<h2 class="anchored" data-anchor-id="procédure-dengle-granger">Procédure d’Engle-Granger</h2>
+<p>La procédure d’Engle-Granger est une procédure en deux étapes pour estimer des modèles à correction d’erreur. Attention la procédure présentée ici n’est valide que pour deux séries toutes les deux caractérisées par un processus <span class="math inline">\(I(1)\)</span>.</p>
+<section id="ère-étape-tester-lexistence-de-la-cointégration" class="level3">
+<h3 class="anchored" data-anchor-id="ère-étape-tester-lexistence-de-la-cointégration">1ère étape : Tester l’existence de la cointégration</h3>
+<p>Dans un premier temps, si les séries <span class="math inline">\(Y\)</span> et <span class="math inline">\(X\)</span> sont des processus <span class="math inline">\(I(1)\)</span>, alors il convient de régresser <span class="math inline">\(Y\)</span> sur <span class="math inline">\(X\)</span> :</p>
+<p><span class="math display">\[
+Y_t = \alpha + \beta X_t + e_t
+\]</span></p>
+<p>On récupère ensuite la série des résidus <span class="math inline">\(\hat{e}_t\)</span> et l’on teste la stationnarité de cette série. Généralement on utilise le test ADF avec un modèle sans constante mais avec ou sans tendance. On estime la relation :</p>
+<p><span class="math display">\[
+\Delta \hat{e}_t = \phi \hat{e}_{t-1} + \sum_{i=1}^p \phi_i \Delta \hat{e}_{t-i} + u_t
+\]</span></p>
+<p>avec <span class="math inline">\(\hat{e}_t = \hat{Y}_t - \hat{\alpha} - \hat{\beta}X_t\)</span>. On teste ensuite :</p>
+<p><span class="math display">\[
+\left\{    
+\begin{array}{ll}       
+H_0 : \phi = 0 \text{ ; } \hat{e}_t \text{ non stationnaire}  \\       
+H_1 : \phi &lt; 0 \text{ ; } \hat{e}_t \text{ stationnaire}     
+\end{array}
+\right.
+\]</span></p>
+<p>Avec la statistique de test :</p>
+<p><span class="math display">\[
+t_{\hat{\phi}} = \frac{\hat{\phi}}{\hat{\sigma}_{\hat{\phi}}}
+\]</span></p>
+<p>Attention, les valeurs critiques pour tester la stationnarité de cette série sont différentes de celles utilisées classiquement.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: center;">Type de test</th>
+<th style="text-align: center;">1%</th>
+<th style="text-align: center;">5%</th>
+<th style="text-align: center;">10%</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">Sans tendance</td>
+<td style="text-align: center;">-3.90</td>
+<td style="text-align: center;">-3.34</td>
+<td style="text-align: center;">-3.04</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">Avec tendance</td>
+<td style="text-align: center;">-4.32</td>
+<td style="text-align: center;">-3.78</td>
+<td style="text-align: center;">-3.50</td>
+</tr>
+</tbody>
+</table>
+<p>La règle de décision est la suivante :</p>
+<ul>
+<li><p>Si <span class="math inline">\(t_{\hat{\phi}} &lt; t\)</span> : on rejette l’hypothèse nulle. Les résidus sont stationnaires. Les séries <span class="math inline">\(Y_t\)</span> et <span class="math inline">\(X_t\)</span> sont cointégrées.</p></li>
+<li><p>Si <span class="math inline">\(t_{\hat{\phi}} &gt; t\)</span> : on ne peut pas rejeter la l’hypothèse nulle. Les résidus ne sont pas stationnaires. Les séries <span class="math inline">\(Y_t\)</span> et <span class="math inline">\(X_t\)</span> ne sont pas cointégrées.</p></li>
+</ul>
+</section>
+<section id="ème-étape-estimer-le-modèle-à-correction-derreur" class="level3">
+<h3 class="anchored" data-anchor-id="ème-étape-estimer-le-modèle-à-correction-derreur">2ème étape : Estimer le modèle à correction d’erreur</h3>
+<p>Si <span class="math inline">\(\hat{e}_t\)</span> est bien un processus <span class="math inline">\(I(0)\)</span>, alors les séries <span class="math inline">\(Y_t\)</span> et <span class="math inline">\(X_t\)</span> sont cointégrées et caractérisées par une relation de long terme. La régression de l’une l’autre n’est plus une régression fallacieuse. On peut donc estimer le modèle en niveau (en incluant <span class="math inline">\(\Delta X_t\)</span> et ses retards et/ou ses valeurs avancées ainsi que les retards de <span class="math inline">\(Y_t\)</span> si besoin) et obtenir les coefficients de long-terme de la série.</p>
+<p>On peut ensuite estimer le modèle à correction d’erreur dans lequel le terme à correction d’erreur correspond à la série des résidus <span class="math inline">\(\hat{e}_t\)</span> :</p>
+<p><span class="math display">\[
+\Delta Y_t = \alpha + \phi \Delta Y_{t-1} + \gamma_0 \Delta X_t + \gamma_1 \Delta X_{t-1} + \delta \hat{e}_{t-1} + u_t
+\]</span></p>
+<p>Ce modèle nous permet d’obtenir des effets de court-terme avec les coefficients des variables en différence, ainsi que la vitesse d’ajustement des séries suite à un écart à leur relation de long-terme.</p>
+</section>
+</section>
+<section id="extension-de-la-cointégration" class="level2">
+<h2 class="anchored" data-anchor-id="extension-de-la-cointégration">Extension de la cointégration</h2>
+<p>La cointégration à la Granger peut évidemment être généralisée avec un nombre de variables supérieures à 2. Mais cette méthode requiert tout de même que l’ensemble des variables soient intégrées du même ordre. <a href="https://onlinelibrary.wiley.com/doi/full/10.1002/jae.616?casa_token=PNv1tRySyY0AAAAA%3A871E331d0NLVpRpeJ4TghehXlefBXEznk49q2vbrkuWUMKenTGGqaPc_rK95X3aWp34rPcw8leVRkog"><strong>Pesaran et al (2001)</strong></a> ont développé une méthodologie permettant de tester l’existence d’une relation entre les niveaux de <span class="math inline">\(K\)</span> variables que celles-ci soient intégrées d’ordre 1 et/ou d’ordre 0.</p>
+<p>La méthodologie repose sur l’estimation de 3 modèles :</p>
+<section id="modèle-ardl-général" class="level3">
+<h3 class="anchored" data-anchor-id="modèle-ardl-général">Modèle ARDL général</h3>
+<p>La forme générale d’un <span class="math inline">\(ARDL(p, q_1, \dots, q_k)\)</span> est donnée par :</p>
+<p><span class="math display">\[
+Y_t = c_0 + c_1t + \sum_{i=1}^pb_{y,i}Y_{t-i} + \sum_{j=1}^k \sum_{l=0}^{q_j}b_{j,l}X_{j,t-l} + \varepsilon_t
+\]</span></p>
+<p>Ce modèle régresse la variable <span class="math inline">\(Y_t\)</span> sur une constante <span class="math inline">\(c_0\)</span>, une possible tendance linéaire <span class="math inline">\(c_1\)</span>, ses <span class="math inline">\(p\)</span> valeurs passées ainsi que les valeurs contemporaines et passées des variables <span class="math inline">\(X_t\)</span>. Le choix des ordres <span class="math inline">\(p, q_1, \dots, q_j\)</span> est une question empirique.</p>
+<p>Les multiplicateurs de court-terme sont donnés par les coefficients associés aux valeurs contemporaines des variables <span class="math inline">\(X_{j,t}\)</span>. ces multiplicateurs indiquent la réponse de <span class="math inline">\(Y_t\)</span> suite à une variation temporaire d’une unité de <span class="math inline">\(X_{j,t}\)</span>.</p>
+<p><span class="math display">\[
+\text{SR}_{\text{ARDL}} = \frac{\partial Y_t}{\partial X_{j,t}} = b_{j,0} \hspace{0.3cm} j \in \left\{ 1, \cdots, k \right\}
+\]</span></p>
+<p>Les multiplicateurs <span class="math inline">\(\text{Delay}_{x_{j,s}}\)</span> indiquent la réponse de la variable <span class="math inline">\(Y_{t+s}\)</span> suite à une variation temporaire de la variable <span class="math inline">\(X_{j,t}\)</span>. Il s’agit d’une réponse directe. Il s’agit du coefficient associé au <span class="math inline">\(s^{\text{ième}}\)</span> retard de la variable <span class="math inline">\(X_{j}\)</span> auquel viennent s’ajouter les effets directs sur les périodes antérieures pondérées par les effet auto-régressifs de la variable <span class="math inline">\(Y\)</span>.</p>
+<p><span class="math display">\[
+\text{Delay}_{x_{j,s}} = \frac{\partial Y_{t+s}}{\partial X_{j,t}} = b_{j,s} + \sum_{i=1}^{min \left\{ p,s \right\}} b_{y,i} \frac{\partial Y_{t+\left( s-i \right)}}{\partial X_{j,t}} \hspace{0.6cm} ; \hspace{0.3cm} b_{j,s} = 0 \hspace{0.3cm} \forall \hspace{0.3cm} s&gt;q
+\]</span></p>
+<p>Les multiplicateurs <span class="math inline">\(\text{Interim}_{x_{j,s}}\)</span> indiquent la réponse de la variable <span class="math inline">\(Y_{t+s}\)</span> suite à une variation permanente de la variable <span class="math inline">\(X_{j,t}\)</span>. Il s’agit de la somme des multiplicateurs <span class="math inline">\(\text{Delay}_{x_{j,i}}\)</span> avec <span class="math inline">\(i = \{1, \dots, s\}\)</span>.</p>
+<p><span class="math display">\[
+\text{Interim}_{x_{j,s}} = \sum_{i=0}^s \text{Delay}_{x_{j,s}}
+\]</span></p>
+<p>Les multiplicateurs de long-terme indiquent la réponse totale de la variable <span class="math inline">\(Y\)</span> suite à un choc permanent sur la variable <span class="math inline">\(X_{j,t}\)</span>. Il s’agit de la somme des coefficients associés à la variable <span class="math inline">\(X_t\)</span> et à ses retards divisé par 1 moins la somme des coefficients auto-régressifs de la variable <span class="math inline">\(Y\)</span>.</p>
+<p><span class="math display">\[
+\text{LR}_{\text{ARDL}} = \frac{\partial Y_{t+\infty}}{\partial X_{j,t}} = \theta_j = \frac{\sum_{l=0}^{q_j} b_{j,l}}{1 - \sum_{i=1}^p b_{y,i}} \hspace{0.6cm} ; \hspace{0.3cm} j  \in  \left\{ 1, \cdots, k \right\}
+\]</span></p>
+<p>Le vecteur de coefficients <span class="math inline">\(\hat{\theta}_j\)</span> permet de construire l’équation de long-terme associé aux niveaux des variables :</p>
+<p><span class="math display">\[
+\hat{Y}_t^{\text{LT}} = \hat{\alpha} + \sum_{j=1}^k \hat{\theta}_j X_{j,t}
+\]</span></p>
+</section>
+<section id="modèle-unrestricted-error-correction-model-uecm" class="level3">
+<h3 class="anchored" data-anchor-id="modèle-unrestricted-error-correction-model-uecm">Modèle Unrestricted Error Correction Model (UECM)</h3>
+<p>La formule d’un modèle UECM dérivé du modèle ARDL précédent est la suivante :</p>
+<p><span class="math display">\[
+\Delta Y_t = c_0 + c_1t + \pi_y Y_{t-1} + \sum_{j=1}^k \pi_j X_{j,t-1} + \sum_{i=1}^{p-1}\psi_{y,i} \Delta Y_{t-i} + \sum_{j=1}^k \sum_{l=1}^{q_j - 1} \psi_{j,l} \Delta X_{j,t-l} + \sum_{j=1}^k \omega_j \Delta X_{j,t} + \varepsilon_t
+\]</span></p>
+<p>Ce modèle met en relation la première différence de la variable <span class="math inline">\(Y_t\)</span> avec les retards de sa première différence ainsi que les retards de la première différence des variables <span class="math inline">\(X_t\)</span> comme un <span class="math inline">\(ARDL\)</span> classique avec des variables en première différence. Les coefficients associés à ces variables en différences premières représentes la relation de court-terme entre <span class="math inline">\(Y\)</span> et <span class="math inline">\(X\)</span>. Cependant le modèle UECM va également inclure les niveaux des variable <span class="math inline">\(Y\)</span> et <span class="math inline">\(X_j\)</span> retardés d’une période afin d’inclure les relations de long-terme entre les variables.</p>
+<p>A partir de ce modèle il est possible de calculer les multiplicateurs de court-terme et de long-terme. Ces multiplicateurs sont strictement égaux aux multiplicateurs calculés à partir du modèle <span class="math inline">\(ARDL\)</span> en niveaux.</p>
+<p>Les multiplicateurs de court-terme sont donnés par les coefficients associés aux valeurs contemporaines des premières différences de <span class="math inline">\(X_j\)</span>.</p>
+<p><span class="math display">\[
+\text{SR}_{\text{UECM}} = \text{SR}_{\text{ARDL}} = \frac{\partial Y_t}{\partial X_{j,t}} = \omega_j \hspace{0.6cm} j \in \left\{ 1, \cdots, k \right\}
+\]</span></p>
+<p>Les multiplicateurs de long-terme sont donnés par la division du coefficient associé à la variable <span class="math inline">\(X_{j,t}\)</span> en niveau avec le coefficient associé à <span class="math inline">\(Y_t\)</span> en niveau multiplié par moins 1.</p>
+<p><span class="math display">\[
+\text{LR}_{\text{UECM}} = \text{LR}_{\text{ARDL}} = \frac{\partial Y_{t+\infty}}{\partial X_{j,t}} = \theta_j = \frac{\pi_j}{-\pi_y} \hspace{0.6cm} j \in \left\{ 1, \cdots, k \right\}
+\]</span></p>
+<p>De la même manière que pour le modèle <span class="math inline">\(ARDL\)</span>, le vecteur de coefficient de long-terme <span class="math inline">\(\hat{\theta}_j\)</span> peut être utilisé pour construire l’équation de long-terme des variables en niveau :</p>
+<p><span class="math display">\[
+\hat{Y}_t^{\text{LT}} = \hat{\alpha} + \sum_{j=1}^k \hat{\theta}_j X_{j,t}
+\]</span></p>
+<p>Ce modèle apporte une précision supplémentaire par rapport au modèle <span class="math inline">\(ARDL\)</span> puisqu’il indique également la vitesse de convergence des séries suite à un écart à la relation d’équilibre à travers le coefficient <span class="math inline">\(\pi_y\)</span>. En effet, si <span class="math inline">\(Y_{t-1}\)</span> augmente de 1 tandis que toutes les variables restent inchangées, cela signifie que <span class="math inline">\(Y_{t-1}\)</span> s’est écarté de sa valeur de long-terme. Le coefficient <span class="math inline">\(\pi_y\)</span> indique la force de rappel qui va ramener <span class="math inline">\(Y_t\)</span> vers sa valeur de long-terme. <span class="math inline">\(\frac{1}{\pi_y}\)</span> indique le temps nécessaire pour <span class="math inline">\(Y\)</span> retourne à sa valeur de long-terme suite à un déséquilibre.</p>
+</section>
+<section id="modèle-restricted-error-correction-model-recm" class="level3">
+<h3 class="anchored" data-anchor-id="modèle-restricted-error-correction-model-recm">Modèle Restricted Error Correction Model (RECM)</h3>
+<p>A partir du modèle <span class="math inline">\(ARDL\)</span> il est également possible de construire une modélisation <span class="math inline">\(RECM\)</span> de la forme suivante :</p>
+<p><span class="math display">\[
+\Delta Y_t = c_0 + c_1t + \sum_{i=1}^{p-1} \psi_{y,i} \Delta Y_{t-i} + \sum_{j=1}^k \sum_{l=1}^{q_{j-1}} \Delta X_{j, t-l} + \sum_{j=1}^k \omega_j \Delta X_{j,t} + \pi_y \text{ECT}_t = \varepsilon_t
+\]</span></p>
+<p>Ce modèle relie la première différence de la variable <span class="math inline">\(Y\)</span> avec les premières différences (retardées) des variable <span class="math inline">\(X_j\)</span>. La différence avec le modèle UECM réside dans le fait que les variables en niveau ont été retirées et inclues dans le terme <span class="math inline">\(\text{ECT}_t\)</span>. cela permet de gagner des degrés de liberté puisqu’il y a moins de coefficients à estimer. On augmente donc la précision de nos estimateurs en diminuant leur variance estimée. Il permet également d’obtenir plus de flexibilité concernant l’inclusion de tendance ou de constante (voir plus loin).</p>
+<p>Il faut remarquer que ce modèle permet d’obtenir les même coefficients de court-terme que les modèles <span class="math inline">\(ARDL\)</span> et <span class="math inline">\(UECM\)</span> à partir des coefficients <span class="math inline">\(\omega_j\)</span>. La force de rappel donnée par le coefficient <span class="math inline">\(\pi_j\)</span> est également la même que dans le modèle <span class="math inline">\(UECM\)</span>.</p>
+<p>Lors de la construction de ce modèle, 5 cas sont possibles (et vont conditionner les tests statistiques) :</p>
+<ul>
+<li><strong>Cas 1 : Sans constante ni tendance dans les équation de court- et long-terme</strong></li>
+</ul>
+<p>Dans ce cas, on va contrainte qu’il n’y ait ni tendance ni constante à la fois dans l’équation en différence et dans le terme à correction d’erreur. On a donc :</p>
+<p><span class="math display">\[
+\begin{align}
+&amp;c_0 = c_1 = 0 \\
+\\
+&amp;\text{ECT}_t = Y_{t-1} - \left( \sum_{j=1}^k \theta_j X_{j, t-1} \right)
+\end{align}
+\]</span></p>
+<p>Le terme à correction d’erreur en <span class="math inline">\(t\)</span> est donné la différence entre la valeur de <span class="math inline">\(Y_{t-1}\)</span> et sa valeur de long-terme en <span class="math inline">\(t-1\)</span> (sans constante ni tendance) calculée à partir des multiplicateurs de long-terme <span class="math inline">\(\theta_j\)</span>. Il s’agit de la valeur du déséquilibre de <span class="math inline">\(Y\)</span> avec sa valeur de long-terme.</p>
+<ul>
+<li><strong>Cas 2 : Sans tendance ni constante dans l’équation de court-terme ; sans tendance mais avec constante dans l’équation de long-terme</strong></li>
+</ul>
+<p>Dans ce cas, on va contraindre à ce qu’il n’y ait ni constante ni tendance dans l’équation en différence, mais on va inclure une constante dans le terme à correction d’erreur. On a donc :</p>
+<p><span class="math display">\[
+\begin{align}
+&amp;c_0 = c_1 = 0 \\
+\\
+&amp;\text{ECT}_t = Y_{t-1} - \left( \mu + \sum_{j=1}^k \theta_j X_{j, t-1} \right)
+\end{align}
+\]</span></p>
+<ul>
+<li><strong>Cas 3 : Sans tendance mais avec constante dans l’équation de court-terme ; sans tendance et sans constante dans l’équation de long-terme</strong></li>
+</ul>
+<p>Dans ce cas, on va contraire à ce qu’il y ait une constante mais pas de tendance dans l’équation en différence. On ne va inclure ni tendance ni constante dans le terme à correction d’erreur. On a donc :</p>
+<p><span class="math display">\[
+\begin{align}
+&amp;c_1 = 0 \\
+\\
+&amp;\text{ECT}_t = Y_{t-1} - \left( \sum_{j=1}^k \theta_j X_{j, t-1} \right)
+\end{align}
+\]</span></p>
+<ul>
+<li><strong>Cas 4 : Sans tendance mais avec constante dans l’équation de court-terme ; sans constante et avec tendance dans l’équation de long-terme</strong></li>
+</ul>
+<p>Dans ce cas, on va contraindre à ce qu’il y ait une constante mais pas de tendance dans l’équation en différence. On va inclure une tendance linéaire dans le terme à correction d’erreur mais pas de constante. On a donc :</p>
+<p><span class="math display">\[
+\begin{align}
+&amp;c_1 = 0 \\
+\\
+&amp;\text{ECT}_t = Y_{t-1} - \left( \delta(t-1) + \sum_{j=1}^k \theta_j X_{j, t-1} \right)
+\end{align}
+\]</span></p>
+<ul>
+<li><strong>Cas 5 : Avec tendance et constante dans l’équation de court-terme ; Sans tendance ni constante dans l’équation de long-terme</strong></li>
+</ul>
+<p>Dans ce cas, on va contraindre à ce qu’il y ait une constante et une tendance dans l’équation en différence et à ce qu’il n’y ait ni constante ni tendance dans le terme à correction d’erreur. On a donc :</p>
+<p><span class="math display">\[
+\text{ECT}_t = Y_{t-1} - \left( \sum_{j=1}^k \theta_j X_{j, t-1} \right)
+\]</span> Il faut bien noter que tous ces cas ne sont pas tous utilisables pour une même modélisation. En effet, on ne peut pas imposer une contrainte (ou une absence de contrainte) sur des paramètres qui n’ont pas été inclus dans le modèle <span class="math inline">\(ARDL\)</span> ou <span class="math inline">\(UECM\)</span> sous-jacent. Par exemple, si le modèle <span class="math inline">\(ARDL\)</span> n’inclue pas de tendance linéaire, il n’est pas possible d’utiliser les cas où on impose une tendance linéaire dans l’équation de court- ou long-terme puisque cette tendance n’existe pas dans le modélisation initiale.</p>
+</section>
+<section id="bound-f-test-bound-t-test" class="level3">
+<h3 class="anchored" data-anchor-id="bound-f-test-bound-t-test">Bound F test / Bound t test</h3>
+<p>Les tests initiaux de cointégration ne fonctionnent généralement que si toutes les variables sont intégrées du même ordre ce qui dans un certain nombre de cas pratiques n’est pas réaliste. <strong>Pesaran et al (2001)</strong> ont développé deux tests statistique afin de tester s’il existe une relation de long-terme entre les variables en niveau et ce même si toutes les variables ne sont intégrées du même ordre.</p>
+<p>Les valeurs critiques de ces tests ne sont pas standards. <strong>Pesaran et al (2001)</strong> ont tabulés des valeurs critiques lorsque toutes les variables sont intégrées d’ordre 0 et lorsque toutes les variables sont intégrées d’ordre 1. Cela donne un intervalle permettant de déterminer si un ensemble de variables <span class="math inline">\(I(0)\)</span> et <span class="math inline">\(I(1)\)</span> possèdent une relation de long-terme ou non.</p>
+<p>Le premier test est un test de Wald (sorte d’équivalent au test de Fisher) qui va tester les coefficients associés aux variables en niveau sont tous conjointement différents de 0.</p>
+<p>Ainsi à partir du modèle :</p>
+<p><span class="math display">\[
+\Delta Y_t = c_0 + c_1t + \pi_y Y_{t-1} + \sum_{j=1}^k \pi_j X_{j,t-1} + \sum_{i=1}^{p-1}\psi_{y,i} \Delta Y_{t-i} + \sum_{j=1}^k \sum_{l=1}^{q_j - 1} \psi_{j,l} \Delta X_{j,t-l} + \sum_{j=1}^k \omega_j \Delta X_{j,t} + \varepsilon_t
+\]</span></p>
+<p>On va tester (en fonction du cas de modèle <span class="math inline">\(RECM\)</span> choisi) :</p>
+<ul>
+<li><strong>Cas 1, 3, 5</strong></li>
+</ul>
+<p><span class="math display">\[
+\left\{    
+\begin{array}{ll}       
+H_0 : \pi_y = \pi_1 = \dots = \pi_k = 0  \\       
+H_1 : \pi_y \neq \pi_1 \neq \dots \neq \pi_k \neq 0     
+\end{array}
+\right.
+\]</span></p>
+<ul>
+<li><strong>Cas 2 :</strong></li>
+</ul>
+<p><span class="math display">\[
+\left\{    
+\begin{array}{ll}       
+H_0 : \pi_y = \pi_1 = \dots = \pi_k = c_0 = 0  \\       
+H_1 : \pi_y \neq \pi_1 \neq \dots \neq \pi_k \neq c_0 \neq 0     
+\end{array}
+\right.
+\]</span></p>
+<ul>
+<li><strong>Cas 4</strong></li>
+</ul>
+<p><span class="math display">\[
+\left\{    
+\begin{array}{ll}       
+H_0 : \pi_y = \pi_1 = \dots = \pi_k = c_1 = 0  \\       
+H_1 : \pi_y \neq \pi_1 \neq \dots \neq \pi_k \neq c_1 \neq 0     
+\end{array}
+\right.
+\]</span></p>
+<p>Sous l’hypothèse nulle, ne présentent pas de relation de long-terme en niveau. Elles ne sont pas cointégrées. On estime donc un <span class="math inline">\(ARDL\)</span> en première différence classique. Sous l’hypothèse alternative, il existe une relation de long-terme entre les variables en niveau. On peut donc estimer un modèle à correction d’erreur.</p>
+<p>Une fois la statistique de test obtenue (non reportée ici) notée <span class="math inline">\(F\)</span>, il faut la comparer aux valeurs critiques tabulés notées <span class="math inline">\(F_{I(0)}\)</span> pour la valeur critique obtenue lorsque toutes les variables sont <span class="math inline">\(I(0)\)</span> et <span class="math inline">\(F_{I(1)}\)</span> pour la valeur critique obtenue lorsque toutes les variables sont <span class="math inline">\(I(1)\)</span>. Cela donne l’intervalle : <span class="math inline">\([F_{I(0)} \hspace{0.2cm}; \hspace{0.2cm} F_{I(1)}]\)</span>. La règle de décision est la suivante :</p>
+<ul>
+<li><p>Si <span class="math inline">\(F &lt; F_{I(0)}\)</span> alors on ne peut pas rejeter <span class="math inline">\(H_0\)</span>. Il semblerait qu’il n’existe pas de relation en niveau entre les variables peu importe que les variables soient toutes <span class="math inline">\(I(0)\)</span>, <span class="math inline">\(I(1)\)</span> ou mutuellement cointégrées.</p></li>
+<li><p>Si <span class="math inline">\(F &gt; F_{I(1)}\)</span>} alors on peut rejeter l’hypothèse nulle. Il semblerait qu’il existe une relation en niveau entre les variables peu importe quelles soient toutes <span class="math inline">\(I(0)\)</span>, <span class="math inline">\(I(1)\)</span> ou mutuellement cointégrées</p></li>
+<li><p>Si <span class="math inline">\(F \in [F_{I(0)} \hspace{0.2cm}; \hspace{0.2cm} F_{I(1)}]\)</span> alors on ne peut pas tirer de conclusion à partir de ce test. Il faut regarder variable par variables leur ordre d’intégration avant de faire des tests d’inférence.</p></li>
+</ul>
+<p>Le deuxième test proposé par <strong>Pesaran et al (2001)</strong> est un dérivé du test de Student qui va tester si la force de rappel de long-terme est significativement différente de 0 dans un modèle <span class="math inline">\(UECM\)</span>.</p>
+<p>Ainsi à partir du modèle :</p>
+<p><span class="math display">\[
+\Delta Y_t = c_0 + c_1t + \pi_y Y_{t-1} + \sum_{j=1}^k \pi_j X_{j,t-1} + \sum_{i=1}^{p-1}\psi_{y,i} \Delta Y_{t-i} + \sum_{j=1}^k \sum_{l=1}^{q_j - 1} \psi_{j,l} \Delta X_{j,t-l} + \sum_{j=1}^k \omega_j \Delta X_{j,t} + \varepsilon_t
+\]</span></p>
+<p>On va tester :</p>
+<p><span class="math display">\[
+\left\{    
+\begin{array}{ll}       
+H_0 : \pi_y = 0  \\       
+H_1 : \pi_y  \neq 0     
+\end{array}
+\right.
+\]</span></p>
+<p>Une fois la statistique de test obtenue (non reportée ici) notée <span class="math inline">\(t\)</span>, il faut la comparer aux valeurs critiques tabulés notées <span class="math inline">\(t_{I(0)}\)</span> pour la valeur critique obtenue lorsque toutes les variables sont <span class="math inline">\(I(0)\)</span> et <span class="math inline">\(t_{I(1)}\)</span> pour la valeur critique obtenue lorsque toutes les variables sont <span class="math inline">\(I(1)\)</span>. Cela donne l’intervalle : <span class="math inline">\([t_{I(0)} \hspace{0.2cm}; \hspace{0.2cm} t_{I(1)}]\)</span>. La règle de décision est la suivante :</p>
+<ul>
+<li><p>Si <span class="math inline">\(t &lt; t_{I(0)}\)</span> alors on ne peut pas rejeter <span class="math inline">\(H_0\)</span>. Il semblerait qu’il n’existe pas de force de rappel de long-terme. Ce qui semblerait indiquer l’absence de relation en niveau entre les variables peu importe que les variables soient toutes <span class="math inline">\(I(0)\)</span>, <span class="math inline">\(I(1)\)</span> ou mutuellement cointégrées.</p></li>
+<li><p>Si <span class="math inline">\(t &gt; t_{I(1)}\)</span>} alors on peut rejeter l’hypothèse nulle. Il semblerait qu’il existe une force de rappel de long-terme. Ce qui semblerait indiquer la présence de relation en niveau entre les variables peu importe quelles soient toutes <span class="math inline">\(I(0)\)</span>, <span class="math inline">\(I(1)\)</span> ou mutuellement cointégrées</p></li>
+<li><p>Si <span class="math inline">\(t \in [t_{I(0)} \hspace{0.2cm}; \hspace{0.2cm} t_{I(1)}]\)</span> alors on ne peut pas tirer de conclusion à partir de ce test. Il faut regarder variable par variables leur ordre d’intégration avant de faire des tests d’inférence.</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
