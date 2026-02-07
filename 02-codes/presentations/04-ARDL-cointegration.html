@@ -21,6 +21,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -80,6 +115,7 @@ window.Quarto = {
   <li><a href="#théorie" id="toc-théorie" class="nav-link active" data-scroll-target="#théorie">Théorie</a>
   <ul class="collapse">
   <li><a href="#hypothèses-classiques-des-mco-en-séries-temporelles" id="toc-hypothèses-classiques-des-mco-en-séries-temporelles" class="nav-link" data-scroll-target="#hypothèses-classiques-des-mco-en-séries-temporelles">Hypothèses classiques des MCO en séries temporelles</a></li>
+  <li><a href="#propriétés-asymptotiques-des-mco" id="toc-propriétés-asymptotiques-des-mco" class="nav-link" data-scroll-target="#propriétés-asymptotiques-des-mco">Propriétés asymptotiques des MCO</a></li>
   <li><a href="#modèles-à-retards-distribués-dl" id="toc-modèles-à-retards-distribués-dl" class="nav-link" data-scroll-target="#modèles-à-retards-distribués-dl">Modèles à Retards Distribués (DL)</a></li>
   <li><a href="#multiplicateurs-et-effets-marginaux" id="toc-multiplicateurs-et-effets-marginaux" class="nav-link" data-scroll-target="#multiplicateurs-et-effets-marginaux">Multiplicateurs et effets marginaux</a>
   <ul class="collapse">
@@ -101,6 +137,14 @@ window.Quarto = {
   <li><a href="#modèle-restricted-error-correction-model-recm" id="toc-modèle-restricted-error-correction-model-recm" class="nav-link" data-scroll-target="#modèle-restricted-error-correction-model-recm">Modèle Restricted Error Correction Model (RECM)</a></li>
   <li><a href="#bound-f-test-bound-t-test" id="toc-bound-f-test-bound-t-test" class="nav-link" data-scroll-target="#bound-f-test-bound-t-test">Bound F test / Bound t test</a></li>
   </ul></li>
+  </ul></li>
+  <li><a href="#code" id="toc-code" class="nav-link" data-scroll-target="#code">Code</a>
+  <ul class="collapse">
+  <li><a href="#setup" id="toc-setup" class="nav-link" data-scroll-target="#setup">Setup</a></li>
+  <li><a href="#régression-statique" id="toc-régression-statique" class="nav-link" data-scroll-target="#régression-statique">Régression statique</a></li>
+  <li><a href="#régression-avec-variable-dépendante-retardée" id="toc-régression-avec-variable-dépendante-retardée" class="nav-link" data-scroll-target="#régression-avec-variable-dépendante-retardée">Régression avec variable dépendante retardée</a></li>
+  <li><a href="#modélisation-ardl" id="toc-modélisation-ardl" class="nav-link" data-scroll-target="#modélisation-ardl">Modélisation ARDL</a></li>
+  <li><a href="#procédure-de-pesaran-et-al-2001" id="toc-procédure-de-pesaran-et-al-2001" class="nav-link" data-scroll-target="#procédure-de-pesaran-et-al-2001">Procédure de Pesaran et al (2001)</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -162,10 +206,60 @@ E(u_t|\mathbf{X}) = 0, \hspace{0.2cm} t = 1, 2, \dots, n
 \]</span></p>
 <p>Cette hypothèse indique que l’erreur à l’instant <span class="math inline">\(t\)</span> ne doit pas être corrélée de quelque manière que ce soit avec les variables explicatives pour chaque période de temps. Les variables doivent être strictement exogènes. Ce qui est une hypothèse plus stricte que la seule exogénéité contemporaine <span class="math inline">\(E(u_t|\mathbf{X}_t) = 0, \hspace{0.2cm} t = 1, 2, \dots, n\)</span>.</p>
 <p>Sous les hypothèses TS.1 à TS.3 les estimateurs MCO en série temporelle sont sans biais.</p>
+<ul>
+<li><strong>Hypothèse TS.4 : Homoscédasticité</strong></li>
+</ul>
+<p>Conditionnellement à <span class="math inline">\(X\)</span>, la variance de <span class="math inline">\(u_t\)</span> est la même pour tout <span class="math inline">\(t\)</span> : <span class="math inline">\(Var(u_t | X) = Var(u_t) = \sigma^2 \text{ , } t = 1, 2, \dots, n\)</span>. Cela signifie que la variance conditionnelle des erreurs ne doit pas dépendre des variables explicatives (il suffit pour cela que <span class="math inline">\(u_t\)</span> et <span class="math inline">\(X\)</span> soient indépendants) et que la variance des erreurs soit constante au cours du temps.</p>
+<ul>
+<li><strong>Hypothèse TS.5 : Absence d’autocorrélation</strong></li>
+</ul>
+<p>Conditionnellement à <span class="math inline">\(X\)</span>, les erreurs à deux périodes de temps différentes ne sont pas corrélées entre elles: <span class="math inline">\(Corr(u_t, u_s) = 0 \hspace{0.2cm} \forall \hspace{0.2cm} t \neq s\)</span>. Si cette propriété n’est pas vérifiée, on dit que les erreurs souffrent d’autocorrélation ou de corrélation sérielle car elles sont corrélées dans le temps. L’autocorrélation implique que si à une période <span class="math inline">\(t\)</span> le niveau réel de la variable est pus élevé que la niveau attendu, alors il y a de plus fortes chances que ce soit également le cas dans la période suivante.</p>
+<p>Sous les hypothèses TS.4 à TS.5, les erreurs sont dites sphériques. Dans ce cas, la variance des estimateurs MCO est minimale.</p>
+<p><strong>Sous les hypothèses TS.1 à TS.5, les estimateurs MCO sont les meilleurs estimateurs linéaires possibles sans biais, conditionnellement à</strong> <span class="math inline">\(X\)</span><strong>.</strong></p>
+<ul>
+<li><strong>Hypothèse TS.6 : Normalité</strong></li>
+</ul>
+<p>Les erreurs <span class="math inline">\(u_t\)</span> sont indépendantes de <span class="math inline">\(X\)</span> et indépendamment et identiquement distribuées selon une loi normale <span class="math inline">\((0, \sigma^2)\)</span>. Cette hypothèse implique les hypothèses TS.3, TS.4, TS.5 mais est plus forte de par les hypothèses d’indépendance et de normalité.</p>
+<p>Sous les hypothèses TS.1 à TS.6, les estimateurs des MCO sont normalement distribués conditionnellement à <span class="math inline">\(X\)</span>. De plus, sous l’hypothèse nulle, chaque statistique <span class="math inline">\(t\)</span> suit une distribution de Student, et chaque statistique <span class="math inline">\(F\)</span> suit une loi de Fisher.</p>
+</section>
+<section id="propriétés-asymptotiques-des-mco" class="level2">
+<h2 class="anchored" data-anchor-id="propriétés-asymptotiques-des-mco">Propriétés asymptotiques des MCO</h2>
+<p>Les hypothèses classiques des MC0 en séries temporelles peuvent être difficiles à remplir. En effet, elles imposent généralement que ces hypothèses soient vérifiées pour toutes les périodes de temps simultanément ce qui est difficile à prouver. Cependant, grâce aux séries dites faiblement dépendantes (stationnaires), nous pouvons assouplir ces hypothèses et utiliser les propriétés asymptotiques des MCO.</p>
+<ul>
+<li><strong>Hypothèse TS.1’ : Linéarité et faible dépendance</strong></li>
+</ul>
+<p>Le processus stochastique <span class="math inline">\(\{(x_{t,1}, x_{t,2}, \dots, x_{t,k}, y_t)\}\)</span> : <span class="math inline">\(t=1, 2, \dots, n\)</span> suit un modèle linéaire dans ses paramètres :</p>
+<p><span class="math display">\[ y_t = \alpha + \beta_1 X_{1t} + \dots + \beta_k X_{kt} + u_t \]</span></p>
+<p>Où <span class="math inline">\(u_t\)</span> correspond à la série des erreurs et <span class="math inline">\(n\)</span> le nombre de périodes temps (observations) de l’échantillon. Ce processus est un processus stationnaire et de faible dépendance. La Loi des Grands Nombres et le Théorème Central Limite s’appliquent aux moyennes de l’échantillon.</p>
+<p>La stationnarité de la série n’est pas critique pour les propriétés asymptotiques des MCO (il faut une forme de stabilité dans les temps des relations). La restriction additionnelle majeure de cette hypothèse est l’hypothèse de faible dépendance qui implique que <span class="math inline">\(X_t\)</span> et <span class="math inline">\(X_{t+h}\)</span> sont “presque indépendants” lorsque <span class="math inline">\(h\)</span> augmente.</p>
+<ul>
+<li><strong>Hypothèse TS.2’ : Absence de parfaite colinéarité</strong></li>
+</ul>
+<p>Cette hypothèse est la même que l’hypothèse TS.2 :</p>
+<p>Dans l’échantillon (et donc dans le processus temporel sous-jacent), aucune variable explicative n’est une constante ou une combinaison linéaire parfaite d’autres variables explicatives.</p>
+<p>Cette hypothèse autorise une certaine corrélation entre les variables explicatives tant que celles-ci ne sont pas parfaitement corrélées dans l’échantillon.</p>
+<p>Si cette hypothèse n’est pas vérifiée le modèle n’est pas identifiable.</p>
+<ul>
+<li><strong>Hypothèse TS.3’ : Moyenne conditionnelle nulle</strong></li>
+</ul>
+<p>Les variables explicatives sont simultanément exogènes : <span class="math inline">\(E(u_t|X_t) = 0\)</span>.</p>
+<p>Par stationnarité, on suppose que si l’exogénéité est vérifiée pour une période de temps, cela est vrai aussi pour toutes les périodes de temps. Supprimer la stationnarité nous demanderait de vérifier que la condition est vraie pour tout <span class="math inline">\(t=1, 2, \dots, n\)</span>. Cette hypothèse est bien plus facile à vérifier que l’hypothèse TS.3 qui suppose que le terme d’erreur en <span class="math inline">\(t\)</span> n’est corrélé d’aucune manière que ce soit à toutes les variables explicatives pour toutes les périodes de temps. Ici, il faut simplement vérifier qu’il n’y ait pas de lien quelconque à la période <span class="math inline">\(t\)</span>. Attention cela ne signifie pas que cette hypothèse supprime la possibilité pour que le terme d’erreur contienne des variables retardées. Dans ce cas il faut les prendre en compte dans le modèle.</p>
+<p><strong>Sous les hypothèses TS.1’, TS.2’ et TS.3’, les estimateurs MCO sont consistants :</strong> <span class="math inline">\(\text{plim }\hat{\beta} = \beta\)</span><strong>.</strong></p>
+<ul>
+<li><strong>Hypothèse TS.4’ : Homoscédasticité</strong></li>
+</ul>
+<p>Les erreurs sont simultanément homoscédastiques : <span class="math inline">\(Var(u_t|X_t) = \sigma^2\)</span></p>
+<p>Une foi encore, la stationnarité nous permet de ne vérifier que la relation contemporaine et pas pour toutes les valeurs de temps.</p>
+<ul>
+<li><strong>Hypothèse TS.5’ : Absence d’autocorrélation</strong></li>
+</ul>
+<p>Pour tout <span class="math inline">\(t \neq s\)</span>, <span class="math inline">\(E(u_t u_s |X_t X_s) = 0\)</span>. Cette hypothèse signifie simplement que les termes d’erreurs de périodes de temps différentes ne doivent pas être corrélés.</p>
+<p><strong>De manière asymptotique (lorsque le nombre d’observation croit vers l’infini), sous les hypothèses TS.1’ à TS.5’, les estimateurs MCO sont asymptotiquement normalement distribués. De plus les écarts-types, t-stat, F-stat et LM-stat issus des MCO sont asymptotiquement valides.</strong></p>
+<p>Les modèles ayant des variables explicatives avec tendance peuvent satisfaire les hypothèses TS.1’ à TS.5’ à condition que ces variables soient stationnaires en tendance (processus Trend Stationnary). Aussi longtemps que les tendances sont intégrées dans l’équation si cela est nécessaire, la procédure d’inférence usuelle est asymptotiquement valide.</p>
 </section>
 <section id="modèles-à-retards-distribués-dl" class="level2">
 <h2 class="anchored" data-anchor-id="modèles-à-retards-distribués-dl">Modèles à Retards Distribués (DL)</h2>
-<p>Les modèles à retards distribués sont des modèles dynamiques de séries temporelles dans lequels la dynamique de la variable <span class="math inline">\(Y\)</span> peut être expliquée par des valeurs contemporainres et/ou retardées des variables explicatives <span class="math inline">\(X\)</span>.</p>
+<p>Les modèles à retards distribués sont des modèles dynamiques de séries temporelles dans lesquels la dynamique de la variable <span class="math inline">\(Y\)</span> peut être expliquée par des valeurs contemporaines et/ou retardées des variables explicatives <span class="math inline">\(X\)</span>.</p>
 <p>Ce type de modèle permet d’incorporer une dynamique plus riche et d’obtenir des effets marginaux (parfois causaux) des variables <span class="math inline">\(X\)</span> sur la variable <span class="math inline">\(Y\)</span>.</p>
 <p>Suivant si l’on considère un nombre fini ou infini de valeurs retardées pour la variable explicative, on parlera de modèles à retards distribués finis ou infinis. En pratique seuls les modèles à retards finis peuvent être estimés.</p>
 <p>Un modèle à retards distribués finis d’ordre <span class="math inline">\(DL(q_1, \dots, q_k)\)</span> s’écrit sous sa forme générale :</p>
@@ -532,6 +626,622 @@ H_1 : \pi_y  \neq 0
 <li><p>Si <span class="math inline">\(t \in [t_{I(0)} \hspace{0.2cm}; \hspace{0.2cm} t_{I(1)}]\)</span> alors on ne peut pas tirer de conclusion à partir de ce test. Il faut regarder variable par variables leur ordre d’intégration avant de faire des tests d’inférence.</p></li>
 </ul>
 </section>
+</section>
+</section>
+<section id="code" class="level1">
+<h1>Code</h1>
+<section id="setup" class="level2">
+<h2 class="anchored" data-anchor-id="setup">Setup</h2>
+<p>Charger les librairies et tous les objets de setup. Comme rien n’est chargé pour l’instant il faut :</p>
+<ul>
+<li><p>Utiliser la syntaxe <code>here::here()</code> pour dire que l’on utilise la fonction <code>here()</code> du package <code>here</code></p></li>
+<li><p>Indiquer le chemin en entier jusqu’au script <code>setup.R</code></p></li>
+</ul>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Exécute le script setup.R pour charger tous les éléments importants</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"02-codes"</span>, <span class="st">"utils"</span>, <span class="st">"setup.R"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Nous voulons modéliser la monnaie réelle (agrégat M2) en fonction du revenu réel, du taux d’intérêt des obligations étatiques et du taux d’intérêt des dépôts bancaires au Danemark de 1974:Q1 à 1987:Q3.</p>
+<p>Commençons par charger les données contenues dans l’objet <code>ARDL::denmark</code> et transformons le en objet de classe <code>tibble</code> pour plus de facilités à manipuler les données. (Si certaines fonctions imposent l’utilisation d’un objet TS, alors on le retransformera en temps voulu).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualiser à quoi ressemble l'objet denmark</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>ARDL<span class="sc">::</span>denmark <span class="sc">|&gt;</span> </span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>             LRM      LRY        LPY       IBO    IDE
+1974 Q1 11.63255 5.903658 -0.6187359 0.1547356 0.0940
+1974 Q2 11.60415 5.873820 -0.5807479 0.1779912 0.0955
+1974 Q3 11.58152 5.837818 -0.5428478 0.1705647 0.0955
+1974 Q4 11.60185 5.812255 -0.5046041 0.1522273 0.0955
+1975 Q1 11.58630 5.803945 -0.4864585 0.1342276 0.0885
+1975 Q2 11.60450 5.786761 -0.4544386 0.1334805 0.0790</code></pre>
+</div>
+</div>
+<p>Il s’agit d’un objet de classe TS (Time Series) contenant 5 colonnes pour les différentes variables. Les dates sont indiquées en temps que noms des lignes. Il faut donc penser à les récupérer sinon nous n’aurons pas les dates disponibles lorsque l’on va transformer cet objet en tibble.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Charger les données</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  ARDL<span class="sc">::</span>denmark <span class="sc">|&gt;</span> </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Transformer en une tibble en indiquant que le nom des lignes doit être mis dans la variable "year"</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_tibble</span>(<span class="at">rownames =</span> <span class="st">"year"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Afficher l'objet</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 55 × 6
+   year      LRM   LRY    LPY   IBO    IDE
+   &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;
+ 1 1974 Q1  11.6  5.90 -0.619 0.155 0.094 
+ 2 1974 Q2  11.6  5.87 -0.581 0.178 0.0955
+ 3 1974 Q3  11.6  5.84 -0.543 0.171 0.0955
+ 4 1974 Q4  11.6  5.81 -0.505 0.152 0.0955
+ 5 1975 Q1  11.6  5.80 -0.486 0.134 0.0885
+ 6 1975 Q2  11.6  5.79 -0.454 0.133 0.079 
+ 7 1975 Q3  11.7  5.83 -0.441 0.128 0.076 
+ 8 1975 Q4  11.8  5.93 -0.439 0.129 0.074 
+ 9 1976 Q1  11.8  5.94 -0.404 0.141 0.072 
+10 1976 Q2  11.8  5.94 -0.373 0.153 0.078 
+# ℹ 45 more rows</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Le fait d'être en quaterly complique un peu la mise en graphique</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>df <span class="sc">|&gt;</span> </span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Ajouter une variable qui indique le numéro de ligne : permet d'avoir une variable continue sur l'axe des x</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">t =</span> <span class="fu">row_number</span>()) <span class="sc">|&gt;</span> </span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Regrouper toutes les valeurs des variables d'intérêt dans une variable nommée "value" et le nom des variables associées dans une variable nimmée "variable"</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols =</span> <span class="sc">!</span><span class="fu">c</span>(year, t),</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="st">"variable"</span>,</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_to =</span> <span class="st">"value"</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Faire un graphique en ligne</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> t, <span class="at">y =</span> value)) <span class="sc">+</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Séparer les variables dans différents panels avec chaque axe qui leur est propre</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="st">"variable"</span>, <span class="at">scales =</span> <span class="st">"free"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 275 × 4
+   year        t variable   value
+   &lt;chr&gt;   &lt;int&gt; &lt;chr&gt;      &lt;dbl&gt;
+ 1 1974 Q1     1 LRM      11.6   
+ 2 1974 Q1     1 LRY       5.90  
+ 3 1974 Q1     1 LPY      -0.619 
+ 4 1974 Q1     1 IBO       0.155 
+ 5 1974 Q1     1 IDE       0.094 
+ 6 1974 Q2     2 LRM      11.6   
+ 7 1974 Q2     2 LRY       5.87  
+ 8 1974 Q2     2 LPY      -0.581 
+ 9 1974 Q2     2 IBO       0.178 
+10 1974 Q2     2 IDE       0.0955
+# ℹ 265 more rows</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="04-ARDL-cointegration_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Avec un objet TS</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(ARDL<span class="sc">::</span>denmark)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="04-ARDL-cointegration_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Il semblerait que les variables ne soient pas stationnaires. On peut le vérifier avec le test ADF par exemple. On va effectuer le test ADF sur chaque série. Pour éviter d’avoir à le faire manuellement pour chaque série, on peut faire une boucle <code>for</code> qui va nous permettre de boucler une opération sur un certain nombre d’éléments.</p>
+<p>On peut cependant être plus efficace en utilisant le package <code>purrr</code>. La fonction <code>map()</code> permet d’appliquer une fonction sur chaque élément d’un vecteur ou d’une liste donné. Ainsi <code>map(x, f)</code> va appliquer la fonction <code>f</code> à chaque élément contenu dans <code>x</code>. La fonction <code>map2(x, y, f)</code> permet de faire la même chose sauf qu’il y a deux vecteurs simultanés <code>x</code> et <code>y</code> qui vont rentrer dans la fonction <code>f</code>. De base ces fonctions renvoient une liste. La fonction <code>map2_dfr()</code> permet simplement de rendre un tibble au lieu d’une liste.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Appliquer le test ADF sur chaque série</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># La fonction a besoin de 2 élements : la série et son nom</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>purrr<span class="sc">::</span><span class="fu">map2_dfr</span>(</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(df<span class="sc">$</span>LRM, df<span class="sc">$</span>LRY, df<span class="sc">$</span>IBO, df<span class="sc">$</span>IDE), <span class="co"># Série à tester</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">"LRM"</span>, <span class="st">"LRY"</span>, <span class="st">"IBO"</span>, <span class="st">"IDE"</span>), <span class="co"># Nom de la série</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Créer une fonction prenant deux paramètres : série et name</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Cette fonction exécuter la fonction adf_test_auto</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  \(serie, name) dobby<span class="sc">::</span><span class="fu">adf_test_auto</span>(</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    serie, name, </span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">lags =</span> <span class="dv">20</span>, </span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">message =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">return_res =</span> <span class="cn">TRUE</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 6
+  serie_name nb_lags model has_ur phi_stat phi_crit
+  &lt;chr&gt;        &lt;dbl&gt; &lt;chr&gt; &lt;lgl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
+1 LRM             10 2     FALSE     -3.04    -2.89
+2 LRY             18 3     TRUE      -3.27    -3.45
+3 IBO              1 3     TRUE      -3.00    -3.45
+4 IDE              1 3     FALSE     -3.85    -3.45</code></pre>
+</div>
+</div>
+<p>Les tests ADF nous indiquent que les séries LRY et IBO ne semblent pas stationnaires. Leur inclusion dans un modèle utilisant les MCO peut résulter en une corrélation fallacieuse. Les coefficients associés ont de très fortes chances d’être biaisés fortement.</p>
+</section>
+<section id="régression-statique" class="level2">
+<h2 class="anchored" data-anchor-id="régression-statique">Régression statique</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">lm</span>(LRM <span class="sc">~</span> LRY <span class="sc">+</span> IBO <span class="sc">+</span> IDE, <span class="at">data =</span> df))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = LRM ~ LRY + IBO + IDE, data = df)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.093657 -0.028844  0.005755  0.030319  0.107622 
+
+Coefficients:
+            Estimate Std. Error t value             Pr(&gt;|t|)    
+(Intercept)  4.39447    0.58112   7.562       0.000000000707 ***
+LRY          1.29580    0.09398  13.788 &lt; 0.0000000000000002 ***
+IBO         -2.61631    0.32819  -7.972       0.000000000161 ***
+IDE          0.61856    0.69110   0.895                0.375    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.04259 on 51 degrees of freedom
+Multiple R-squared:  0.9262,    Adjusted R-squared:  0.9218 
+F-statistic: 213.3 on 3 and 51 DF,  p-value: &lt; 0.00000000000000022</code></pre>
+</div>
+</div>
+<p>A partir du modèle statique, on peut voir que les variables LRY et IBO sont très fortement significatives et que le R² ajusté est de 0,9218 ce qui est extrêmement élevé et un signe de corrélation fallacieuse/de coefficients biaisés à cause de la non stationnarité.</p>
+<p>Un moyen simple de prendre en compte la non stationnarité consiste à différencier les variables non-stationnaires avant de les inclure dans le modèle de régression. Pour cela on peut soit créer des variables dans le tibble <code>df</code>, soit on peut utiliser la fonction <code>dynlm::dynlm()</code> qui permet d’appliquer des opérateurs de séries temporelles.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Différencier les variables LRY et IBO</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>df_diff <span class="ot">&lt;-</span> </span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">|&gt;</span> </span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Modifier le dataframe df</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Effectuer la même opération pour les variable sélectionnées</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">across</span>(</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">.cols =</span> <span class="fu">c</span>(LRY, IBO), <span class="co"># Sélectionner les variables LRY et IBO</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">.fns =</span> \(variable) variable <span class="sc">-</span> <span class="fu">lag</span>(variable), <span class="co"># Leur appliquer une fonction qui va faire la différence première</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">.names =</span> <span class="st">"diff_{.col}"</span> <span class="co"># Créer une nouvelle variable qui va prendre le nom diff_ suivi du nom originel de la variable</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Afficher le résultat</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 55 × 8
+   year      LRM   LRY    LPY   IBO    IDE diff_LRY  diff_IBO
+   &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;
+ 1 1974 Q1  11.6  5.90 -0.619 0.155 0.094  NA       NA       
+ 2 1974 Q2  11.6  5.87 -0.581 0.178 0.0955 -0.0298   0.0233  
+ 3 1974 Q3  11.6  5.84 -0.543 0.171 0.0955 -0.0360  -0.00743 
+ 4 1974 Q4  11.6  5.81 -0.505 0.152 0.0955 -0.0256  -0.0183  
+ 5 1975 Q1  11.6  5.80 -0.486 0.134 0.0885 -0.00831 -0.0180  
+ 6 1975 Q2  11.6  5.79 -0.454 0.133 0.079  -0.0172  -0.000747
+ 7 1975 Q3  11.7  5.83 -0.441 0.128 0.076   0.0467  -0.00507 
+ 8 1975 Q4  11.8  5.93 -0.439 0.129 0.074   0.0964   0.000422
+ 9 1976 Q1  11.8  5.94 -0.404 0.141 0.072   0.00781  0.0125  
+10 1976 Q2  11.8  5.94 -0.373 0.153 0.078  -0.00232  0.0118  
+# ℹ 45 more rows</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>reg_statique <span class="ot">&lt;-</span> </span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lm</span>(LRM <span class="sc">~</span> diff_LRY <span class="sc">+</span> diff_IBO <span class="sc">+</span> IDE, <span class="at">data =</span> df_diff) <span class="sc">|&gt;</span> </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summary</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = LRM ~ diff_LRY + diff_IBO + IDE, data = df_diff)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.241490 -0.084574  0.001314  0.078514  0.198113 
+
+Coefficients:
+            Estimate Std. Error t value             Pr(&gt;|t|)    
+(Intercept)  12.4140     0.1110 111.888 &lt; 0.0000000000000002 ***
+diff_LRY     -0.3442     0.6791  -0.507                0.614    
+diff_IBO      0.2766     1.5898   0.174                0.863    
+IDE          -7.2621     1.2090  -6.007          0.000000214 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.1179 on 50 degrees of freedom
+  (1 observation effacée parce que manquante)
+Multiple R-squared:  0.4388,    Adjusted R-squared:  0.4051 
+F-statistic: 13.03 on 3 and 50 DF,  p-value: 0.00000208</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Utiliser des opérateurs de séries temporelles directement</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>dynlm<span class="sc">::</span><span class="fu">dynlm</span>(</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  LRM <span class="sc">~</span> <span class="fu">d</span>(LRY) <span class="sc">+</span> <span class="fu">d</span>(IBO) <span class="sc">+</span> IDE, <span class="co"># d() -&gt; fait la différence première d'une série </span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> df <span class="sc">|&gt;</span> <span class="fu">ts</span>() <span class="co"># Obligé de transformer le dataframe en objet Time Series pour faire la différenciation</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span> </span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summary</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Time series regression with "ts" data:
+Start = 2, End = 55
+
+Call:
+dynlm::dynlm(formula = LRM ~ d(LRY) + d(IBO) + IDE, data = ts(df))
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.241490 -0.084574  0.001314  0.078514  0.198113 
+
+Coefficients:
+            Estimate Std. Error t value             Pr(&gt;|t|)    
+(Intercept)  12.4140     0.1110 111.888 &lt; 0.0000000000000002 ***
+d(LRY)       -0.3442     0.6791  -0.507                0.614    
+d(IBO)        0.2766     1.5898   0.174                0.863    
+IDE          -7.2621     1.2090  -6.007          0.000000214 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.1179 on 50 degrees of freedom
+Multiple R-squared:  0.4388,    Adjusted R-squared:  0.4051 
+F-statistic: 13.03 on 3 and 50 DF,  p-value: 0.00000208</code></pre>
+</div>
+</div>
+<p>On peut voir (les deux méthodes donnant strictement le même résultat) que les variables en premières différences ne sont plus significatives tandis que la variable IDE devient significatives. L’augmentation des taux d’intérêts bancaire fait diminuer fortement l’offre totale de monnaie M2 puisqu’il y a moins de crédits en circulation dans l’économie.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>dobby<span class="sc">::</span><span class="fu">check_univariate_autocorr</span>(reg_statique<span class="sc">$</span>residuals, <span class="st">"résidus statiques"</span>, <span class="at">test_type =</span> <span class="st">"Box-Pierce"</span>, <span class="at">return_output =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+
+#########################################
+# Box-Pierce test for résidus statiques #
+#########################################</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>H0 : There is no autocorrelation in 'résidus statiques' for a given lag number</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[[1]]
+
+    Box-Pierce test
+
+data:  serie
+X-squared = 40.611, df = 1, p-value = 0.0000000001858
+
+
+[[2]]
+
+    Box-Pierce test
+
+data:  serie
+X-squared = 115.88, df = 20, p-value = 0.000000000000001665</code></pre>
+</div>
+</div>
+<p>On peut voir que nos résidus sont fortement autocorrélés. cela n’est pas surprenant puisque nous n’avons inclue aucune dynamique dans notre régression.</p>
+</section>
+<section id="régression-avec-variable-dépendante-retardée" class="level2">
+<h2 class="anchored" data-anchor-id="régression-avec-variable-dépendante-retardée">Régression avec variable dépendante retardée</h2>
+<p>Pour prendre en compte plus de dynamique, on peut rajouter des retards dans les variables expliques ou bien ajouter des retards de la variable dépendante. Pour ce faire on peut soit créer les variables dans un dataframe, soit on utilise la fonction <code>dynlm()</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>reg_dep_retard <span class="ot">&lt;-</span> </span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  dynlm<span class="sc">::</span><span class="fu">dynlm</span>(</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  LRM <span class="sc">~</span> <span class="fu">L</span>(LRM) <span class="sc">+</span> <span class="fu">d</span>(LRY) <span class="sc">+</span> <span class="fu">d</span>(IBO) <span class="sc">+</span> IDE,</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> df <span class="sc">|&gt;</span> <span class="fu">ts</span>()</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span> </span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summary</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Time series regression with "ts" data:
+Start = 2, End = 55
+
+Call:
+dynlm::dynlm(formula = LRM ~ L(LRM) + d(LRY) + d(IBO) + IDE, 
+    data = ts(df))
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.051689 -0.019407  0.003597  0.014714  0.089534 
+
+Coefficients:
+            Estimate Std. Error t value             Pr(&gt;|t|)    
+(Intercept)  0.51046    0.39511   1.292              0.20243    
+L(LRM)       0.96244    0.03188  30.189 &lt; 0.0000000000000002 ***
+d(LRY)       0.49018    0.15740   3.114              0.00308 ** 
+d(IBO)      -1.02792    0.36532  -2.814              0.00703 ** 
+IDE         -0.70936    0.35101  -2.021              0.04877 *  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.0269 on 49 degrees of freedom
+Multiple R-squared:  0.9714,    Adjusted R-squared:  0.969 
+F-statistic: 415.5 on 4 and 49 DF,  p-value: &lt; 0.00000000000000022</code></pre>
+</div>
+</div>
+<p>les variables indiquées par <code>L(x)</code> sont les variables retardées (s’il y a plusieurs retards, un chiffre indique le numéro du retard : <code>L(x,1)</code> sera donc le premier retard de la variable <span class="math inline">\(x\)</span>). Les variables indiquées par <code>d(x)</code> sont les variables en différence. S’il y a un chiffre après, cela indique le niveau de la différence : <code>d(x,2)</code> = <span class="math inline">\(x_t - x_{t-2}\)</span>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>dobby<span class="sc">::</span><span class="fu">check_univariate_autocorr</span>(reg_dep_retard<span class="sc">$</span>residuals, <span class="st">"résidus dépendante retardée"</span>, <span class="at">test_type =</span> <span class="st">"Box-Pierce"</span>, <span class="at">return_output =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+
+###################################################
+# Box-Pierce test for résidus dépendante retardée #
+###################################################</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>H0 : There is no autocorrelation in 'résidus dépendante retardée' for a given lag number</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[[1]]
+
+    Box-Pierce test
+
+data:  serie
+X-squared = 4.9261, df = 1, p-value = 0.02645
+
+
+[[2]]
+
+    Box-Pierce test
+
+data:  serie
+X-squared = 111.38, df = 20, p-value = 0.00000000000001099</code></pre>
+</div>
+</div>
+<p>Outre le R² ajusté très élevé qui est suspect, on peut voir que l’inclusion de la variable dépendante retardée permet de prendre en compte d’avantage d’autocorrélation à l’ordre 1. En revanche on modélise très mal l’autocorrélation de long-terme. Il s’agit d’un indice indiquant que l’on n’a pas pris en compte assez de retards dans notre modélisation.</p>
+</section>
+<section id="modélisation-ardl" class="level2">
+<h2 class="anchored" data-anchor-id="modélisation-ardl">Modélisation ARDL</h2>
+<p>La fonction <code>dynlm()</code> est très puissante mais sa syntaxe peut vite devenir encombrante lorsque les retards et les différences s’enchainent. Le package <code>ARDL</code> permet d’obtenir les mêmes résultats mais avec une syntaxe bien moins volumineuse. On peut utiliser la même syntaxe que pour la fonction <code>dynlm()</code> mais au lieu d’avoir à indiquer chaque retard pour chaque variable, on indique simplement le nombre de retards que l’on souhaite inclure dans la modélisation pour chaque variable via le paramètre <code>order</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simplement un retard pour la variable dépendante</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>ARDL<span class="sc">::</span><span class="fu">ardl</span>(</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  LRM <span class="sc">~</span> diff_LRY <span class="sc">+</span> diff_IBO <span class="sc">+</span> IDE, <span class="co"># variables à utiliser</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> df_diff, <span class="co"># Dataframe ou objet TS</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">order =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>) <span class="co"># Nombre de retards à inclure pour chaque variable</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summary</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Time series regression with "ts" data:
+Start = 2, End = 55
+
+Call:
+dynlm::dynlm(formula = full_formula, data = data, start = start, 
+    end = end)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.051689 -0.019407  0.003597  0.014714  0.089534 
+
+Coefficients:
+            Estimate Std. Error t value             Pr(&gt;|t|)    
+(Intercept)  0.51046    0.39511   1.292              0.20243    
+L(LRM, 1)    0.96244    0.03188  30.189 &lt; 0.0000000000000002 ***
+diff_LRY     0.49018    0.15740   3.114              0.00308 ** 
+diff_IBO    -1.02792    0.36532  -2.814              0.00703 ** 
+IDE         -0.70936    0.35101  -2.021              0.04877 *  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.0269 on 49 degrees of freedom
+Multiple R-squared:  0.9714,    Adjusted R-squared:  0.969 
+F-statistic: 415.5 on 4 and 49 DF,  p-value: &lt; 0.00000000000000022</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Ajouter des retards aux variables explicatives</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>ARDL<span class="sc">::</span><span class="fu">ardl</span>(</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  LRM <span class="sc">~</span> diff_LRY <span class="sc">+</span> diff_IBO <span class="sc">+</span> IDE, <span class="co"># variables à utiliser</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> df_diff, <span class="co"># Dataframe ou objet TS</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">order =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">1</span>) <span class="co"># Nombre de retards à inclure</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summary</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Time series regression with "ts" data:
+Start = 5, End = 55
+
+Call:
+dynlm::dynlm(formula = full_formula, data = data, start = start, 
+    end = end)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.044614 -0.017754  0.000147  0.012726  0.088022 
+
+Coefficients:
+               Estimate Std. Error t value            Pr(&gt;|t|)    
+(Intercept)     0.30516    0.46579   0.655              0.5161    
+L(LRM, 1)       0.97689    0.03713  26.312 &lt;0.0000000000000002 ***
+diff_LRY        0.37523    0.17916   2.094              0.0426 *  
+L(diff_LRY, 1)  0.05537    0.17872   0.310              0.7583    
+L(diff_LRY, 2)  0.06658    0.17738   0.375              0.7094    
+diff_IBO       -1.06777    0.50307  -2.123              0.0400 *  
+L(diff_IBO, 1) -0.16443    0.57978  -0.284              0.7782    
+L(diff_IBO, 2) -0.22506    0.48442  -0.465              0.6447    
+L(diff_IBO, 3) -0.86968    0.44042  -1.975              0.0552 .  
+IDE            -0.52856    0.74500  -0.709              0.4821    
+L(IDE, 1)       0.20189    0.75753   0.267              0.7912    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.02749 on 40 degrees of freedom
+  (1 observation effacée parce que manquante)
+Multiple R-squared:  0.9738,    Adjusted R-squared:  0.9673 
+F-statistic: 148.9 on 10 and 40 DF,  p-value: &lt; 0.00000000000000022</code></pre>
+</div>
+</div>
+</section>
+<section id="procédure-de-pesaran-et-al-2001" class="level2">
+<h2 class="anchored" data-anchor-id="procédure-de-pesaran-et-al-2001">Procédure de Pesaran et al (2001)</h2>
+<p>Comme nous l’avons vu, notre jeu de données est caractérisé par des variables <span class="math inline">\(I(0)\)</span> stationnaires et des variables <span class="math inline">\(I(1)\)</span> non-stationnaires. Cette disparité empêche d’utiliser la procédure d’Engle et Granger pour tester la cointégration de nos variables. Actuellement, on ne sait pas s’il existe une relation entre les niveaux de nos variables et s’il est donc correcte de modéliser nos séries selon une telle relation ou selon un modèle à correction d’erreur. La meilleure chose que l’on pouvait faire était donc de différencier nos variables <span class="math inline">\(I(1)\)</span> afin d’obtenir des variables <span class="math inline">\(I(0)\)</span> et les inclure dans la modélisation.</p>
+<p>Cependant, cela est limitant car ce qui nous intéresse est le niveau des taux d’intérêts et pas leur taux de croissance. Pour pallier ce problème, on peut utiliser la méthode de Pesaran et al (2001) afin de tester s’il existe une relation entre les niveaux de nos variables ou non.</p>
+<p>La première étape consiste à trouver et estimer le meilleur ARDL entre les niveaux de nos variables. Pour cela, on peut tester différentes spécifications, utiliser les tests sur les résidus ou bien utiliser les critères d’information. La fonction <code>ARDL::auto.ardl()</code> permet de trouver le meilleur ARDL en fonction du critère d’information choisi.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Tester "tous" les modèles et les classer en fonction de leur AIC </span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>models <span class="ot">&lt;-</span> </span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  ARDL<span class="sc">::</span><span class="fu">auto_ardl</span>(</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    LRM <span class="sc">~</span> LRY <span class="sc">+</span> IBO <span class="sc">+</span> IDE, <span class="co"># Variables à utiliser</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> df, <span class="co"># Source des variables</span></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_order =</span> <span class="dv">5</span>, <span class="co"># Nombre de retards maximum autorisé pour les variables</span></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">selection =</span> <span class="st">"AIC"</span> <span class="co"># critère d'information à utiliser</span></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Afficher le classement des modèles</span></span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>models<span class="sc">$</span>top_orders <span class="sc">|&gt;</span> </span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   LRM LRY IBO IDE       AIC
+1    3   1   3   2 -251.0259
+2    3   1   3   3 -250.1144
+3    2   2   0   0 -249.6266
+4    3   2   3   2 -249.1087
+5    3   2   3   3 -248.1858
+6    2   2   0   1 -247.7786
+7    2   1   0   0 -247.5643
+8    2   2   1   1 -246.6885
+9    3   3   3   3 -246.3061
+10   2   2   1   2 -246.2709
+11   2   1   1   1 -245.8736
+12   2   2   2   2 -245.7722
+13   1   1   0   0 -245.6620
+14   2   1   2   2 -245.1712
+15   3   1   2   2 -245.0996
+16   1   0   0   0 -244.4317
+17   1   1   0   1 -243.7702
+18   5   5   5   5 -243.3120
+19   4   1   3   2 -243.0728
+20   4   1   3   3 -242.4378</code></pre>
+</div>
+</div>
+<p>On peut voir que le modèle ARDL qui minimise le critère AIC (pondération entre l’explication du modèle et le nombre de paramètres à estimer) est le modèle <span class="math inline">\(ARDL(3,1,3,2)\)</span>. Le modèle avec simplement un retard sur la variable retardée est le modèle numéro 16.</p>
+<p>Ces modèles étant déjà estimés, on peut obtenir les résultats associés :</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Enregistrer le meilleur modèle dans une variables</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>ardl_3132 <span class="ot">&lt;-</span> </span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  models<span class="sc">$</span>best_model</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Afficher le résumé des résultats</span></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>ardl_3132 <span class="sc">|&gt;</span> </span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summary</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Time series regression with "ts" data:
+Start = 4, End = 55
+
+Call:
+dynlm::dynlm(formula = full_formula, data = data, start = start, 
+    end = end)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.029939 -0.008856 -0.002562  0.008190  0.072577 
+
+Coefficients:
+            Estimate Std. Error t value   Pr(&gt;|t|)    
+(Intercept)   2.6202     0.5678   4.615 0.00004187 ***
+L(LRM, 1)     0.3192     0.1367   2.336   0.024735 *  
+L(LRM, 2)     0.5326     0.1324   4.024   0.000255 ***
+L(LRM, 3)    -0.2687     0.1021  -2.631   0.012143 *  
+LRY           0.6728     0.1312   5.129 0.00000832 ***
+L(LRY, 1)    -0.2574     0.1472  -1.749   0.088146 .  
+IBO          -1.0785     0.3217  -3.353   0.001790 ** 
+L(IBO, 1)    -0.1062     0.5858  -0.181   0.857081    
+L(IBO, 2)     0.2877     0.5691   0.505   0.616067    
+L(IBO, 3)    -0.9947     0.3925  -2.534   0.015401 *  
+IDE           0.1255     0.5545   0.226   0.822161    
+L(IDE, 1)    -0.3280     0.7213  -0.455   0.651847    
+L(IDE, 2)     1.4079     0.5520   2.550   0.014803 *  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.0191 on 39 degrees of freedom
+Multiple R-squared:  0.988, Adjusted R-squared:  0.9843 
+F-statistic: 266.8 on 12 and 39 DF,  p-value: &lt; 0.00000000000000022</code></pre>
+</div>
+</div>
+<p>Il semble que la capacité explicative de ce modèle soit très élevée. Cependant à ce stade on ne sait pas encore s’il existe une relation entre les variables en niveau. Pour cela on va estimer le modèle <span class="math inline">\(UECM\)</span> à partir du meilleur <span class="math inline">\(ARDL\)</span> en niveau (c’est à dire qu’on va choisir le même nombre de retards pour chaque variable en différence).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Estimer le modèle UECM à partir du meilleur ARDL en niveau trouvé</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>uecm_3132 <span class="ot">&lt;-</span> ARDL<span class="sc">::</span><span class="fu">uecm</span>(ardl_3132)</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Afficher les résultats</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>uecm_3132 <span class="sc">|&gt;</span> </span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summary</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Time series regression with "ts" data:
+Start = 4, End = 55
+
+Call:
+dynlm::dynlm(formula = full_formula, data = data, start = start, 
+    end = end)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.029939 -0.008856 -0.002562  0.008190  0.072577 
+
+Coefficients:
+             Estimate Std. Error t value   Pr(&gt;|t|)    
+(Intercept)   2.62019    0.56777   4.615 0.00004187 ***
+L(LRM, 1)    -0.41685    0.09166  -4.548 0.00005154 ***
+L(LRY, 1)     0.41538    0.11761   3.532    0.00108 ** 
+L(IBO, 1)    -1.89172    0.39111  -4.837 0.00002093 ***
+L(IDE, 1)     1.20534    0.44690   2.697    0.01028 *  
+d(L(LRM, 1)) -0.26394    0.10192  -2.590    0.01343 *  
+d(L(LRM, 2))  0.26867    0.10213   2.631    0.01214 *  
+d(LRY)        0.67280    0.13116   5.129 0.00000832 ***
+d(IBO)       -1.07852    0.32170  -3.353    0.00179 ** 
+d(L(IBO, 1))  0.70701    0.46874   1.508    0.13953    
+d(L(IBO, 2))  0.99468    0.39251   2.534    0.01540 *  
+d(IDE)        0.12546    0.55445   0.226    0.82216    
+d(L(IDE, 1)) -1.40786    0.55204  -2.550    0.01480 *  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.0191 on 39 degrees of freedom
+Multiple R-squared:  0.7458,    Adjusted R-squared:  0.6676 
+F-statistic: 9.537 on 12 and 39 DF,  p-value: 0.00000003001</code></pre>
+</div>
+</div>
+<p>Le modèle <span class="math inline">\(UECM\)</span> nous permet d’utiliser le Bound F test de Pesaran et al (2001) qui va tester l’hypothèse nulle de non significativité conjointe des coefficients des variables en niveau. Pour cela on utilise la fonction <code>ARDl::bound_f_test()</code> qui va prendre comme argument, entre autre, un ARDL ou UECM (le modèle ARDL sera automatiquement transformé en UECM) et le “cas” indiquant si la constante et/ou la tendance doivent participer à l’équation de court- ou long-terme. Le paramètre <code>alpha</code> permet d’indiquer le niveau de significativité des valeurs critiques. En cas d’absence, seule la p.value est renvoyée.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Bound F test dans lequel la constante participe dans l'équation de long-terme. </span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Valeurs critiques pour un niveau de significativité de 1%</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>res_f_test <span class="ot">&lt;-</span> </span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>  ARDL<span class="sc">::</span><span class="fu">bounds_f_test</span>(</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>    uecm_3132, <span class="co"># UECM</span></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">case =</span> <span class="dv">2</span>, <span class="co"># Constante dans l'équation de long-terme. Pas de tendance</span></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">alpha =</span> <span class="fl">0.01</span> <span class="co"># Niveau de significativité de 1%</span></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Afficher le résultat et les valeurs critiques</span></span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>res_f_test<span class="sc">$</span>tab</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  statistic Lower-bound I(0) Upper-bound I(1) alpha     p.value
+F  5.116768         3.674361         4.610394  0.01 0.004417563</code></pre>
+</div>
+</div>
+<p>Le Bound F test nous donne l’intervalle suivant : <span class="math inline">\([3.67 ; 4.61]\)</span>. La valeur de la statistique calculée est <span class="math inline">\(5.12\)</span>. Cette statistique est supérieure à la valeur critique supérieure <span class="math inline">\(I(1)\)</span>. On rejette donc l’hypothèse nulle de non-significativité conjointe des coefficients en niveau au sein de 1%. Il semblerait qu’il existe une relation de entre les niveaux des variables sélectionnées.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Ne pas indiquer les valeurs critiques. </span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>ARDL<span class="sc">::</span><span class="fu">bounds_f_test</span>(</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    uecm_3132, <span class="co"># UECM</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">case =</span> <span class="dv">2</span>, <span class="co"># Constante dans l'équation de long-terme. Pas de tendance</span></span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Bounds F-test (Wald) for no cointegration
+
+data:  d(LRM) ~ L(LRM, 1) + L(LRY, 1) + L(IBO, 1) + L(IDE, 1) + d(L(LRM,     1)) + d(L(LRM, 2)) + d(LRY) + d(IBO) + d(L(IBO, 1)) + d(L(IBO,     2)) + d(IDE) + d(L(IDE, 1))
+F = 5.1168, p-value = 0.004418
+alternative hypothesis: Possible cointegration
+null values:
+   k    T 
+   3 1000 </code></pre>
+</div>
+</div>
 </section>
 </section>
 

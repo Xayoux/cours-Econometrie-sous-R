@@ -21,5 +21,7 @@ install.packages("fDMA")
 install.packages("runner")
 install.packages("see")
 install.packages("LSTS")
+install.packages("dynlm")
+install.packages("ARDL")
 
 devtools::install_github("https://github.com/Xayoux/dobby.git")
