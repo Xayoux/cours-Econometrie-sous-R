@@ -585,46 +585,50 @@ Charger les librairies et tous les objets de setup. Comme rien n'est chargé pou
 source(here::here("02-codes", "utils", "setup.R"))
 ```
 
+## Présentation des données
+
 Nous voulons modéliser la monnaie réelle (agrégat M2) en fonction du revenu réel, du taux d'intérêt des obligations étatiques et du taux d'intérêt des dépôts bancaires au Danemark de 1974:Q1 à 1987:Q3.
 
 Commençons par charger les données contenues dans l'objet `ARDL::denmark` et transformons le en objet de classe `tibble` pour plus de facilités à manipuler les données. (Si certaines fonctions imposent l'utilisation d'un objet TS, alors on le retransformera en temps voulu).
 
 ```{r}
-# Visualiser à quoi ressemble l'objet denmark
-ARDL::denmark |> 
-  head()
+# Visualiser à quoi ressemble l'objet denmark et l'enregister dans l'objet df_ts
+df_ts <- 
+  ARDL::denmark
+
+df_ts |> head()
 ```
 
-Il s'agit d'un objet de classe TS (Time Series) contenant 5 colonnes pour les différentes variables. Les dates sont indiquées en temps que noms des lignes. Il faut donc penser à les récupérer sinon nous n'aurons pas les dates disponibles lorsque l'on va transformer cet objet en tibble.
+Il s'agit d'un objet de classe TS (Time Series) contenant 5 colonnes pour les différentes variables. Les dates sont indiquées en tantque noms des lignes. On peut vouloir transformer ce objet Time Series en un tibble afin d'avoir plus de facilité à manipuler les données ou pour les représenter graphiquement. Pour cela, le package `timetk` propose la fonction `tk_tbl()` pour transformer un objetv Time Series en tibble facilement, en conservant l'unité de temps si on le souhaite.
 
 ```{r}
-df <-
-  # Charger les données
-  ARDL::denmark |> 
-  # Transformer en une tibble en indiquant que le nom des lignes doit être mis dans la variable "year"
-  as_tibble(rownames = "year") |> 
-  # Afficher l'objet
+df <- 
+  df_ts |> 
+  timetk::tk_tbl(
+    rename_index = "date" # Rename the time variable "date"
+  ) |> 
   print()
 ```
 
+L'index temporel a bien été ajouté dans la variable "date" sous un format `yearqtr` indiquant un format trimestriel. Avec cette tibble on peut facilement utiliser le package `ggplot2` pour représenter graphiquement nos séries. Afin de toutes les mettre dans un seul graphique facilement, on va pivoter les données afin que toutes les valeurs soient dans une seule colonne et que le nom des variables soit dans une autre colonne.
+
 ```{r}
-# Le fait d'être en quaterly complique un peu la mise en graphique
 df |> 
-  # Ajouter une variable qui indique le numéro de ligne : permet d'avoir une variable continue sur l'axe des x
-  mutate(t = row_number()) |> 
-  # Regrouper toutes les valeurs des variables d'intérêt dans une variable nommée "value" et le nom des variables associées dans une variable nimmée "variable"
+  # Regrouper toutes les valeurs des variables d'intérêt dans une variable nommée "value" et le nom des variables associées dans une variable nommée "variable"
   pivot_longer(
-    cols = !c(year, t),
+    cols = !c(date),
     names_to = "variable",
     values_to = "value"
   ) |> 
   print() |> 
   # Faire un graphique en ligne
-  ggplot(aes(x = t, y = value)) +
+  ggplot(aes(x = date, y = value)) +
   geom_line() +
   # Séparer les variables dans différents panels avec chaque axe qui leur est propre
   facet_wrap("variable", scales = "free")
 ```
+
+On peut aussi tout simplement utiliser la fonction `plot()` sur l'objet time series, mais les possibilités de customisation sont plus faibles.
 
 ```{r}
 # Avec un objet TS
@@ -636,27 +640,41 @@ Il semblerait que les variables ne soient pas stationnaires. On peut le vérifie
 On peut cependant être plus efficace en utilisant le package `purrr`. La fonction `map()` permet d'appliquer une fonction sur chaque élément d'un vecteur ou d'une liste donné. Ainsi `map(x, f)` va appliquer la fonction `f` à chaque élément contenu dans `x`. La fonction `map2(x, y, f)` permet de faire la même chose sauf qu'il y a deux vecteurs simultanés `x` et `y` qui vont rentrer dans la fonction `f`. De base ces fonctions renvoient une liste. La fonction `map2_dfr()` permet simplement de rendre un tibble au lieu d'une liste.
 
 ```{r}
-# Appliquer le test ADF sur chaque série
-# La fonction a besoin de 2 élements : la série et son nom
-purrr::map2_dfr(
-  list(df$LRM, df$LRY, df$IBO, df$IDE), # Série à tester
-  c("LRM", "LRY", "IBO", "IDE"), # Nom de la série
-  # Créer une fonction prenant deux paramètres : série et name
-  # Cette fonction exécuter la fonction adf_test_auto
-  \(serie, name) dobby::adf_test_auto(
-    serie, name, 
-    lags = 20, 
-    message = FALSE, 
-    return_res = TRUE
+# N'exécuter que si le package "dobby" est installé
+if (rlang::is_installed("dobby")) {
+  # Appliquer le test ADF sur chaque série (on peut utiliser l'objet tibble ou bien l'objet TS sans distinction)
+  # La fonction a besoin de 2 élements : la série et son nom
+  purrr::map2_dfr(
+    list(df$LRM, df$LRY, df$IBO, df$IDE), # Série à tester
+    c("LRM", "LRY", "IBO", "IDE"), # Nom de la série
+    # Créer une fonction prenant deux paramètres : série et name
+    # Cette fonction exécuter la fonction adf_test_auto
+    \(serie, name) dobby::adf_test_auto(
+      serie, name, 
+      lags = 20, 
+      message = FALSE, 
+      return_res = TRUE
+    )
   )
-)
+} else {
+  print("Le package 'dobby' n'est pas installé.")
+}
+
+
 ```
 
-Les tests ADF nous indiquent que les séries LRY et IBO ne semblent pas stationnaires. Leur inclusion dans un modèle utilisant les MCO peut résulter en une corrélation fallacieuse. Les coefficients associés ont de très fortes chances d'être biaisés fortement.
+Les tests ADF nous indiquent que les séries LRY et IBO ne semblent pas stationnaires. Leur inclusion dans un modèle utilisant les MCO peut résulter en une corrélation fallacieuse. Les coefficients associés ont de très fortes chances d'être biaisés fortement. Si le package `dobby` n'est pas installé, le test ADF peut se faire manuellement avec la fonction `urca::ur.df()`. Attention, les p.values indiquées ne sont pas les bonnes, et les valeurs critiques données par la fonction concernent le test joint ADF et pas le test individuel (que l'on préfère généralement).
 
 ## Régression statique
 
+Dans un premier temps, modélison la relation (possiblement fallacieuse) suivante :
+
+$$
+\text{LRM}_t = \alpha + \beta_1 \text{LRY}_t + \beta_2 \text{IBO}_t + \beta_3 \text{IDE}_t +u_t
+$$
+
 ```{r}
+# Régression statique
 summary(lm(LRM ~ LRY + IBO + IDE, data = df))
 ```
 
@@ -681,71 +699,127 @@ df_diff <-
   print()
 ```
 
+Le modèle estimé devient :
+
+$$
+\text{LRM}_t = \alpha + \beta_1 \Delta \text{LRY}_t + \beta_2 \Delta \text{IBO}_t + \beta_3 \text{IDE}_t +u_t
+$$
+
+Avec $\Delta X_t = X_t - X_{t-1}$.
+
 ```{r}
+# Régression statique avec toutes les variables I(0)
 reg_statique <- 
   lm(LRM ~ diff_LRY + diff_IBO + IDE, data = df_diff) |> 
   summary() |> 
   print()
 ```
 
+On peut obtenir le même résultat en passant directement des opérateurs de série temporelle à la fonction `dynlm()`. L'opérateur `d(x,i)` permet d'appliquer une différence d'ordre $i$ à la variable $x_t$. $d(x, 1) = x_t - x_{t-1}$ ; $d(x, 2) = x_t - x_{t-2}$. Pour utiliser ces opérateurs temporels, il faut absolument passer comme argument des données de type TS (ou autre format de séries temporelles).
+
 ```{r}
 # Utiliser des opérateurs de séries temporelles directement
 dynlm::dynlm(
   LRM ~ d(LRY) + d(IBO) + IDE, # d() -> fait la différence première d'une série 
-  data = df |> ts() # Obligé de transformer le dataframe en objet Time Series pour faire la différenciation
+  data = df_ts # Obligé de transformer le dataframe en objet Time Series pour faire la différenciation
 ) |> 
   summary()
 ```
 
-On peut voir (les deux méthodes donnant strictement le même résultat) que les variables en premières différences ne sont plus significatives tandis que la variable IDE devient significatives. L'augmentation des taux d'intérêts bancaire fait diminuer fortement l'offre totale de monnaie M2 puisqu'il y a moins de crédits en circulation dans l'économie.
+On peut voir (les deux méthodes donnant strictement le même résultat) que les variables en premières différences ne sont plus significatives tandis que la variable IDE devient significative. L'augmentation des taux d'intérêts bancaire fait diminuer fortement l'offre totale de monnaie M2 puisqu'il y a moins de crédits en circulation dans l'économie.
+
+Un des point gros point d'attention lorsque l'on travaille avec des séries temporelles est le fait de savoir si toute l'autocorrélation des séries a bien été prise en compte. Sinon cela retire la propriété de variance minimale des estimateurs et nous indique également que notre modélisation est incomplète et n'arrive pas à correctement reproduire les caractéristique de notre série d'origine.
+
+On utilise donc le test de Ljung-Box sur notre série des résidus.
 
 ```{r}
-dobby::check_univariate_autocorr(reg_statique$residuals, "résidus statiques", test_type = "Box-Pierce", return_output = FALSE)
+# N'exécuter que si le package dobby est installé
+if (rlang::is_installed("dobby")) {
+  dobby::check_univariate_autocorr(reg_statique$residuals, "résidus statiques", test_type = "Box-Pierce", return_output = FALSE)
+} else {
+  print("Le package 'dobby' n'est pas installé")
+}
+
 ```
 
-On peut voir que nos résidus sont fortement autocorrélés. cela n'est pas surprenant puisque nous n'avons inclue aucune dynamique dans notre régression.
+On peut voir que nos résidus sont fortement autocorrélés. Cela n'est pas surprenant puisque nous n'avons inclue aucune dynamique dans notre régression. Notre modélisation est donc incomplète.
 
 ## Régression avec variable dépendante retardée
 
-Pour prendre en compte plus de dynamique, on peut rajouter des retards dans les variables expliques ou bien ajouter des retards de la variable dépendante. Pour ce faire on peut soit créer les variables dans un dataframe, soit on utilise la fonction `dynlm()`.
+Pour prendre en compte plus de dynamique, on peut rajouter des retards dans les variables explicatives ou bien ajouter des retards de la variable dépendante. Pour ce faire, on peut soit créer les variables dans un dataframe, soit on utilise la fonction `dynlm()`. L'opérateur `L(x,i)` permet d'indiquer que l'on prend la variable $x$ retardée de $i$ périodes. $L(x,2) = x_{t-2}$.
+
+Le modèle estimé devient :
+
+$$
+\text{LRM}_t = \alpha + \beta_0 \text{LRM}_{t-1} + \beta_1 \Delta \text{LRY}_t + \beta_2 \Delta \text{IBO}_t + \beta_3 \text{IDE}_t +u_t
+$$
 
 ```{r}
+# Régression avec variable dépendante retardée
 reg_dep_retard <- 
   dynlm::dynlm(
   LRM ~ L(LRM) + d(LRY) + d(IBO) + IDE,
-  data = df |> ts()
+  data = df_ts
 ) |> 
   summary() |> 
   print()
 ```
 
-les variables indiquées par `L(x)` sont les variables retardées (s'il y a plusieurs retards, un chiffre indique le numéro du retard : `L(x,1)` sera donc le premier retard de la variable $x$). Les variables indiquées par `d(x)` sont les variables en différence. S'il y a un chiffre après, cela indique le niveau de la différence : `d(x,2)` = $x_t - x_{t-2}$.
+On peut re-tester l'autocorrélation des résidus de notre modèle.
 
 ```{r}
-dobby::check_univariate_autocorr(reg_dep_retard$residuals, "résidus dépendante retardée", test_type = "Box-Pierce", return_output = FALSE)
+# N'exécuter que si le package 'dobby' est installé
+if (rlang::is_installed("dobby")) {
+  dobby::check_univariate_autocorr(reg_dep_retard$residuals, "résidus dépendante retardée", test_type = "Box-Pierce", return_output = FALSE)
+} else {
+  print("Le package 'dobby' n'est pas installé")
+}
 ```
 
-Outre le R² ajusté très élevé qui est suspect, on peut voir que l'inclusion de la variable dépendante retardée permet de prendre en compte d'avantage d'autocorrélation à l'ordre 1. En revanche on modélise très mal l'autocorrélation de long-terme. Il s'agit d'un indice indiquant que l'on n'a pas pris en compte assez de retards dans notre modélisation.
+Outre le R² ajusté très élevé qui est suspect, on peut voir que l'inclusion de la variable dépendante retardée permet de prendre en compte d'avantage d'autocorrélation à l'ordre 1. En revanche on modélise très mal l'autocorrélation de long-terme. Il s'agit d'un indice indiquant que l'on n'a pas pris en compte assez de retards dans notre modélisation (ou qu'il nous manque des variables explicatives).
 
 ## Modélisation ARDL
 
-La fonction `dynlm()` est très puissante mais sa syntaxe peut vite devenir encombrante lorsque les retards et les différences s'enchainent. Le package `ARDL` permet d'obtenir les mêmes résultats mais avec une syntaxe bien moins volumineuse. On peut utiliser la même syntaxe que pour la fonction `dynlm()` mais au lieu d'avoir à indiquer chaque retard pour chaque variable, on indique simplement le nombre de retards que l'on souhaite inclure dans la modélisation pour chaque variable via le paramètre `order`.
+La fonction `dynlm()` est très puissante mais sa syntaxe peut vite devenir encombrante lorsque les retards et les différences s’enchaînent. Le package `ARDL` permet d'obtenir les mêmes résultats mais avec une syntaxe bien moins volumineuse. On peut utiliser la même syntaxe que pour la fonction `dynlm()` mais au lieu d'avoir à indiquer chaque retard pour chaque variable, on indique simplement le nombre de retards que l'on souhaite inclure dans la modélisation pour chaque variable via le paramètre `order`.
+
+On peut passer comme argument de données un tibble ou un objet de séries temporelles. Certaines fonctionnalités vont marcher avec un type d'objet et pas l'autre. Par exemple la création et représentation de l'équation de long-terme nécessite un objet de Série Temporelle pour fonctionner correctement. On va donc choisir d'utiliser un objet de série temporelle dès qu'on le peut.
+
+Le package `timetk` permet encore une fois de facilement passer d'un tibble à un objet TS avec la fonction `tk_ts()`.
 
 ```{r}
-# Simplement un retard pour la variable dépendante
+# Transformer df_diff en objet de Série temporelle
+df_diff_ts <- 
+  df_diff |> 
+  timetk::tk_ts(
+    select = !date, # La variable date doit être retirée
+    start = min(df_diff$date), # On indique que notre série temporelle commence à la première date
+    frequency = 4 # On indique que l'on se trouve avec des données trimestrielles : 4 périodes par années
+  )
+
+# Afficher les premières observations
+df_diff_ts |> 
+  head()
+```
+
+On va maintenant utiliser le package `ARDL` pour modéliser notre série LRM avec une variable dépendante retardée.
+
+```{r}
+# Modélisation avec variable dépendante retardée
 ARDL::ardl(
   LRM ~ diff_LRY + diff_IBO + IDE, # variables à utiliser
-  data = df_diff, # Dataframe ou objet TS
-  order = c(1, 0, 0, 0) # Nombre de retards à inclure pour chaque variable
+  data = df_diff_ts, # Dataframe ou objet TS
+  order = c(1, 0, 0, 0) # Nombre de retards à inclure pour chaque variable. La première est la variable dépendante
 ) |>
   summary()
 ```
+
+On peut ajouter facilement de nouveaux retards sur nos variables. Ici nous allons estimer un $ARDL(1, 2, 3, 1)$ pour l'exemple.
 
 ```{r}
 # Ajouter des retards aux variables explicatives
 ARDL::ardl(
   LRM ~ diff_LRY + diff_IBO + IDE, # variables à utiliser
-  data = df_diff, # Dataframe ou objet TS
+  data = df_diff_ts, # Dataframe ou objet TS
   order = c(1, 2, 3, 1) # Nombre de retards à inclure
 ) |>
   summary()
@@ -753,9 +827,11 @@ ARDL::ardl(
 
 ## Procédure de Pesaran et al (2001)
 
-Comme nous l'avons vu, notre jeu de données est caractérisé par des variables $I(0)$ stationnaires et des variables $I(1)$ non-stationnaires. Cette disparité empêche d'utiliser la procédure d'Engle et Granger pour tester la cointégration de nos variables. Actuellement, on ne sait pas s'il existe une relation entre les niveaux de nos variables et s'il est donc correcte de modéliser nos séries selon une telle relation ou selon un modèle à correction d'erreur. La meilleure chose que l'on pouvait faire était donc de différencier nos variables $I(1)$ afin d'obtenir des variables $I(0)$ et les inclure dans la modélisation.
+Comme nous l'avons vu, notre jeu de données est caractérisé par des variables $I(0)$ stationnaires et des variables $I(1)$ non-stationnaires. Cette disparité empêche d'utiliser la procédure d'Engle et Granger pour tester la cointégration de nos variables. Actuellement, on ne sait pas s'il existe une relation entre les niveaux de nos variables et s'il est donc correct de modéliser nos séries selon une telle relation ou selon un modèle à correction d'erreur. La meilleure chose que l'on pouvait faire était donc de différencier nos variables $I(1)$ afin d'obtenir des variables $I(0)$ et les inclure dans la modélisation.
 
 Cependant, cela est limitant car ce qui nous intéresse est le niveau des taux d'intérêts et pas leur taux de croissance. Pour pallier ce problème, on peut utiliser la méthode de Pesaran et al (2001) afin de tester s'il existe une relation entre les niveaux de nos variables ou non.
+
+### Estimation de l'ARDL en niveau
 
 La première étape consiste à trouver et estimer le meilleur ARDL entre les niveaux de nos variables. Pour cela, on peut tester différentes spécifications, utiliser les tests sur les résidus ou bien utiliser les critères d'information. La fonction `ARDL::auto.ardl()` permet de trouver le meilleur ARDL en fonction du critère d'information choisi.
 
@@ -764,7 +840,7 @@ La première étape consiste à trouver et estimer le meilleur ARDL entre les ni
 models <- 
   ARDL::auto_ardl(
     LRM ~ LRY + IBO + IDE, # Variables à utiliser
-    data = df, # Source des variables
+    data = df_ts, # Source des variables
     max_order = 5, # Nombre de retards maximum autorisé pour les variables
     selection = "AIC" # critère d'information à utiliser
   )
@@ -780,13 +856,79 @@ Ces modèles étant déjà estimés, on peut obtenir les résultats associés :
 
 ```{r}
 # Enregistrer le meilleur modèle dans une variables
-ardl_3132 <- 
-  models$best_model
+ardl_3132 <- models$best_model
 
 # Afficher le résumé des résultats
 ardl_3132 |> 
   summary()
 ```
+
+### Tester la sphéricité des erreurs
+
+On peut, tout comme un modèle linéaire en coupe transversale, tester si les erreurs sont sphériques. Pour rappel, en série temporelle, les erreurs sont dites sphériques si leur variance est constante et si elles ne sont pas autocorrélées dans le temps. On peut utiliser les tests de Breush-Pagan et de White pour tester si la variance des résidus est constante.
+
+```{r}
+# Breusch-Pagan test
+lmtest::bptest(ardl_3132)
+
+# White test
+whitestrap::white_test(ardl_3132)
+```
+
+Il semblerait que l'on ne puisse pas rejeter l’hypothèse nulle d'homoscédasticité à partir de ces tests. On peut également tester pour la présence d'effets ARCH, c'est à dire de variance conditionnellement hétéroscédastique avec le test ARCH.
+
+```{r}
+fDMA::archtest(as.numeric(ardl_3132$residuals**2), lag = 20)
+```
+
+Une fois de plus, on ne peut pas rejeter l'hypothèse nulle d'homoscédasticité conditionnelle. Il semblerait que nos résidus aient une variance constante.
+
+Pour tester l'autocorrélation, on peut utiliser les tests de Ljung-Box ou Box-Pierce sur la série des résidus. Une fonction "wrap-up" est présente dans le package `dobby`. Dans le cas où celui-ci ne fonctionne pas (pour des raisons d'installation), on peut utiliser la fonction `stats::Box.test()` qui est la fonction utilisée par le package `dobby`.
+
+```{r}
+# N'exécuter que si le package dobby est installé
+if (rlang::is_installed("dobby")) {
+  # Ljung-Box test for lags 1 and 20 with dobby package
+  dobby::check_univariate_autocorr(ardl_3132$residuals, "résidus ARDL(3132)", return_output = FALSE)
+} else {
+  print("Le package 'dobby' n'est pas installé")
+}
+```
+
+```{r}
+# Ljung-Box test for lag 1
+stats::Box.test(ardl_3132$residuals, lag = 1, type = "Ljung-Box")
+```
+
+On ne peut pas rejeter l'hypothèse nulle de non-autocorrélation des résidus. Il semblerait que nos erreurs soient sphériques. La variance de nos estimateurs devrait donc être minimale. Il semblerait également que l'on ait correctement réussi à prendre en compte la dynamique de notre variable dépendante.
+
+### Corriger l'hétéroscédasticité
+
+Si jamais on soupçonne la non-sphéricité des erreurs d'être un problème, on peut utiliser des écarts-types robustes à l'hétéroscédasticité et/ou l'autocorrélation.
+
+```{r}
+# Ecrats-types robustes à l'hétéroscédasticité à la White
+ardl_3132 |> 
+  lmtest::coeftest(vcov. = car::hccm)
+```
+
+```{r}
+# Ecarts-types robustes à l'hétéroscédasticité et l'autocorrélation à la Newey-West
+ardl_3132 |> 
+  lmtest::coeftest(vcov. = sandwich::vcovHAC)
+```
+
+```{r}
+# Ecarts-types robustes à l'hétéroscédasticité et l'autocorrélation à la Newey-West avec pré-mise en bruit blanc des résidus via un VAR à la Andrews & Monahan (1992)
+ardl_3132 |> 
+  coeftest(vcov. = sandwich::NeweyWest)
+```
+
+Savoir si et quel type de correction utiliser est un problème empirique dont la solution dépend du problème rencontré. Une bonne pratique peut cependant être de tester la robustesse de ses résultats avec différentes corrections afin de voir l'impact de chacune d'entre elle. Ici, il semblerait que les différentes corrections apportées ne changent pas les résultats de significativité de manière importante.
+
+Rappel que nous ne savons pas encore si notre ARDL en niveau est valide comme nous n'avons pas encore testé s'il existe une relation entre les niveaux de nos variables.
+
+### Tester la présence d'une relation en niveau
 
 Il semble que la capacité explicative de ce modèle soit très élevée. Cependant à ce stade on ne sait pas encore s'il existe une relation entre les variables en niveau. Pour cela on va estimer le modèle $UECM$ à partir du meilleur $ARDL$ en niveau (c'est à dire qu'on va choisir le même nombre de retards pour chaque variable en différence).
 
@@ -799,7 +941,7 @@ uecm_3132 |>
   summary()
 ```
 
-Le modèle $UECM$ nous permet d'utiliser le Bound F test de Pesaran et al (2001) qui va tester l'hypothèse nulle de non significativité conjointe des coefficients des variables en niveau. Pour cela on utilise la fonction `ARDl::bound_f_test()` qui va prendre comme argument, entre autre, un ARDL ou UECM (le modèle ARDL sera automatiquement transformé en UECM) et le "cas" indiquant si la constante et/ou la tendance doivent participer à l'équation de court- ou long-terme. Le paramètre `alpha` permet d'indiquer le niveau de significativité des valeurs critiques. En cas d'absence, seule la p.value est renvoyée.
+Le modèle $UECM$ nous permet d'utiliser le Bound F-test de Pesaran et al (2001) qui va tester l'hypothèse nulle de non significativité conjointe des coefficients des variables en niveau. Pour cela on utilise la fonction `ARDl::bound_f_test()` qui va prendre comme argument, entre autre, un ARDL ou UECM (le modèle ARDL sera automatiquement transformé en UECM) et le "cas" indiquant si la constante et/ou la tendance doivent participer à l'équation de court- ou long-terme. Le paramètre `alpha` permet d'indiquer le niveau de significativité des valeurs critiques. En cas d'absence, seule la p.value est renvoyée.
 
 ```{r}
 # Bound F test dans lequel la constante participe dans l'équation de long-terme. 
@@ -815,7 +957,19 @@ res_f_test <-
 res_f_test$tab
 ```
 
-Le Bound F test nous donne l'intervalle suivant : $[3.67 ; 4.61]$. La valeur de la statistique calculée est $5.12$. Cette statistique est supérieure à la valeur critique supérieure $I(1)$. On rejette donc l'hypothèse nulle de non-significativité conjointe des coefficients en niveau au sein de 1%. Il semblerait qu'il existe une relation de entre les niveaux des variables sélectionnées.
+Si l'on considère la non-sphéricité des erreurs peut être un problème (ce qui ne semble pas être notre cas), on peut utiliser une matrice de variance-covariance des estimateurs robustes à ces problèmes avec le paramètre `vcov_matrix`.
+
+```{r}
+# Bound F-test avec la correction HAC de la matrice de variance-covariance des estimateurs
+ARDL::bounds_f_test(
+  uecm_3132, # UECM
+  case = 2, # Constante dans l'équation de long-terme. Pas de tendance
+  alpha = 0.01, # Niveau de significativité de 1%
+  vcov_matrix	= sandwich::vcovHAC(uecm_3132) # Correction HAC
+)[["tab"]]
+```
+
+Le Bound F-test sans correction de la matrice de variance-covariance nous donne l'intervalle suivant : $[3.67 ; 4.61]$. La valeur de la statistique calculée est $5.12$. Cette statistique est supérieure à la valeur critique supérieure $I(1)$. On rejette donc l'hypothèse nulle de non-significativité conjointe des coefficients en niveau au seuil de 1%. Il semblerait qu'il existe une relation de entre les niveaux des variables sélectionnées. La correction HAC ne change pas notre conclusion.
 
 ```{r}
 # Ne pas indiquer les valeurs critiques. 
@@ -824,3 +978,114 @@ ARDL::bounds_f_test(
     case = 2, # Constante dans l'équation de long-terme. Pas de tendance
   )
 ```
+
+On va tester la significativité du coefficient de réversion à la moyenne (donné par le coefficient de la variable dépendante retardée en niveau) avec le Bound t-test de Pesaran et al (2001). Attention il ne faut pas regarder le test de Student classique cela est une erreur. Attention également, le Bound t-test n'est applicable que dans les cas 1, 3, 5...
+
+```{r}
+res_t_test <- 
+  ARDL::bounds_t_test(
+    uecm_3132, 
+    case = 3, # La tendance passe dans l'équation de court-terme
+    alpha = 0.01 # Seuil de significativité à 1%
+  )
+
+res_t_test$tab
+```
+
+On peut encore une fois appliquer une correction à la matrice de variance-covariance si nécessaire.
+
+```{r}
+ARDL::bounds_t_test(
+  uecm_3132, 
+  case = 3, # La tendance passe dans l'équation de court-terme
+  alpha = 0.01, # Seuil de significativité à 1%
+  vcov_matrix	= sandwich::vcovHAC(uecm_3132) # Correction HAC
+)[["tab"]]
+```
+
+L'intervalle en valeur absolue est donnée par : $[3.44;4.38]$ . La statistique en valeur absolue est $4.55$. Elle est supérieure à la borne supérieure $I(1)$. On rejette donc l'hypothèse nulle de nullité de réversion à la moyenne. Il semblerait encore une fois qu'il existe une relation en niveau entre nos variables et que la correction HAC ne change pas nos résultats.
+
+```{r}
+# Simplement afficher le résultat du test avec la p.value
+ARDL::bounds_t_test(
+    uecm_3132, 
+    case = 3, # La tendance passe dans l'équation de court-terme
+)
+```
+
+### Multiplicateurs
+
+Au vu des tests qui sont concordants, il semblerait bien qu'il existe une relation entre les niveaux de nos variables bien quelles ne soient pas toutes intégrées du même ordre. On peut donc s'intéresser à l'interprétation des coefficients. Cependant, il peut être difficile de trouver l'interprétation à donner aux coefficients à cause de la dynamique du modèle et des nombreux retards inclus. Pour cela, on va calculer et interpréter les coefficients multiplicateurs de court- et long-terme avec la fonction `ARDL::multipliers()`. L'argument `type` permet d'indiquer le type de multiplicateur que l'on souhaite obtenir : "sr" pour le court-terme ; "lr" ou rien pour le long-terme ; un chiffre pour les multiplicateurs Delays et Interim.
+
+```{r}
+# Multiplicateurs de court-terme
+ARDL::multipliers(
+  ardl_3132, 
+  type = "sr" # Indiquer que l'on souhaite les multiplicateurs de court-terme
+)
+```
+
+Une augmentation temporaire d'1% (les variables sont en log) du revenu réel augmente l'offre de monnaie réelle de 0,67%. Cette augmentation est significativement différente de 0. L'augmentation du revenu réel conduit à d'avantage d'emprunt et un plus grand besoin de monnaie ce qui explique l'augmentation. Cependant, l'effet est inférieur à l'unité. L'offre de monnaie augmente moins fortement que l'augmentation du revenu.
+
+A l'inverse lorsque les taux d'intérêts augmentent de manière temporaire de 1%, l'offre de monnaie réelle diminue de 1,07%. Une augmentation des taux rend les crédits plus onéreux et risqués ce qui diminue le nombre de crédits accordés et donc la création monétaire. Il semblerait que l'offre de monnaie et les taux d'intérêts évoluent de concert.
+
+En revanche, les taux de dépôts bancaires n'ont pas l'air d'avoir un effet à court terme sur l'offre de monnaie réelle puisque le coefficient n'est pas significativement différent de 0.
+
+```{r}
+# Multiplicateurs de long-terme
+ARDL::multipliers(ardl_3132) # Si aucun type n'est indiqué alors, il s'agit du long-terme
+```
+
+Une augmentation permanente d'1% du revenu réel va entraîner une hausse de presque 1% de l'offre de monnaie réelle. L'effet est plus élevé que dans le court terme car la dynamique du modèle permet à l'augmentation de se distribuer dans le temps, augmentant ainsi l'effet final comparé à l'effet à l'impact. Il en va de même pour l'effet des taux d'intérêts qui font diminuer de 4,5% l'offre de monnaie réelle suite à une augmentation permanente de 1%. Il s'agit d'un effet extrêmement élevé. On peut expliquer cela par le fait que les taux d'intérêts ne sont généralement pas augmentés de manière permanente. Les augmentation (et donc l'écart à la valeur d'équilibre) sont généralement temporaires afin de limiter l'inflation.
+
+Dans le long-terme, le taux de dépôt des banques devient significatif. On peut argumenter qu'il faut du temps pour que le taux de dépôt se traduise par une augmentation des dépôts et donc une plus forte création de monnaie.
+
+On peut encore une fois corriger, si nécessaire, la matrice de variance-covariance des estimateurs en cas de problème de sphéricité des erreurs :
+
+```{r}
+ARDL::multipliers(
+  ardl_3132,
+  vcov_matrix	= sandwich::vcovHAC(ardl_3132)
+)
+
+```
+
+Si l'on s'intéresse à un effet dynamique et pas simplement à un impact immédiat, on peut regarder les multiplicateurs Delays qui indiquent la variation à une période $t+S$ suite à une variation temporaire en $t$. Ici on va regarder jusqu'à $t+15$.
+
+```{r}
+# Calculer les multiplicateurs Delays jusqu'à 15 périodes
+ARDL::multipliers(
+  ardl_3132, 
+  type = 15, # Nombre de Delays à calculer
+  se = TRUE # Indiquer si l'on souhaite obtenir les écarts-types
+) |> 
+  ARDL::plot_delay(interval = 0.95) # Représenter graphiquement les impacts temporaires avec un intervalle de confiance de 95%
+```
+
+Notre argument concernant le temps nécessaire aux taux de dépôt bancaire pour faire effet semble se valider puisqu'on peut remarquer que l'effet d'une augmentation temporaire ne se manifeste qu'en $t+2$ puis $t+4$. A l'inverse, on peut voir que l'effet d'une augmentation temporaire des taux d'intérêts va avoir un effet direct sur la quasi totalité des périodes, bien que celui-ci diminue. Rappel que IBO est une variable caractérisée par une variable unitaire. Les chocs qu'elle reçoit sont donc persistants ce qui peut expliquer cet effet persistant.
+
+### Relation de long-terme et vitesse d'ajustement
+
+Il est possible à partir des multiplicateurs de long-terme de construire l'équation de cointégration. C'est à dire l'équation de long-terme, d'équilibre de l'offre de monnaie.
+
+```{r}
+# Calculer l'éuqation de cointégration (de long-terme de la variable LRM)
+ce <- 
+  ARDL::coint_eq(
+    ardl_3132, # Modèle utiliser pour calculer l'équation de cointégration. Doit être un objet TS sinon ça devient bizarre
+    case = 2 # Constante dans l'équation de long-terme et pas de tendance
+  )
+
+# Représenter graphiquement la relation de cointégration contre les vraies valeurs de LRM
+ARDL::plot_lr(ardl_3132, coint_eq = ce, show.legend = TRUE)
+```
+
+On peut voir que sur les dernières années disponibles, l'offre de monnaie réelle a généralement été inférieure à son niveau de long-terme, impliquant des chocs lui faisant dévier de son équilibre. On peut retrouver la vitesse d'ajustement à ces chocs à partir du modèle $UECM$ ou $RECM$. Ce dernier étant plus parcimonieux, les estimateurs devraient être légèrement plus précis.
+
+```{r}
+# Estimer le modèle RECM
+recm_3132 <- ARDL::recm(uecm_3132, case = 2)
+summary(recm_3132)
+```
+
+La vitesse d'ajustement est donnée par le coefficient du terme $ect$. Elle est ici de $-0,41685$ ce qui indiquerait un effet d'ajustement plutôt modéré. On peut calculer le temps que met l'offre de monnaie à revenir à sa situation d'équilibre suit à une variation : $\frac{1}{0.41685} \approx 2.4$. Il faut environ 2.4 périodes de temps (donc deux trimestres et demi) pour que l'offre de monnaie revienne à son niveau d'équilibre suite à un écart.

@@ -23,5 +23,10 @@ install.packages("see")
 install.packages("LSTS")
 install.packages("dynlm")
 install.packages("ARDL")
+install.packages("sandwich")
+install.packages("timetk")
 
 devtools::install_github("https://github.com/Xayoux/dobby.git")
+
+# Installer si nécessaire, mais normalement déjà installé
+# install.packages("rlang")

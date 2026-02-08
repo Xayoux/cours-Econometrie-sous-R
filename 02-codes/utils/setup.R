@@ -1,6 +1,7 @@
 # Importer (et télécharger si nécessaire) les packages ------------------------
 # PAckage pour télécharger depuis github
 library(devtools)
+library(rlang)
 
 # Packages pour la manipulation de données
 library(tidyverse)
@@ -10,6 +11,7 @@ library(modelsummary)
 library(janitor)
 library(glue)
 library(conflicted)
+library(timetk)
 
 # Package pour les données utilisées dans Wooldrige
 require(wooldridge)
@@ -27,6 +29,7 @@ library(forcats)
 library(forecast)
 library(fDMA)
 library(runner)
+library(sandwich)
 
 # PAckage pour les ARDl
 library(dynlm)
@@ -34,6 +37,7 @@ library(ARDL)
 
 # PAckage maison pour le test ADF
 library(dobby)
+
 
 # Gérer les conflits de fonction entre package
 conflicts_prefer(dplyr::filter)
