@@ -1,18 +1,53 @@
 ---
 title: "Basics"
-format: html
+format:
+  html:
+    embed-resources: true
+    code-overflow: wrap
+    toc: true
+    toc-location: left
+    toc-depth: 5
+    toc-expand: 2
+    include-in-header:
+      text: |
+        <style>
+          p {
+            text-align: justify
+          }
+        </style>
+  pdf:
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines=true, breaksymbol=, commandchars=\\\{\}}
+        \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true, breaksymbol=,commandchars=\\\{\}}
 editor: visual
 ---
+
+```{r}
+#| eval: false
+#| include: false
+# A UTILISER POUR RENDER EN HTML ET PDF
+quarto::quarto_render(
+    here::here(
+        "02-codes", 
+        "presentations",
+        "00-basiques", 
+        "00-basiques.qmd"
+    ), 
+    output_format = "all"
+)
+```
 
 # Télécharger R et R studio
 
 Si R est déjà installé, vérifier la version de R installée sur l'ordinateur. Pour cela : lancer Rstudio si R studio est installé et regarder la version en haut de la console :
 
-![](images/version-R-console.png)
+![](../images/version-R-console.png)
 
 Si Rstudio n'est pas installé : exécuter R et regarder la version :
 
-![](images/version-R-terminal.png)
+![](../images/version-R-terminal.png)
 
 Si la version installée est inférieure à la 4.5 (4.4 etc...) ou si R n'est pas installé : Télécharger et installer le langage de programmation R : <https://cran.rstudio.com>
 
@@ -30,9 +65,9 @@ Pour ceux qui avaient une ancienne version de R : Changer la version de R utilis
 
 -   Changer la version R
 
-![](images/tools-global-options.png)
+![](../images/tools-global-options.png)
 
-![](images/change-R-version.png)
+![](../images/change-R-version.png)
 
 Normalement vous devriez avoir une version de R supérieure à la 4.5
 
@@ -44,7 +79,7 @@ Aller sur la page github : <https://github.com/Xayoux/cours-Econometrie-sous-R>
 
 Cliquer sur le bouton "Code" puis sur "Download Zip"
 
-![](images/dl-cours.png)
+![](../images/dl-cours.png)
 
 Ensuite : clic droit -\> Extraire Tout à l'endroit voulu.
 

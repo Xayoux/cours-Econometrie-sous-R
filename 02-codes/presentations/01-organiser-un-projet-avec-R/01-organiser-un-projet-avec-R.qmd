@@ -1,9 +1,44 @@
 ---
 title: "Organiser un projet avec R"
 author: "Romain CAPLIEZ"
-format: html
+format:
+  html:
+    embed-resources: true
+    code-overflow: wrap
+    toc: true
+    toc-location: left
+    toc-depth: 5
+    toc-expand: 2
+    include-in-header:
+      text: |
+        <style>
+          p {
+            text-align: justify
+          }
+        </style>
+  pdf:
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines=true, breaksymbol=, commandchars=\\\{\}}
+        \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true, breaksymbol=,commandchars=\\\{\}}
 editor: visual
 ---
+
+```{r}
+#| eval: false
+#| include: false
+# A UTILISER POUR RENDER EN HTML ET PDF
+quarto::quarto_render(
+    here::here(
+        "02-codes", 
+        "presentations",
+        "01-organiser-un-projet-avec-R", 
+        "01-organiser-un-projet-avec-R.qmd"
+    ), 
+    output_format = "all"
+)
+```
 
 # Organiser un projet avec R
 
@@ -43,11 +78,11 @@ Pour pallier ce problème (entre autre), on va utiliser les "Projets R". Créer 
 
 On peut créer un projet de manière "manuelle" de la façon suivante :
 
-![](images/creer-projet-R-1-01.png){fig-align="center"}
+![](../images/creer-projet-R-1-01.png){fig-align="center"}
 
-![](images/creer-projet-R-2.png){fig-align="center"}
+![](../images/creer-projet-R-2.png){fig-align="center"}
 
-![](images/creer-projet-R-3.png){fig-align="center"}
+![](../images/creer-projet-R-3.png){fig-align="center"}
 
 Ou bien en utilisant la commande `usethis::create_project("D:/cours/Econometrie sous R").`
 

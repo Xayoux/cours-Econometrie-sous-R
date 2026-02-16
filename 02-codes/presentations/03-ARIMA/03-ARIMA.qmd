@@ -1,7 +1,43 @@
 ---
 title: "03-ARIMA"
-format: html
+author: "Romain CAPLIEZ"
+format:
+  html:
+    embed-resources: true
+    code-overflow: wrap
+    toc: true
+    toc-location: left
+    toc-depth: 5
+    toc-expand: 2
+    include-in-header:
+      text: |
+        <style>
+          p {
+            text-align: justify
+          }
+        </style>
+  pdf:
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines=true, breaksymbol=, commandchars=\\\{\}}
+        \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true, breaksymbol=,commandchars=\\\{\}}
 ---
+
+```{r}
+#| eval: false
+#| include: false
+# A UTILISER POUR RENDER EN HTML ET PDF
+quarto::quarto_render(
+    here::here(
+        "02-codes", 
+        "presentations",
+        "03-ARIMA", 
+        "03-ARIMA.qmd"
+    ), 
+    output_format = "all"
+)
+```
 
 # Cours
 
@@ -22,11 +58,11 @@ Dans ce chapitre nous allons uniquement modéliser une série $Y_t$ par ses vale
 Les séries temporelles et financières sont très souvent caractérisées par un non-stationnarité en moyenne et/ou en variance. Une série est dite non stationnaire si ses propriétés statistiques changent au cours du temps. Plus formellement, on dira qu'une série est stationnaire au second ordre si :
 
 $$
-\begin{align}
+\begin{aligned}
 E(X_t^2) &< \infty \\
 E(X_t) &= m \hspace{0.3cm} \forall \hspace{0.3cm} t \\
 E(X_t,X_{t+h}) &= \gamma_h \hspace{0.3cm} \forall \hspace{0.3cm} t, \hspace{0.3cm} \forall \hspace{0.3cm} h
-\end{align}
+\end{aligned}
 $$
 
 Une série stationnaire au second ordre doit avoir une variance finie, une moyenne constante au cours du temps et son auto-covariance doit dépendre uniquement de la différence des temps $h$.
@@ -41,9 +77,179 @@ Si une série est non-stationnaire, il est nécessaire de procéder à des ajust
 
 -   Processus **Difference Stationnary (DS)** : Dans un processus DS, les conséquences d'un choc sont permanentes. La série ne revient jamais à sa valeur pré-choc. La non-stationnarité est stochastique. Pour stationnariser une telle série, on applique un filtre aux différences. Généralement on va utiliser la différence-première.
 
-![](images/processus-ts-ds.png)
+![](../images/processus-ts-ds.png)
 
 De multiples tests existent pour détecter la stationnarité tels que le test augmenté de Dickey-Fuller (ADF) ou de Phillips-Perron.
+
+## Test ADF
+
+### Procédure ADF
+
+Pour tester le caractère stationnaire d'une série, on applique des tests de racine unitaire. Il en existe de nombreux, mais le plus connu est probablement le test augmenté de Dickey-Fuller (1979, 1981). IL vise à tester l'hypothèse nulle de présence d'au moins une racine unitaire (non-stationnaire) contre l'hypothèse alternative de non-présence de racine unitaire (stationnarité).
+
+La test ADF repose sur une procédure en plusieurs étapes. Il est important d'effectuer les étapes dans l'ordre et de manière rigoureuse.
+
+On va d'abord chercher à déterminer le "bon" modèle à utiliser pour tester l'hypothèse nulle puis une fois que ce modèle sera trouvé, on testera la présence ou non de racine unitaire. **Il ne faut pas tester la présence de racine unitaire sur chaque modèle.**
+
+Les modèles possibles sont :
+
+-   Avec constante et tendance
+
+-   Avec constante et sans tendance
+
+-   Sans constante ni tendance
+
+La première étape consiste à estimer le modèle avec constante et tendance (modèle 3) suivant :
+
+$$
+\Delta Y_t = \lambda + \delta t + \phi Y_{t-1} + \sum_{j=1}^p \phi_j \Delta Y_{t-j} + \varepsilon_t
+$$
+
+On régresse la variation de notre variable $\Delta Y_t$ sur le premier retard de notre variable en niveau $Y_{t-1}$ (paramètre d'intérêt pour tester la présence de racine unitaire), une constante $\lambda$ et une tendance temporelle linéaire $\delta t$. Dans la version augmenté du test (présentée ici) on rajoute les retards de la variables en différence afin d'essayer d'obtenir des résidus bruit-blanc.
+
+L'ordre $p$ a son importance puisqu'il doit permettre de blanchir les résidus. Pour le choisir, on peut tester les résidus et choisir l'ordre $p$ qui va arriver à blanchir les résidus (tests d'autocorrélation, etc...). Ou bien (ce que l'on fait généralement), on va choisir l'ordre $p$ qui va minimiser un critère d'information (voir plus bas pour une définition).
+
+Une fois l'ordre $p$ choisi et le modèle estimé, on va tester la significativité de la tendance temporelle.
+
+On teste l'hypothèse nulle de nullité de la tendance temporelle contre l'hypothèse alternative qu'il existe une tendance temporelle :
+
+$$
+\begin{cases}
+H_0 : \delta = 0 \\
+H_1 : \delta \neq 0
+\end{cases}
+$$
+
+Pour cela on va calculer la statistique t de Student du coefficient $\delta$ tel que :
+
+$$
+t_{\hat{\delta}} = \frac{\hat{\delta}}{\hat{\sigma}_{\hat{\delta}}}
+$$
+
+Puis on va comparer cette statistique de test avec les valeurs critiques tabulés par Dickey et Fuller. Attention, les valeurs critiques usuelles ne s'appliquent pas sur ce test.
+
+Les valeurs critiques sont les suivantes :
+
+| T        | 1%   | 5%   | 10%  |
+|----------|------|------|------|
+| 100      | 3.53 | 2.79 | 2.38 |
+| 250      | 3.49 | 2.79 | 2.38 |
+| 500      | 3.49 | 2.78 | 2.38 |
+| $\infty$ | 3.46 | 2.78 | 2.38 |
+
+La règle de décision est standard :
+
+-   Si $|t_{\hat{\delta}}| \geq t_{\text{ADF}}$ : On rejette l'hypothèse nulle de non-significativité de la tendance linéaire. On garde ce modèle et on effectue le test de racine unitaire sur ce modèle.
+
+-   $|t_{\hat{\delta}}| < t_{\text{ADF}}$ : On ne peut pas rejeter l'hypothèse de non-significativité de la tendance linéaire. Le modèle ne comporte pas de tendance linéaire. On rejette donc l'utilisation de ce modèle. Il faut estimer un modèle avec constante et sans tendance.
+
+Dans le cas, où la tendance linéaire n'est pas significative, il faut estimer le modèle avec constante et sans tendance (modèle 2) suivant :
+
+$$
+\Delta Y_t = \gamma + \phi Y_{t-1} + \sum_{j=1}^p \phi_j \Delta Y_{t-j} + \varepsilon_t
+$$ Encore une fois, il faut tester si ce modèle est le bon modèle à utiliser. Pour cela on va tester la significativité de la constante :
+
+$$
+\begin{cases}
+H_0 : \gamma = 0 \\
+H_1 : \gamma \neq 0
+\end{cases}
+$$ On calcule la statistique $t$ de Student du coefficient $\gamma$ tel que :
+
+$$
+t_{\hat{\gamma}} = \frac{\hat{\gamma}}{\hat{\sigma}_{\hat{\gamma}}}
+$$
+
+Puis on va comparer cette statistique de test avec les valeurs critiques tabulés par Dickey et Fuller. Attention, les valeurs critiques usuelles ne s'appliquent pas sur ce test.
+
+Les valeurs critiques sont les suivantes :
+
+| T        | 1%   | 5%   | 10%  |
+|----------|------|------|------|
+| 100      | 3.22 | 2.54 | 2.17 |
+| 250      | 3.19 | 2.53 | 2.16 |
+| 500      | 3.18 | 2.52 | 2.16 |
+| $\infty$ | 3.18 | 2.52 | 2.16 |
+
+La règle de décision est standard :
+
+-   Si $|t_{\hat{\gamma}}| \geq t_{\text{ADF}}$ : On rejette l'hypothèse nulle de non-significativité de la constante. On garde ce modèle et on effectue le test de racine unitaire sur ce modèle.
+
+-   $|t_{\hat{\gamma}}| < t_{\text{ADF}}$ : On ne peut pas rejeter l'hypothèse de non-significativité de la constante. Le modèle ne comporte pas de constante. On rejette donc l'utilisation de ce modèle. Il faut estimer un modèle sans constante ni sans tendance.
+
+Dans le cas, où la constante n'est pas significative, il faut estimer le modèle sans constante ni tendance (modèle 1) suivant :
+
+$$
+\Delta Y_t = \phi Y_{t-1} + \sum_{j=1}^p \phi_j \Delta Y_{t-j} + \varepsilon_t
+$$ Pour ce modèle il n'y a rien d'autre à tester que la présence ou non de racine unitaire. Le test de racine unitaire est le même peu importe le modèle choisi. Ce sont simplement les valeurs critiques qui vont changer.
+
+On teste :
+
+$$
+\begin{cases}
+H_0 : \phi = 0 \hspace{0.3cm} \text{Présence de racine unitaire} \\
+H_1 : \phi < 0 \hspace{0.3cm} \text{Non présence de racine unitaire}
+\end{cases}
+$$ On calcule la statistique $t$ de Student du coefficient $\phi$ tel que :
+
+$$
+t_{\hat{\phi}} = \frac{\hat{\phi}}{\hat{\sigma}_{\hat{\phi}}}
+$$ Les valeurs critiques pour chaque modèles sont disponibles dans la sous-section suivante.
+
+Ce test étant un test unilatéral et les valeurs critiques étant négatives, la règle de décision est différente de la règle habituelle. **Attention, il ne faut pas prendre la valeur absolue de la statistique de test**.
+
+-   Si $|t_{\hat{\phi}}| \leq t_{\text{ADF}}$ : On rejette l'hypothèse nulle de présence d'au moins une racine unitaire. La série ne comporte donc pas de racine unitaire. La série est donc stationnaire et peut être utilisée dans une modélisation standard.
+
+-   $|t_{\hat{\phi}}| > t_{\text{ADF}}$ : On ne peut pas rejeter l'hypothèse nulle de la présence d'au moins une racine unitaire. La série comporte donc au moins une racine unitaire. La série n'est pas stationnaire. Elle ne peut pas être utilisée dans une modélisation standard. Elle doit d'abord être stationnarisée (généralement en la log-différenciant).
+
+### Valeurs critiques de Dickey-Fuller
+
+#### Significativité de la tendance (modèle 3)
+
+| T        | 1%   | 5%   | 10%  |
+|----------|------|------|------|
+| 100      | 3.53 | 2.79 | 2.38 |
+| 250      | 3.49 | 2.79 | 2.38 |
+| 500      | 3.49 | 2.78 | 2.38 |
+| $\infty$ | 3.46 | 2.78 | 2.38 |
+
+#### Significativité de la constante (modèle 2)
+
+| T        | 1%   | 5%   | 10%  |
+|----------|------|------|------|
+| 100      | 3.22 | 2.54 | 2.17 |
+| 250      | 3.19 | 2.53 | 2.16 |
+| 500      | 3.18 | 2.52 | 2.16 |
+| $\infty$ | 3.18 | 2.52 | 2.16 |
+
+#### Significativité du terme auto-régressif
+
+**Modèle 1 (Sans constante ni tendance)**
+
+| T        | 1%    | 5%    | 10%   |
+|----------|-------|-------|-------|
+| 100      | -2.60 | -1.95 | -1.61 |
+| 250      | -2.58 | -1.95 | -1.62 |
+| 500      | -2.58 | -1.95 | -1.62 |
+| $\infty$ | -2.58 | -1.95 | -1.62 |
+
+**Modèle 2 (Avec constante sans tendance)**
+
+| T        | 1%    | 5%    | 10%   |
+|----------|-------|-------|-------|
+| 100      | -3.51 | -2.89 | -2.58 |
+| 250      | -3.46 | -2.88 | -2.57 |
+| 500      | -3.44 | -2.87 | -2.57 |
+| $\infty$ | -3.43 | -2.86 | -2.57 |
+
+**Modèle 3 (Avec constante et tendance)**
+
+| T        | 1%    | 5%    | 10%   |
+|----------|-------|-------|-------|
+| 100      | -4.04 | -3.45 | -3.15 |
+| 250      | -3.99 | -3.43 | -3.13 |
+| 500      | -3.98 | -3.42 | -3.13 |
+| $\infty$ | -3.96 | -3.41 | -3.12 |
 
 ## Auto-corrélation et auto-corrélation partielle
 
@@ -56,12 +262,12 @@ La fonction d'auto-corrélation partielle (PACF) mesure la corrélation entre $X
 Une série temporelle $Y_t$ est appelée **bruit blanc** si :
 
 $$
-\begin{align}
+\begin{aligned}
 Y_t &= \varepsilon_t \\
 E(\varepsilon_t) &= 0 \hspace{0.3cm} \forall \hspace{0.3cm} t \\
 V(\varepsilon_t) &= \sigma_\varepsilon^2 \hspace{0.3cm} \forall \hspace{0.3cm} t \\
 Cov(\varepsilon_t, \varepsilon_{t'}) &= 0 \hspace{0.3cm} \forall \hspace{0.3cm} t \neq t'
-\end{align}
+\end{aligned}
 $$
 
 ```{r echo=FALSE}
@@ -109,7 +315,7 @@ arima.sim(n = 100, list(order=c(0,1,0))) |>
 On appelle processus auto-régressif d'ordre $p$ noté $AR(p)$, un processus $Y_t$ stationnaire tel que :
 
 $$
-Y_t = - \phi_1Y_{t-1} - \cdots - \phi_p Y_{t-p} = \varepsilon_t
+Y_t - \phi_1Y_{t-1} - \cdots - \phi_p Y_{t-p} = \varepsilon_t
 $$
 
 Avec $\phi_i \in R, i = 1, \cdots, p$ et $\varepsilon_t \sim BB(0, \sigma{\varepsilon}^2)$.
@@ -128,7 +334,7 @@ $$
 
 Pour un $AR(p)$, les auto-corrélations partielles s'annulent à partir du rang $p+1$. Cette propriété peut être utilisée pour définir graphiquement l'ordre d'un processus $AR(p)$. La fonction d'auto-corrélation n'a pas de forme définie.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE}
 set.seed(124)
 arima.sim(n = 100, list(order=c(3,0,0), ar = c(0.3, 0.3, 0.3))) |> 
   dplyr::as_tibble() |> 
@@ -177,7 +383,7 @@ $$
 
 Pour un processus $MA(q)$, la fonction d'auto-corrélation s'annule à partir du rang $q+1$. La fonction d'auto-corrélation partielle n'a pas de forme définie.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE}
 set.seed(124)
 arima.sim(n = 100, list(order=c(0,0,3), ma = c(0.3, 0.3, 0.3))) |> 
   dplyr::as_tibble() |> 
@@ -242,7 +448,7 @@ $$
 
 On peut déterminer graphiquement l'ordre d'un processus $ARMA(p,q)$ en regardant les ACF et PACF et en utilisant les mêmes règles que pour les processus $AR$ et $MA$.
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, message=FALSE}
 set.seed(124)
 arima.sim(n = 100, list(order=c(1,0,1), ar = 0.7, ma = 0.3)) |> 
   dplyr::as_tibble() |> 
@@ -266,7 +472,10 @@ Lorsqu'une série présente de la saisonnalité, 2 grandes possibilités existen
 Un processus $SARMA(p,q)(P,Q)$ s'écrit :
 
 $$
-\left( 1 - a\phi_1L - \cdots - \phi_pL^p \right) \left( 1 - \phi_{1S}L_S - \cdots - \phi_{PS}L^P_S \right)Y_t = \left( 1 - \theta_1 L - \cdots - \theta_qL^q \right) \left( 1 - \theta_{1S} L_S - \cdots - \theta_{QS}L^Q_S \right)\varepsilon_t
+\begin{aligned}
+&\left( 1 - a\phi_1L - \cdots - \phi_pL^p \right) \left( 1 - \phi_{1S}L_S - \cdots - \phi_{PS}L^P_S \right)Y_t \\ 
+&= \left( 1 - \theta_1 L - \cdots - \theta_qL^q \right) \left( 1 - \theta_{1S} L_S - \cdots - \theta_{QS}L^Q_S \right)\varepsilon_t
+\end{aligned}
 $$
 
 S'il existe différent type de saisonnalité, on utilise un polynôme saisonnier par saisonnalité.
@@ -285,7 +494,7 @@ Estimer un processus $ARIMA(p,d,q)$ sur $Y_t$ revient à estimer un $ARMA(p,q)$ 
 
 Rappel que : $\left( 1 - L^2 \right)Y_t =  \left( 1 - 2L + L^2 \right)Y_t$
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, message=FALSE}
 set.seed(1238)
 arima.sim(n = 100, list(order=c(1,1,1), ar = 0.7, ma = 0.3)) |> 
   dplyr::as_tibble() |> 
@@ -337,7 +546,7 @@ La règle de décision est classique :
 
 -   Si $|t_{\hat{\rho}_k}| < 1.96$ (ou $p.value > 0.05$), on ne peut pas rejeter l'hypothèse nulle. L'auto-corrélation d'ordre $k$ n'est pas significativement différente de 0.
 
-L'ordre du processus $MA$ est donné lorsque l'on ne peut plus rejeter l'hypothèse nulle.
+L'ordre du processus $MA$ correspond au dernier ordre à partir duquel on peut encore rejeter l'hypothèse nulle.
 
 ### Déterminer l'ordre AR(p)
 
@@ -360,11 +569,13 @@ La règle de décision est classique :
 
 -   Si $|t_{\hat{\phi}_{kk}}| < 1.96$ (ou $p.value > 0.05$), on ne peut pas rejeter l'hypothèse nulle. L'auto-corrélation partielle d'ordre $k$ n'est pas significativement différente de 0.
 
+L'ordre du processus $AR$ correspond au dernier ordre à partir duquel on peut encore rejeter l'hypothèse nulle.
+
 ### Modèles identifiés
 
 Les deux étapes précédentes nous ont permis d'identifier un ou plusieurs modèles possibles. Si un ordre $p = 3$ a été trouvé, cela signifie que les modèles $AR(p)$ possibles sont : $AR(1)$, $AR(2)$ et $AR(3)$. Si un ordre $q=2$ a été trouvé, cela signifie que les modèles $MA(q)$ possibles sont : $MA(1)$ et $MA(2)$.
 
-Les processus $ARMA(p,q)$ possible correspondent à toutes les combinaisons possibles de ces différents processus.
+Les processus $ARMA(p,q)$ possibles correspondent à toutes les combinaisons possibles de ces différents processus.
 
 ## Estimation des processus ARMA
 
@@ -442,7 +653,7 @@ On teste l'hypothèse nulle d'absence d'auto-corrélation dans les résidus.
 $$
 \begin{cases}
 H_0 : \hat{\rho}_{\hat{\varepsilon}1} = \cdots = \hat{\rho}_{\hat{\varepsilon}K} \\
-H_1 : \exists \hat{\rho}_{\hat{\varepsilon}k} \neq 0
+H_1 : \exists \hspace{0.2cm} \hat{\rho}_{\hat{\varepsilon}k} \neq 0
 \end{cases} 
 $$
 
@@ -469,7 +680,7 @@ On teste l'hypothèse nulle d'absence d'auto-corrélation dans les résidus :
 $$
 \begin{cases}
 H_0 : \hat{\rho}_{\hat{\varepsilon}1} = \cdots = \hat{\rho}_{\hat{\varepsilon}K} \\
-H_1 : \exists \hat{\rho}_{\hat{\varepsilon}k} \neq 0
+H_1 : \exists \hspace{0.2cm} \hat{\rho}_{\hat{\varepsilon}k} \neq 0
 \end{cases} 
 $$
 
@@ -489,7 +700,7 @@ La règle de décision est la suivante :
 
 #### Homoscédasticité
 
-La variance des résidus doit être constante. Sinon cela signifie que des éléments de la dynamique n'ont ps été pris en compte.
+La variance des résidus doit être constante. Sinon cela signifie que des éléments de la dynamique n'ont pas été pris en compte.
 
 ##### Test de White
 
@@ -501,10 +712,10 @@ $$
 \hat{\varepsilon}_t^2 = a_0 + a_1 Y_{t-1} + b_1 Y_{t-1}^2 + \cdots + a_p Y_{t-p} + b_p Y_{t-p}^2 + u_t
 $$
 
-On test l'hypothèse nulle de variance constante (homoscédasticité) :
+On teste l'hypothèse nulle de variance constante (homoscédasticité) :
 
 $$
-\begin{cases}  H_0 : a_i = b_i = 0 \hspace{0.3cm} \forall i = 1, \cdots, p \\  H_1 : \exists \hspace{0.3cm} a_i \neq 0 \hspace{0.3cm} | \hspace{0.3cm} b_i \neq 0\end{cases}
+\begin{cases}  H_0 : a_i = b_i = 0 \hspace{0.3cm} \forall i = 1, \cdots, p \\  H_1 : \exists \hspace{0.2cm} a_i \neq 0 \hspace{0.2cm} | \hspace{0.2cm} b_i \neq 0\end{cases}
 $$
 
 On calcule la statistique de test :
@@ -539,8 +750,8 @@ On teste l'hypothèse nulle d'absence d'hétéroscédasticité conditionnelle :
 
 $$
 \begin{cases}  
-H_0 : \alpha_i = 0 \hspace{0.3cm} \forall i = 1, \cdots, l \\  
-H_1 : \exists \alpha_i \neq 0
+H_0 : \alpha_i = 0 \hspace{0.3cm} \forall \hspace{0.2cm} i = 1, \cdots, l \\  
+H_1 : \exists \hspace{0.2cm} \alpha_i \neq 0
 \end{cases}
 $$
 
@@ -570,13 +781,13 @@ $$
 \text{MAE} = \frac{1}{T} \sum_t \left| \hat{\varepsilon}_t \right|
 $$
 
--   Racine de l'erreur quadratique moyenne (RMSE)
+-   Racine de l'Erreur Quadratique Moyenne (RMSE)
 
 $$
 \text{RMSE} = \sqrt{\frac{1}{T} \sum_t \hat{\varepsilon}_t^2}
 $$
 
--   Écart absolu Moyen en % (MAPE)
+-   Écart Absolu Moyen en % (MAPE)
 
 $$
 \text{MAPE} = 100 \times \frac{1}{T} \sum_t \left| \frac{\hat{\varepsilon}_t}{Y_t} \right|
@@ -604,7 +815,7 @@ $$
 \text{HQ} = log \left( \hat{\sigma}_{\varepsilon}^2 \right) + \alpha (p+q) log \left( \frac{log(T)}{T} \right)
 $$
 
-avec $\alpha$ une constante que l'on choisit avec généralement $\alpha = 1$.
+Avec $\alpha$ une constante que l'on choisit avec généralement $\alpha = 1$.
 
 Généralement, le critère SIC aura tendance à retenir des modèles plus parcimonieux que le critère AIC. AIC est souvent le critère le plus utilisé.
 
@@ -637,12 +848,23 @@ Nous allons essayer de modéliser et de prédire la série du S&P 500 que l'on p
 
 ```{r}
 # Importer les données du S&P500
-sp_500 <- pdfetch::pdfetch_YAHOO("^gspc", fields = "adjclose", from = as.Date("2007-01-03"), to = as.Date("2026-01-10"))
+sp_500 <- 
+  pdfetch::pdfetch_YAHOO(
+    "^gspc", # Code de la série que l'on souhaite importer
+    fields = "adjclose", # Variable que l'on souhaite importer
+    from = as.Date("2007-01-03"), # Date de départ
+    to = as.Date("2026-01-10") # Date de fin
+  )
 ```
 
 ```{r}
 # Visualiser les données
 sp_500
+```
+
+```{r}
+# Type des données
+class(sp_500)
 ```
 
 ```{r}
@@ -696,9 +918,9 @@ urca::ur.df(
   summary() # Donner un résummé du résultat
 ```
 
-On commence d'abord par sélectionner le modèle à utiliser : avec constante et tendance, avec constante sans tendance ou sans constante ni tendance. On commence toujours par le modèle avec constante et tendance. Le paramètre de la tendance est donnée à la ligne `tt`. Attention, pour tester la significativité des paramètres, il faut utiliser les valeurs tabulées par Dickey-Fuller puisque les valeurs usuelles ne sont pas utilisables.
+On commence d'abord par sélectionner le modèle à utiliser : avec constante et tendance, avec constante sans tendance ou sans constante ni tendance. On commence toujours par le modèle avec constante et tendance. Le paramètre de la tendance est donnée à la ligne `tt`. Attention, pour tester la significativité des paramètres, il faut utiliser les valeurs tabulées par Dickey-Fuller puisque les valeurs usuelles ne sont pas utilisables. Les valeurs critiques indiquées par le package `urca` sont les valeurs critiques pour le test ADF joint. En général on ne fait pas ce test car on ne sait pas quel paramètre est significatif ou non.
 
-La valeur critique associée au coefficient de la tendance dans le modèle 3 et avec un nombre d'observations grand au seuil de 5% est $2.78$. La t-value du coefficient de la tendance est de $1.808 < 2.78$. ON ne peut donc pas rejeter l'hypothèse nulle de non-significativité de la tendance. On rejette le modèle 3 et on passe au modèle avec constante et sans tendance.
+La valeur critique associée au coefficient de la tendance dans le modèle 3 et avec un nombre d'observations grand au seuil de 5% est $2.78$. La t-value du coefficient de la tendance est de $1.808 < 2.78$. On ne peut donc pas rejeter l'hypothèse nulle de non-significativité de la tendance. On rejette le modèle 3 et on passe au modèle avec constante et sans tendance.
 
 ```{r}
 urca::ur.df(
@@ -722,7 +944,7 @@ urca::ur.df(
   summary() # Donner un résummé du résultat
 ```
 
-On va tester la significativité du terme auto-régressif en niveau `z.lag.1`. La valeur critique du coefficient pour le modèle 1, avec un grand nombre d'observations et un seuil de 5% est de $-1.95$. La t-value du coefficient est : $3.371 > -1.95$. On rappelle que sur ce test de racine unitaire, la règle de décision est inversée. On rejetera l'hypothèse nulle de non-stationnarité lorsque la t-value et inférieure à la valeur critique (NE PAS PRENDRE LES VALEURS ABSOLUES ICI).
+On va tester la significativité du terme auto-régressif en niveau `z.lag.1`. La valeur critique du coefficient pour le modèle 1, avec un grand nombre d'observations et un seuil de 5% est de $-1.95$. La t-value du coefficient est : $3.371 > -1.95$. On rappelle que sur ce test de racine unitaire, la règle de décision est inversée. On rejetera l'hypothèse nulle de non-stationnarité lorsque la t-value et inférieure à la valeur critique (**NE PAS PRENDRE LES VALEURS ABSOLUES ICI**).
 
 Notre t-value étant supérieure à la valeur critique, on ne peut pas rejeter l'hypothèse nulle de non stationnarité de la série. Notre série est vraisemblablement caractérisée par un processus $I(1)$ avec au moins une racine unitaire. Pour pouvoir l'utiliser dans des modélisations classiques, il faut la stationnariser.
 
@@ -854,7 +1076,7 @@ Nous allons commencer par essayer de modéliser la série avec un $AR(1)$.
 ar_1 <- 
   forecast::Arima(
     rend_sp_500, # Série à modéliser
-    order = c(1, 0, 0), # Ordres AR, I, MA à utiliser
+    order = c(1, 0, 0), # Ordres p, d, d (AR, I, MA) à utiliser
     include.mean = TRUE # Inclure une constante ou pas
   )
 
@@ -884,7 +1106,7 @@ tibble(
   print(n = 10) |> 
   # Faire un graphique simple
   ggplot(aes(x = t, y = rendements, color = variable)) +
-  geom_line()
+  geom_line() 
 ```
 
 On remarque que l'on n'arrive pas bien à reproduire l'amplitude et la volatilité de la série.
@@ -934,7 +1156,7 @@ La modélisation AR(1) ne semble donc pas suffisante pour modéliser correctemen
 
 ## Modélisation ARMA(p,q)
 
-On peut utiliser la fonction `foreast::auto.arima()` pour déterminer le modèle qui correspond le mieux à nos données selon les critères d'informations. Cette fonction va déterminer le nombre de lags nécessaire pour modéliser notre série selon un critère dd'information
+On peut utiliser la fonction `foreast::auto.arima()` pour déterminer le modèle qui correspond le mieux à nos données selon les critères d'informations. Cette fonction va déterminer le nombre de lags nécessaire pour modéliser notre série selon un critère d'information
 
 ```{r}
 # Meilleur modèle selon les critères d'informations
@@ -966,7 +1188,7 @@ dobby::check_univariate_autocorr(best_arma$residuals, "residus")[1]
 
 La majorité de l'autocorrélation de la série semble avoir été prise en compte. Il n'y a pas à court-terme d'auto-corrélation. Par contre, on peut voir que le résultat est moins net à plus long-terme. Ici à l'ordre 20, on rejette l'hypothèse nulle de non-significativité à 5%.
 
-La fonction `Box.Ljung.Text()` permet de tracer un graphique indiquant la p.value du test de Ljung-Box pour tous les horizons voulus. On remarque que l'on ne capte pas toute l'auto-corrélation de long-terme avec notre modélisation.
+La fonction `Box.Ljung.Test()` permet de tracer un graphique indiquant la p.value du test de Ljung-Box pour tous les horizons voulus. On remarque que l'on ne capte pas toute l'auto-corrélation de long-terme avec notre modélisation.
 
 ```{r}
 LSTS::Box.Ljung.Test(best_arma$residuals, lag = 40)
@@ -1020,7 +1242,7 @@ rw <- Arima(rend_sp_500, order = c(0,1,0)) |>
 tibble(
   real_value = as.numeric(rw$x), # Valeur réelle
   fitted_value = rw$fitted, # Valeur estimée
-  t = time(best_arma$x) # Date
+  t = time(rw$x) # Date
 ) |>
   # Pivoter en longueur pour avoir les valeurs dans une seule colonne
   # Permet de facilement gérer les couleurs et légendes avec ggplot2
@@ -1031,31 +1253,38 @@ tibble(
   ) |> 
   # Garder uniquement les dernières observations pour plus de clarté
   filter(row_number() > 9000) |> 
-  print() |> 
+  # Créer le graphique
   ggplot(aes(x = t, y = rendements, color = variable)) +
   geom_line()
 ```
 
 La marche aléatoire reproduit les variations mais avec un temps de retard puisque la valeur prédite en $t$ est simplement la valeur observée en $t-1$.
 
-## Comparaison in sample
+## Comparaison in-sample
+
+On peut comparer les modèles à partir de leur capacité à correctement reproduire la variation des données au sein de l'échantillon. Pour cela on extrait les séries des résidus de chaque modèle puis on va calculer des critères afin de déterminer le modèle qui minimise le plus possible une fonction de perte.
+
+La fonction `purrr::map()` et ses dérivées prennent comme argument un vecteur/liste contenant différents éléments et une fonction qui va être appliquée sur chacun des éléments du vecteur/liste. Ici, chaque élément de la liste correspond à une série de résidus. On va appliquer une fonction de perte sur chacune de ces séries de résidus.
 
 ```{r}
+# Pour chaque série de résidus, calculer le root mean square error
 models_RMSE <- 
-  # Pour chaque série de résidus, calculer le root mean square error
   map_dbl(
     list(rw$residuals, ar_1$residuals, best_arma$residuals), 
     \(epsilon) {sqrt(mean(epsilon**2))}
   )
 
+# Pour chaque série de résidus, calculer le mean absolute error
 models_MAE <- 
   map_dbl(
     list(rw$residuals, ar_1$residuals, best_arma$residuals), 
     \(epsilon) {mean(abs(epsilon))}
   )
 
+# Faire une tibble contenant les différents critères pour chaque modèle
+# AIC() extrait la valeur du critère AIC du modèle
 tibble(
-  model = c("rw", "AR(1)", "best ARMA"),
+  model = c("rw", "AR(1)", "Best ARMA"),
   AIC = c(AIC(rw), AIC(ar_1), AIC(best_arma)),
   BIC = c(BIC(rw), BIC(ar_1), BIC(best_arma)),
   RMSE = models_RMSE,
@@ -1063,23 +1292,36 @@ tibble(
 )
 ```
 
-Les critères de sélection de modèle semblent indiquer que l'ARMA(4,5) donne de meilleurs résultats au sein de l'échantillon. Mais cela semble quand même assez marginal.
+Les critères de sélection de modèle semblent indiquer que l'ARMA(4,5) donne de meilleurs résultats au sein de l'échantillon sur les critères des résidus. Mais quand on pondère sa capacité explicative par le nombre de paramètres à estimer, il ne fait pas forcément mieux que l'AR(1). Mais cela semble quand même assez marginal. Par contre il reproduit mieux les données que la marche aléatoire.
 
 ## Prévision et performance out-of-sample
 
-Les modèles ARMA peuvent être utilisés pour faire de la prédiction :
+Les modèles ARMA peuvent être utilisés pour faire de la prédiction. A partir des informations et du modèle estimé à la date $t$, on peut chercher à prédire pour $h$ périodes.
 
 ```{r}
 # Prédire les 10 prochains rendements
-forecast::forecast(best_arma, h = 10)
+forecast::forecast(
+  best_arma, # Modèle utilisé pour prédire
+  h = 10 # Horizon de prévision. Ici h = 10
+)
 ```
 
-Une façon de juger de la qualité d'un modèle est de tester sa capacité prédictive contre celle d'autres modèles. Pour cela, il faut tester le modèle out-of-sample. C'est à dire qu'il faut estimer le modèle sur un échantillon de test, prédire la prochaine valeur et la comparer avec la vraie valeur observée. Cela donne une erreur de prévision. Ensuite on ajoute la dernière valeur à l'échantillon et on répète le processus. On peut ensuite calculer la MAE ou RMSE de prévision du modèle et sélectionner le modèle qui en moyenne fait le moins d'erreurs.
+Une façon de juger de la qualité d'un modèle est de tester sa capacité prédictive contre celle d'autres modèles. Pour cela, il faut tester le modèle out-of-sample. C'est à dire qu'il faut estimer le modèle sur un échantillon de test, prédire la prochaine valeur et la comparer avec la vraie valeur observée. Cela donne une erreur de prévision. Ensuite on ajoute la vraie valeur à l'échantillon et on répète le processus. On peut ensuite calculer la MAE ou RMSE de prévision du modèle et sélectionner le modèle qui en moyenne fait le moins d'erreurs.
+
+Avec cette méthode on ne compare plus la capacité des modèles à correctement reproduire les données (in-sample), on compare la capacité des modèles à effectuer correctement des prévisions pour l'avenir sans connaître les informations futures (out-of-sample).
+
+Pour faire cela on va créer ne fonction `func_predict()` qui va prendre comme argument une série temporelle, l'ordre de l'ARIMA à estimer et un scalaire qui va indiquer le nombre d'observations du premier échantillon utiliser pour prédire. On va ensuite utiliser cette fonction au sein de la fonction `runner::runner()` qui est une fonction qui va répéter une fonction voulue en faisant glisser ou en ajoutant une par une les observations d'un jeu de données.
+
+Si le paramètre $k$ de `runner()` est égal à 0 (ou n'est pas renseigné), alors on ajoute une observation à chaque fois en gardant toutes les anciennes observations (on fait du récursif) (voir première image). Si $k$ est un scalaire différent de 0, alors tant que le nombre d'observations est inférieur à k, on continue d'ajouter la nouvelle observations en gardant les anciennes. Quand le nombre d'observations devient égal à $k$ alors on ajoute l'observation suivante tout en retirant la première observation possible (on fait de la fenêtre glissante) (voir deuxième image).
+
+![](../images/runner1.png)
+
+![](../images/runner2.png)
 
 ```{r}
 # Fonction pour prédire à l'horizon de 1 jour et retourner un dataframe
 func_predict <- function(serie, order = c(0,0,0), in_sample) {
-  # Condition pour ne pas estimer le modèle si la longueur de la série est inférieure à un scalaire donné
+  # Condition : Ne pas estimer le modèle si le nombre d'observations de la série est inférieur à un scalaire donné -> estimer sinon
   if (length(serie) > in_sample) {
     # Estimer le modèle
     model <- forecast::Arima(serie, order = order, include.mean = TRUE) 
@@ -1089,26 +1331,42 @@ func_predict <- function(serie, order = c(0,0,0), in_sample) {
   
     # Transformer le résultat en dataframe afin de pouvoir grouper les résultats
     df_forecast <- 
+      # Prendre la valeur prédite
       forecast_value |> 
+      # Créer une tibble et inclure une variable "obs" qui prendra la valeur de l'index
       as_tibble(rownames = "obs") |> 
+      # Obtenir des noms corrects pour les variables
       janitor::clean_names() |> 
+      # Sélectionner les variables d'intérêt
       select(obs, point_forecast)
     
+    # Renvoyer le tibble créé
     return(df_forecast)
    } 
 }
 ```
 
+Pour récupérer automatiquement l'ordre de notre meilleur ARMA estimé, on va aller chercher l'élément `best_arma$arma` qui nous renvoi un vecteur contenant toutes les informations sur les paramètres de notre ARMA. Les ordres $p$ et $q$ sont données par les éléments numéros 1 et 2, tandis que l'ordre $d$ est donnée par le 6ème élément.
+
+```{r}
+best_arma$arma
+```
+
 ```{r}
 # Faire la prédiction out-of-sample pour le meilleur arma trouvé. 
-# in_sample = 4750 : on n'estime le modèle qu'une fois que l'on a au moins 4750 observations
+# in_sample = 4750 : on n'estime le modèle qu'une fois que l'on a au moins 4750 observations. 
 pred_out_sample_best_arma <- 
+  # Runner applique 
   runner::runner(
-    x = rend_sp_500,
-    f = \(y) func_predict(y, order = best_arma$arma[c(1,6,2)], in_sample = 4750)
+    x = rend_sp_500, # Série à utiliser
+    # Fonction à utiliser : celle que l'on vient de créer
+    f = \(y) func_predict(y, order = best_arma$arma[c(1,6,2)], in_sample = 4750),
+    k = integer(0) # On veut faire du récursif
   ) |> 
+  # Runner renvoit une liste que l'on va lier en une seule tibble
   list_rbind() |> 
-  mutate(obs = as.numeric(obs))
+  mutate(obs = as.numeric(obs)) |> 
+  print()
 ```
 
 ```{r}
@@ -1133,46 +1391,63 @@ pred_out_sample_rw <-
   mutate(obs = as.numeric(obs))
 ```
 
+Une fois que l'on a effectué les prévisions out-of-sample, il suffit de les comparer avec les vraies valeurs puis de calculer les critères de perte.
+
 ```{r}
+# Créer une tibble contenant les erreurs de prévision
 df_error_pred <- 
+  # Prendre la série des vraies valeurs des rendements
   rend_sp_500 |> 
+  # La transformer en une tibble
   as_tibble() |> 
+  # Obtenir des noms corrects pour les variables
   clean_names() |> 
+  # Ajouter une variable "obs" qui correspond au numéro de ligne 
+  # Permet de matcher avec les prédictions faites (on avait indiquer le numéro de l'index dans les résultats)
   mutate(obs = row_number()) |> 
-  # Joindre les tableaux de résultats estimés précédement
+  # Joindre à ce tibble les prévisions faites pour le meilleur arma
+  # On join par la droite : on ne garde que les valeurs pour lesquelles on a fait une prédiction -> on enlève les 4750 premières observations qui n'ont pas de prédictions associées
   right_join(
     pred_out_sample_best_arma |> rename(point_forecast_best_arma = point_forecast),
+    # Indiquer les variables qui contiennent les indices permettant d'associer les différentes lignes entre elles
     join_by(obs == obs)
   ) |> 
+  # Joindre à ce tibble les prévisions faites pour l'AR(1)
   right_join(
     pred_out_sample_ar_1 |> rename(point_forecast_ar_1 = point_forecast),
     join_by(obs == obs)
   ) |> 
+  # # Joindre à ce tibble les prévisions faites pour la marche aléatoire
   right_join(
     pred_out_sample_rw |> rename(point_forecast_rw = point_forecast),
     join_by(obs == obs)
   ) |> 
+  # Calculer les erreurs de prévision
   mutate(
     error_pred_best_arma = gspc - point_forecast_best_arma,
     error_pred_ar_1 = gspc - point_forecast_ar_1,
     error_pred_rw = gspc - point_forecast_rw
   ) |> 
-  # Mettre toutes les erreures de prévision en colonne pour pouvoir calculer facilement les statistiques
-  select(starts_with("error_pred")) 
+  # Garder uniquement les erreurs de prédiction et l'index
+  select(obs, starts_with("error_pred")) |> 
+  print()
+```
 
+```{r}
 # Calculer la MAE et la RMSE pour les prédictions ou-of-sample
 df_error_pred |> 
+  # Pivoter les erreurs de prédictions pour les mettre dans une seule colonne : plus facile à faire des manipulations globales
   pivot_longer(
-    cols = everything(),
-    names_to = "model",
+    cols = !(obs), # On fait tout pivoter sauf la colonne "obs"
+    names_to = "model", 
     values_to = "error_pred"
   ) |> 
-  drop_na() |> 
+  drop_na() |> # On retire les valeurs manquantes s'il y en a 
   summarize(
-    .by = model,
+    .by = model, # On groupe par type de model : Un critère par modèle
     RMSE = sqrt(mean(error_pred**2)),
     MAE = mean(abs(error_pred))
   )
 ```
 
-Notre $ARMA(4,5)$ est le modèle qui permet le mieux en moyenne de prédire de façon out-of-sample. Attention cela ne veut pas dire qu'il prédit bien. On la juste comparer à d'autres modèles et sur une très petite période pour éviter les longs temps de computation. Il est fort probable au vu des valeurs prédites en échantillon que ce modèle prédise très mal les rendements. Cela semble en ligne avec la théorie des marchés financiers qui veut que les rendements soient imprévisibles.
+Notre $ARMA(4,5)$ est le modèle qui permet le mieux en moyenne de prédire de façon out-of-sample. Attention cela ne veut pas dire qu'il prédit bien. On l'a juste comparer à d'autres modèles et sur une très petite période pour éviter les longs temps de computation. Il est fort probable au vu des valeurs prédites en échantillon que ce modèle prédise très mal les rendements. Cela semble en ligne avec la théorie des marchés financiers qui veut que les rendements soient imprévisibles.

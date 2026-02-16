@@ -1,10 +1,44 @@
 ---
 title: "ARDL et cointégration"
 author: "Romain CAPLIEZ"
-format: html
+format:
+  html:
+    embed-resources: true
+    code-overflow: wrap
+    toc: true
+    toc-location: left
+    toc-depth: 5
+    toc-expand: 2
+    include-in-header:
+      text: |
+        <style>
+          p {
+            text-align: justify
+          }
+        </style>
+  pdf:
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines=true, breaksymbol=, commandchars=\\\{\}}
+        \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true, breaksymbol=,commandchars=\\\{\}}
 editor: visual
-toc: TRUE
 ---
+
+```{r}
+#| eval: false
+#| include: false
+# A UTILISER POUR RENDER EN HTML ET PDF
+quarto::quarto_render(
+    here::here(
+        "02-codes", 
+        "presentations",
+        "04-ARDL-cointegration", 
+        "04-ARDL-cointegration.qmd"
+    ), 
+    output_format = "all"
+)
+```
 
 # Théorie
 
@@ -161,13 +195,13 @@ $$
 Afin de mettre l'accent sur l'effet toute chose égale par ailleurs, on considère que $u_t = 0$. On a :
 
 $$
-\begin{align}
+\begin{aligned}
 Y_{t-1} &= \alpha + \beta_0 c + \beta_1 c + \beta_2 c \\
 Y_t &= \alpha + \beta_0 \left( c+1 \right) + \beta_2 c + \beta_3 c \\
 Y_{t+1} &= \alpha + \beta_0 c + \beta_1 \left( c+1 \right) + \beta_3 c \\
 Y_{t+2} &= \alpha + \beta_0 c + \beta_1 c + \beta_2 \left( c+1 \right) \\
 Y_{t+3} &= \alpha + \beta_0 c + \beta_1 c + \beta_2 c
-\end{align}
+\end{aligned}
 $$
 
 En considérant les deux premières équations, on obtient : $Y_t - Y_{t-1} = \beta_0$ où $\beta_0$ représente le changement immédiat de $Y$ suite à une hausse de l'unité $X$ à la période $t$, ce que l'on peut noter $\frac{\partial Y_t}{\partial X_t}$ et est communément appelé le multiplicateur de court-terme.
@@ -185,10 +219,10 @@ $$
 On a donc :
 
 $$
-\begin{align}Y_{t-1} &= \alpha + \beta_0 c + \beta_1 c + \beta_2 c \\
+\begin{aligned}Y_{t-1} &= \alpha + \beta_0 c + \beta_1 c + \beta_2 c \\
 Y_t &= \alpha + \beta_0 \left( c+1 \right) + \beta_2 c + \beta_3 c \\
 Y_{t+1} &= \alpha + \beta_0 \left( c+1 \right) + \beta_1 \left( c+1 \right) + \beta_3 c \\
-Y_{t+2} &= \alpha + \beta_0 \left( c+1 \right) + \beta_1 \left( c+1 \right) + \beta_2 \left( c+1 \right)\end{align}
+Y_{t+2} &= \alpha + \beta_0 \left( c+1 \right) + \beta_1 \left( c+1 \right) + \beta_2 \left( c+1 \right)\end{aligned}
 $$
 
 A la suite de l'augmentation permanente de $X$, après une période $Y$ a augmenté de $\beta_0 + \beta_1$. Après deux périodes, $Y$ a augmenté de $\beta_0 + \beta_1 + \beta_2$. La somme des coefficients de $X$ et de ses deux retards représente la variation de long-terme de $XY$ suite à un changement permanent de $X$. On l'appelle le multiplicateur de long-terme. Les valeurs intermédiaires sont appelées *Interim multipliers*.
@@ -260,10 +294,10 @@ $$
 Dans le cas où $Y_t$ et $X_t$ sont cointégrés, nous disposons de variables supplémentaires que l'on peut inclure dans cette équation. En effet dans ce cas : $Y_t - \beta X_t$ est un processus $I(0)$, et ses retards peuvent sans problèmes être inclus dans une régression. L'équation devient donc :
 
 $$
-\begin{align}
+\begin{aligned}
 \Delta Y_t &= \alpha + \phi \Delta Y_{t-1} + \gamma_0 \Delta X_t + \gamma_1 \Delta X_{t-1} + \delta (Y_{t-1} - \beta X_{t-1}) + u_t \\
 \Leftrightarrow \Delta Y_t &= \alpha + \phi \Delta Y_{t-1} + \gamma_0 \Delta X_t + \gamma_1 \Delta X_{t-1} + \delta \text{ECT} + u_t
-\end{align}
+\end{aligned}
 $$
 
 Le terme $(Y_{t-1} - \beta X_{t-1})$ est appelé le terme à correcteur d'erreur (*Error Correction Term*), et ce type de modélisation est appelée Modèle à Correction d'Erreur.
@@ -429,11 +463,11 @@ Lors de la construction de ce modèle, 5 cas sont possibles (et vont conditionne
 Dans ce cas, on va contrainte qu'il n'y ait ni tendance ni constante à la fois dans l'équation en différence et dans le terme à correction d'erreur. On a donc :
 
 $$
-\begin{align}
+\begin{aligned}
 &c_0 = c_1 = 0 \\
 \\
 &\text{ECT}_t = Y_{t-1} - \left( \sum_{j=1}^k \theta_j X_{j, t-1} \right)
-\end{align}
+\end{aligned}
 $$
 
 Le terme à correction d'erreur en $t$ est donné la différence entre la valeur de $Y_{t-1}$ et sa valeur de long-terme en $t-1$ (sans constante ni tendance) calculée à partir des multiplicateurs de long-terme $\theta_j$. Il s'agit de la valeur du déséquilibre de $Y$ avec sa valeur de long-terme.
@@ -443,11 +477,11 @@ Le terme à correction d'erreur en $t$ est donné la différence entre la valeur
 Dans ce cas, on va contraindre à ce qu'il n'y ait ni constante ni tendance dans l'équation en différence, mais on va inclure une constante dans le terme à correction d'erreur. On a donc :
 
 $$
-\begin{align}
+\begin{aligned}
 &c_0 = c_1 = 0 \\
 \\
 &\text{ECT}_t = Y_{t-1} - \left( \mu + \sum_{j=1}^k \theta_j X_{j, t-1} \right)
-\end{align}
+\end{aligned}
 $$
 
 -   **Cas 3 : Sans tendance mais avec constante dans l'équation de court-terme ; sans tendance et sans constante dans l'équation de long-terme**
@@ -455,11 +489,11 @@ $$
 Dans ce cas, on va contraire à ce qu'il y ait une constante mais pas de tendance dans l'équation en différence. On ne va inclure ni tendance ni constante dans le terme à correction d'erreur. On a donc :
 
 $$
-\begin{align}
+\begin{aligned}
 &c_1 = 0 \\
 \\
 &\text{ECT}_t = Y_{t-1} - \left( \sum_{j=1}^k \theta_j X_{j, t-1} \right)
-\end{align}
+\end{aligned}
 $$
 
 -   **Cas 4 : Sans tendance mais avec constante dans l'équation de court-terme ; sans constante et avec tendance dans l'équation de long-terme**
@@ -467,11 +501,11 @@ $$
 Dans ce cas, on va contraindre à ce qu'il y ait une constante mais pas de tendance dans l'équation en différence. On va inclure une tendance linéaire dans le terme à correction d'erreur mais pas de constante. On a donc :
 
 $$
-\begin{align}
+\begin{aligned}
 &c_1 = 0 \\
 \\
 &\text{ECT}_t = Y_{t-1} - \left( \delta(t-1) + \sum_{j=1}^k \theta_j X_{j, t-1} \right)
-\end{align}
+\end{aligned}
 $$
 
 -   **Cas 5 : Avec tendance et constante dans l'équation de court-terme ; Sans tendance ni constante dans l'équation de long-terme**

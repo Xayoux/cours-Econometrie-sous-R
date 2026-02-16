@@ -1,10 +1,44 @@
 ---
 title: "Régression linéaire et tests statistiques"
 author: "Romain CAPLIEZ"
-format: html
+format:
+  html:
+    embed-resources: true
+    code-overflow: wrap
+    toc: true
+    toc-location: left
+    toc-depth: 5
+    toc-expand: 2
+    include-in-header:
+      text: |
+        <style>
+          p {
+            text-align: justify
+          }
+        </style>
+  pdf:
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines=true, breaksymbol=, commandchars=\\\{\}}
+        \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true, breaksymbol=,commandchars=\\\{\}}
 editor: visual
-toc: TRUE
 ---
+
+```{r}
+#| eval: false
+#| include: false
+# A UTILISER POUR RENDER EN HTML ET PDF
+quarto::quarto_render(
+    here::here(
+        "02-codes", 
+        "presentations",
+        "02-regressions-lineaires-tests-statistiques", 
+        "02-regressions-lineaires-tests-statistiques.qmd"
+    ), 
+    output_format = "all"
+)
+```
 
 # Théorie
 
@@ -38,7 +72,7 @@ wooldridge::vote1 |>
     x = "Part des dépenses de campagne en %",     
     y = "Part des votes en %"   
   ) +   
-  ggplot2::theme()
+  ggplot2::theme_bw()
 ```
 
 Le modèle $Y_i = \alpha + \beta X_i + u_i$ correspond au modèle *théorique* dans la population. On fait l'hypothèse que la variable $Y_i$ est expliquée par la variable $X_i$ de manière linéaire. Le terme $u_i$ représente les erreurs du modèle, c'est à dire tous les éléments que l'on ne capte pas et qui font varier (de manière non systématique) la variable $Y_i$.
@@ -50,10 +84,10 @@ La méthode classique consiste à utiliser la méthode des **Moindres Carrés Or
 Si on définit les valeurs estimées de la variable endogène et les résidus à partir du modèle de la population comme suit et notés respectivement $\hat{Y}_i$ et $\hat{u}_i$ :
 
 $$
-\begin{align}
+\begin{aligned}
 \hat{Y}_i &= \hat{\alpha} + \hat{\beta} X_i \\
 \hat{u}_i &= Y_i - \hat{Y}_i
-\end{align}
+\end{aligned}
 $$
 
 Alors on cherche :
@@ -66,27 +100,30 @@ Ce qui revient à annuler les dérivées suivantes :
 
 $$
 \begin{cases}
-\frac{\partial \displaystyle \sum_{i=1}^N \hat{u}_i^2}{\partial \hat{\alpha}} = 0 \\    
-\frac{\partial \displaystyle \sum_{i=1}^N \hat{u}_i^2}{\partial \hat{\beta}} = 0 
+\frac{\partial \sum_{i=1}^N \hat{u}_i^2}{\partial \hat{\alpha}} = 0 \\   
+\\ 
+\frac{\partial \sum_{i=1}^N \hat{u}_i^2}{\partial \hat{\beta}} = 0 
 \end{cases}
 $$
 
 Une fois ce système résolu, on trouve :
 
 $$
-\begin{align}
+\begin{aligned}
 \hat{\alpha} &= \overline{Y} - \hat{\beta} \overline{X} \\
+\\
 \hat{\beta} &= \frac{\text{Cov} \left( X, Y \right)}{\text{V} \left( X \right)}
-\end{align}
+\end{aligned}
 $$
 
 Avec :
 
 $$
-\begin{align}
+\begin{aligned}
 \overline{X} &= \frac{1}{N} \sum_{i=1}^N X_i \\
+\\
 \overline{Y} &= \frac{1}{N} \sum_{i=1}^N Y_i
-\end{align}
+\end{aligned}
 $$
 
 On interprète les paramètres de la façon suivante :
@@ -104,10 +141,11 @@ $$
 La variance des estimateurs est donnée par :
 
 $$
-\begin{align}
+\begin{aligned}
 \hat{\sigma}^{2}_{\hat{\beta}} &= \frac{\hat{\sigma}_{u}^2}{\sum_{i=1}^N \left( X_i - \overline{X} \right)^2} = \frac{\hat{\sigma}_{u}^2}{N \times V(X)} \\
+\\
 \hat{\sigma}_{\hat{\alpha}}^2 &= \hat{\sigma}_u^2 \frac{\sum_{i=1}^N X_i^2}{N^2 \times V(X)}
-\end{align}
+\end{aligned}
 $$
 
 ## Régression linéaire multiple
@@ -131,10 +169,9 @@ $$
 
 Sous forme développée cela donne :
 
-$$ \begin{bmatrix}     y_1 \\[4pt]    y_2 \\[4pt]    \vdots \\[4pt]    y_N   \end{bmatrix}  =    
-\begin{bmatrix} 1 & x_{11} & x_{12} & \cdots & x_{1K} \\[4pt]   1 & x_{21} & x_{22} & \cdots & x_{2K} \\[4pt]    \vdots & \vdots & \vdots & \ddots & \vdots \\[4pt]   1 &  x_{N1} & x_{N2} & \cdots & x_{NK}   
-\end{bmatrix}    
-\begin{bmatrix}   \alpha \\ \beta_1 \\[4pt]    \beta_2 \\[4pt]    \vdots \\[4pt]    \beta_K  \end{bmatrix}  +    \begin{bmatrix}    u_1 \\[4pt]    u_2 \\[4pt]    \vdots \\[4pt]    u_N   \end{bmatrix} $$
+$$
+\begin{bmatrix}     y_1 \\[4pt]    y_2 \\[4pt]    \vdots \\[4pt]    y_N   \end{bmatrix}=\begin{bmatrix} 1 & x_{11} & x_{12} & \cdots & x_{1K} \\[4pt]   1 & x_{21} & x_{22} & \cdots & x_{2K} \\[4pt]    \vdots & \vdots & \vdots & \ddots & \vdots \\[4pt]   1 &  x_{N1} & x_{N2} & \cdots & x_{NK}   \end{bmatrix}\begin{bmatrix}   \alpha \\ \beta_1 \\[4pt]    \beta_2 \\[4pt]    \vdots \\[4pt]    \beta_K \end{bmatrix} + \begin{bmatrix}    u_1 \\[4pt]    u_2 \\[4pt]    \vdots \\[4pt]    u_N   \end{bmatrix}
+$$
 
 On peut également écrire le modèle sous forme semi-développée en une ligne :
 
@@ -263,11 +300,11 @@ Il est également possible de calculer le niveau de significativité à partir d
 On peut décomposer la variance de la variable endogène $Y_i$ comme étant la somme de la variance expliquée par le modèle et de la variance du terme d'erreur :
 
 $$
-\begin{align}
+\begin{aligned}
 \frac{1}{N} \sum_{i=1}^{N} \left( Y_i - \overline{Y} \right)^2 &= \frac{1}{N} \sum_{i=1}^{N} \left( \hat{Y}_i - \overline{Y} \right)^2 + \frac{1}{N} \sum_{i=1}^N u_i^2 \\
-\text{ }\\
+\\
 \text{SCT} &= \text{SCE} + \text{SCR}
-\end{align}
+\end{aligned}
 $$
 
 Cette équation de la variance nous indique que la Somme des Carrés Totaux (SCT) est égale à la Somme des Carrés Expliqués (SCE) plus la Somme des Carrés des Résidus (SCR). Autrement dit, la variation de notre variable endogène se décompose en une partie expliquée par le modèle et une partie que l'on explique pas et qui se retrouve dans les résidus.
@@ -332,7 +369,7 @@ $$
 \left\{    
 \begin{array}{ll}       
 H_0 : \beta_2 = \beta_3 = 0  \\       
-H_1 : \beta_2 \neq 0 \text{ } | \text{ } \beta_3 \neq 0     
+H_1 : \beta_2 \neq 0 \hspace{0.2cm} | \hspace{0.2cm} \beta_3 \neq 0     
 \end{array}
 \right.
 $$
@@ -559,10 +596,11 @@ L'hypothèse de normalité des erreurs est nécessaire afin de procéder à une 
 Ce test se base sur la définition des coefficients de skewness $S$ (asymétrie de la distribution) et de kurtosis $K$ (épaisseur des queues de distribution) :
 
 $$
-\begin{align}
+\begin{aligned}
 S &= \frac{\left[ \frac{1}{N}\sum_{i=1}^N \left( X_i - \overline{X} \right)^3 \right]^2}{\left[ \frac{1}{N} \sum_{i=1}^N \left( X_i - \overline{X} \right)^2 \right]^3} \\
+\\
 K &= \frac{\frac{1}{N} \sum_{i=1}^N \left( X_i - \overline{X} \right)^4}{\left[ \frac{1}{N} \sum_{i=1}^N \left( X_i - \overline{X} \right)^2 \right]^{3}}
-\end{align}
+\end{aligned}
 $$
 
 Une loi normale dispose d'un coefficient d'asymétrie (skewness) nul et d'un coefficient d’aplatissement (kurtosis) égal à 3.
@@ -649,15 +687,15 @@ Il est possible de transformer certaines variables en logarithme afin d'obtenir 
 | Nom | Modèle | Interprétation de $\beta$ |
 |------------------------|------------------------|------------------------|
 | Niveau-Niveau | $Y_i = \alpha + \beta X_i +u_i$ | $\Delta Y_i = \beta_1 \Delta X_i$ |
-| Niveau-log | $Y_i = \alpha + \beta \times log( X_i) +u_i$ | $\Delta Y_i = (\frac{\beta}{100}) \text{%} \Delta X_i$ |
-| Log-Niveau | $log(Y_i) = \alpha + \beta X_i +u_i$ | $\text{%} \Delta Y_i = (100 \beta) \Delta X_i$ |
-| Log-Log | $log(Y_i) = \alpha + \beta \times log( X_i) +u_i$ | $\text{%} \Delta Y_i = \beta \text{ } \text{%}\Delta X_i$ |
+| Niveau-log | $Y_i = \alpha + \beta \times log( X_i) +u_i$ | $\Delta Y_i = (\frac{\beta}{100}) \text{\%} \Delta X_i$ |
+| Log-Niveau | $log(Y_i) = \alpha + \beta X_i +u_i$ | $\text{\%} \Delta Y_i = (100 \beta) \Delta X_i$ |
+| Log-Log | $log(Y_i) = \alpha + \beta \times log( X_i) +u_i$ | $\text{\%} \Delta Y_i = \beta \text{\%}\Delta X_i$ |
 
 -   Dans un modèle en `Niveau-Log`, augmenter $X_i$ de 1% fait augmenter $Y_i$ de $\frac{\beta}{100}$ unités en moyenne.
 
--   Dans un modèle `Log-Niveau`, augmenter $X_i$ de 1 unité, fait augmenter $Y_i$ de $(100 \times \beta) \text{%}$.
+-   Dans un modèle `Log-Niveau`, augmenter $X_i$ de 1 unité, fait augmenter $Y_i$ de $(100 \times \beta) \text{\%}$.
 
--   Dans un modèle `Log-Log`, augmenter $X_i$ de 1%, fait augmenter $Y_i$ de $\beta \text{%}$ .
+-   Dans un modèle `Log-Log`, augmenter $X_i$ de 1%, fait augmenter $Y_i$ de $\beta \text{\%}$ .
 
 L'augmentation n'est plus linéaire.
 
@@ -762,7 +800,7 @@ Ce modèle suppose une relation dans la population linéaire entre l'éducation 
 
 ```{r}
 # Représenter graphiquement les données sous forme d'un nuage de points
-wage1 |> 
+wooldridge::wage1 |> 
   ggplot(aes(x = educ, y = wage)) +
   geom_point() +
   theme()
@@ -782,13 +820,13 @@ reg1_summary <-
   print()
 ```
 
-La ligne`(Intercept)` correspond à la constante, tandis que les lignes suivantes correspondent aux variables explicatives du modèle. La colonne `estimate` donne la valeur des estimateurs $\hat\beta$. La colonne `Std. Error` donne la valeur des écarts-types des estimateurs $\hat{\sigma}_{\hat{\beta}}$. La colonne `t value` indique la statistique du test de Student $t_\hat{\beta}$. La colonne `Pr(|t|)` donne la p.value du test de Student.
+La ligne`(Intercept)` correspond à la constante, tandis que les lignes suivantes correspondent aux variables explicatives du modèle. La colonne `estimate` donne la valeur des estimateurs $\hat\beta$. La colonne `Std. Error` donne la valeur des écarts-types des estimateurs $\hat{\sigma}_{\hat{\beta}}$. La colonne `t value` indique la statistique du test de Student $t_{\hat{\beta}}$. La colonne `Pr(|t|)` donne la p.value du test de Student.
 
 La valeur de $\hat{\alpha}$ nous indique que dans l'échantillon lorsqu'un individu a un niveau d'éducation nul, alors son revenu horaire moyen estimé est de $-0.90485$ dollars environ ce qui n'est pas réaliste, un salaire ne pouvait pas être négatif. On remarque que la p.value du test de Student est de $0.187 > 0.05$. On ne peut donc rejeter l'hypothèse selon laquelle la constante serait différente de 0.
 
 La valeur de $\hat{\beta}$ nous indique que dans l'échantillon, lorsqu'un individu augmente son nombre d'années d'éducation de 1, alors en moyenne, son salaire horaire moyen augmente de $0.54136$ dollars. La p.value du test de Student est extrêmement faible et largement inférieure à 5%. Ces estimation nous laissent penser que l'éducation a bien un effet positif sur le salaire dans la population.
 
-Nous pouvons voir que $R^2 = 0.1648$ ce qui signifie que ce modèle permet d'expliquer $16.48 \text{%}$ de la variance du salaire horaire moyen dans notre échantillon.
+Nous pouvons voir que $R^2 = 0.1648$ ce qui signifie que ce modèle permet d'expliquer $16.48 \text{\%}$ de la variance du salaire horaire moyen dans notre échantillon.
 
 La toute dernière ligne `F-statistic` donne la statistique de test et la p.value du test de Fisher de significativité du modèle. On remarque que cette statistique de test est extrêmement faible et largement inférieure à 5%. On rejette donc l'hypothèse nulle de non significativité du modèle. Notre modèle a un certain pouvoir explicatif sur notre variable.
 
@@ -1152,7 +1190,7 @@ reg2_summary <- summary(reg2)
 (lmtest::coeftest(reg2, vcov = hccm))
 ```
 
-Dans un tel cas, nous sommes dans un modèle Log-Niveau. L'interprétation de $\beta \approx 0.083$ est la suivante : une année d'étude supplémentaire augmente en moyenne le salaire horaire de l'individu de $8.3 \text{%}$. Ce coefficient est significativement différent de 0 même en prenant en compte une possible hétéroscédasticité.
+Dans un tel cas, nous sommes dans un modèle Log-Niveau. L'interprétation de $\beta \approx 0.083$ est la suivante : une année d'étude supplémentaire augmente en moyenne le salaire horaire de l'individu de 8.3%. Ce coefficient est significativement différent de 0 même en prenant en compte une possible hétéroscédasticité.
 
 Ici passer `educ` sous forme logarithme n'aurait aucun intérêt. Augmenter son nombre d'années d'études de 1% ne fait aucun sens. On raisonne en termes d'années supplémentaires.
 
