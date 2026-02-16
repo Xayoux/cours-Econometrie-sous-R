@@ -13,7 +13,7 @@ Objectif : Estimer l'effet de la présence en cours sur la réussite à un exame
 
 ## Question 1
 
-*Importer les données et découvrir les variables. Quelles sont les potentielles variables endogènes pour répondre à notre objectif ? Quelle serait la principale variable exogène ?*
+*Importer les données et découvrir les variables. Quelles sont les potentielles variables exogènes pour répondre à notre objectif ? Quelle serait la principale variable endogènes ?*
 
 ## Question 2
 

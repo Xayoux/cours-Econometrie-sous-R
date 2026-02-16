@@ -11,7 +11,7 @@ editor: visual
 
 **Objectif :** Tester la relation de long terme entre le taux d'intérêt des bons du trésor à 3 mois (`i3`) et le taux d'inflation (`inf`). Selon l'effet Fisher, une augmentation de l'inflation devrait se traduire par une augmentation équivalente des taux d'intérêt nominaux à long terme (coefficient de 1).
 
-## Question 0 
+## Question 0
 
 Charger le setup de l'analyse
 
