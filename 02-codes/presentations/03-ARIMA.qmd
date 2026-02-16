@@ -631,6 +631,8 @@ source(here::here("02-codes", "utils", "setup.R"))
 
 ## Données et analyse
 
+### Présentation des données
+
 Nous allons essayer de modéliser et de prédire la série du S&P 500 que l'on peut obtenir depuis 2007 grâce au package `pdfetch` qui est un package permettant de télécharger des séries de données depuis de nombreuses sources différentes. Les données sont retournées comme étant des objets `xts`. Il s'agit d'un type d'objet indiquant que la série est une série temporelle. Il est parfois nécessaires pour certaines fonctions que les séries données soient dans un format temporelle à cause de la gestion des dates.
 
 ```{r}
@@ -659,21 +661,78 @@ sp_500 |>
 
 La fonction d'auto-corrélation montre une très forte persistance de l'auto-corrélation ce qui est un signe de non-stationnarité.
 
+### Test ADF automatique
+
 On va tester la non-stationnarité avec le test ADF. J'utilise ici, une fonction d'un package fait maison qui permet de faire la procédure ADF automatiquement (à l'inverse du package `urca`) et qui permet si nécessaire de retourner un dataframe avec les résultats, ce qui peut être pratique lorsque l'on veut tester la stationnarité de plusieurs séries et récupérer les résultats dans une table.
 
 ```{r}
-# Test ADF automatique
-dobby::adf_test_auto(sp_500, "S&P500", lags = 20, return_res = FALSE)
+# N'exécuter que si le package dobby est installé
+if (rlang::is_installed("dobby")) {
+  # Test ADF automatique
+  dobby::adf_test_auto(
+    sp_500, # Série à utiliser
+    "S&P500", # Nom à donner à la série
+    lags = 20, # Nombre de lags maximum à tester
+    return_res = FALSE # Indiquer si on veut retourner un tableau de résultat ou juste un message
+  ) 
+}
 ```
 
 La série n'est pas stationnaire selon le test ADF puisque l'on ne peut pas rejeter l'hypothèse nulle.
 
 Le modèle sélectionné est le modèle sans constante ni tendance. La série du S&P500 est une une série de type DS. Il faut donc la différencier.
 
+### Test ADF manuel
+
+On peut également faire le test plus manuellement avec le package `urca` et sa fonction `ur.df()`. Il s'agit de la fonction qui est utilisée dans le package `dobby`. Simplement la fonction `ur.df()` ne donne pas de résultats de manière immédiate. Il faut regarder manuellement la significativité des termes voulus et tester chaque modèle un à un.
+
+```{r}
+urca::ur.df(
+  y = sp_500, # Série à utiliser
+  type = "trend", # type de modèle ADF : ici avec tendance et constante
+  lags = 10, # nombre de lags maximum
+  selectlags = "AIC" # Sélection du nombre de lag avec le critère AIC
+) |> 
+  summary() # Donner un résummé du résultat
+```
+
+On commence d'abord par sélectionner le modèle à utiliser : avec constante et tendance, avec constante sans tendance ou sans constante ni tendance. On commence toujours par le modèle avec constante et tendance. Le paramètre de la tendance est donnée à la ligne `tt`. Attention, pour tester la significativité des paramètres, il faut utiliser les valeurs tabulées par Dickey-Fuller puisque les valeurs usuelles ne sont pas utilisables.
+
+La valeur critique associée au coefficient de la tendance dans le modèle 3 et avec un nombre d'observations grand au seuil de 5% est $2.78$. La t-value du coefficient de la tendance est de $1.808 < 2.78$. ON ne peut donc pas rejeter l'hypothèse nulle de non-significativité de la tendance. On rejette le modèle 3 et on passe au modèle avec constante et sans tendance.
+
+```{r}
+urca::ur.df(
+  y = sp_500, # Série à utiliser
+  type = "drift", # type de modèle ADF : ici sans tendance et avec constante
+  lags = 10, # nombre de lags maximum
+  selectlags = "AIC" # Sélection du nombre de lag avec le critère AIC
+) |> 
+  summary() # Donner un résummé du résultat
+```
+
+On tester la significativité du paramètre de la constante `(Intercept)`. La valeur critique associée à la constante dans le modèle 2, avec un nombre grand d'observations et un seuil de 5% est de $2.52$. La t-value associée au paramètre de la constante est de $|-0.41| < 2.52$. On ne peut donc pas rejeter l'hypothèse nulle de non significativité de la constante dans le modèle 2. On rejette ce modèle et on passe au modèle 1.
+
+```{r}
+urca::ur.df(
+  y = sp_500, # Série à utiliser
+  type = "none", # type de modèle ADF : ici sans tendance et sans constante
+  lags = 10, # nombre de lags maximum
+  selectlags = "AIC" # Sélection du nombre de lag avec le critère AIC
+) |> 
+  summary() # Donner un résummé du résultat
+```
+
+On va tester la significativité du terme auto-régressif en niveau `z.lag.1`. La valeur critique du coefficient pour le modèle 1, avec un grand nombre d'observations et un seuil de 5% est de $-1.95$. La t-value du coefficient est : $3.371 > -1.95$. On rappelle que sur ce test de racine unitaire, la règle de décision est inversée. On rejetera l'hypothèse nulle de non-stationnarité lorsque la t-value et inférieure à la valeur critique (NE PAS PRENDRE LES VALEURS ABSOLUES ICI).
+
+Notre t-value étant supérieure à la valeur critique, on ne peut pas rejeter l'hypothèse nulle de non stationnarité de la série. Notre série est vraisemblablement caractérisée par un processus $I(1)$ avec au moins une racine unitaire. Pour pouvoir l'utiliser dans des modélisations classiques, il faut la stationnariser.
+
+### Stationnarisation
+
 Ici on va la log-différencier pour obtenir le changement en pourcentage de la série, autrement dit les rendements journaliers observés.
 
 ```{r}
 # Calculer les rendements de la série
+# Faire la log différence des données + retirer les valeurs manquantes
 rend_sp_500 <- 
   na.omit((log(sp_500) - log(lag(sp_500))) * 100) 
 
@@ -697,26 +756,57 @@ La fonction d'auto-corrélation semble également indiquer que la série des ren
 Malgré les "preuves" graphiques, nous allons tester la stationnarité des rendements.
 
 ```{r}
-# Test ADF automatique
-dobby::adf_test_auto(rend_sp_500, "S&P500", lags = 20, return_res = FALSE)
+# N'exécuter que si le package dobby est installé
+if (rlang::is_installed("dobby")) {
+  # Test ADF automatique
+  dobby::adf_test_auto(
+    rend_sp_500, 
+    "S&P500", 
+    lags = 20, 
+    return_res = FALSE
+  ) 
+}
 ```
 
 L'hypothèse nulle est rejetée, la série des rendements semble donc stationnaire en moyenne.
 
+### Description des rendements
+
 On s'intéresse ensuite à la description statistique de notre série. On commence par observer la normalité de la série :
 
+#### Normalité
+
 ```{r}
-# tester la présence de skewness et de surplus de kurtosis
-dobby::check_univariate_normality(as.numeric(rend_sp_500), "S&P500", return_output = FALSE)
+# Excuter uniquement si le package dobby est installé
+if (rlang::is_installed("dobby")) {
+  # tester la présence de skewness et de surplus de kurtosis
+  dobby::check_univariate_normality(
+    as.numeric(rend_sp_500), # Série : doit être un vecteur numérique   et pas une série temporelle
+    "S&P500", # Nom à donner à la série
+    return_output = FALSE # Faut-il retourner un tableau de résultats   ?
+  ) 
+}
 ```
 
-Les tests statistiques indiques que notre séries et biaisée à gauche avec une skewness négative. Cela indique que les pertes ont d'avantage d'impact que les gains. La série est également caractérisée par une kurtosis supérieure à 3 indiquant que la probabilité d'observer des valeurs extrêmes est bien plus élevée que dans une loi normale.
+Cette fonction exécute les fonctions `moments::agostino.test()` pour tester si la skewness de la série est statistiquement différente de 0 ou non ; `moments::anscombe.test()` pour tester si la kurtosis de la série est statistiquement différente de 3 ; `moments::jarque.test()` pour tester si la kurtosis et la skewness de la série sont conjointement différentes de 0 et 3 respectivement.
+
+Les tests statistiques indiquent que notre série est biaisée à gauche avec une skewness négative. Cela indique que les pertes ont d'avantage d'impact que les gains. La série est également caractérisée par une kurtosis supérieure à 3 indiquant que la probabilité d'observer des valeurs extrêmes est bien plus élevée que dans une loi normale.
+
+Le test joint indique que les moments de la série des rendements ne sont pas égaux aux moments de la loi normale. A priori nos rendements ne suivent pas une loi normale.
+
+Si le package `dobby` n'est pas installé, il est possible de faire les tests un par un :
+
+```{r}
+moments::agostino.test(rend_sp_500)
+```
+
+```{r}
+moments::anscombe.test(rend_sp_500)
+```
 
 ```{r}
 moments::jarque.test(as.numeric(rend_sp_500))
 ```
-
-Le test de Jarque-Bera confirme le diagnostique de non normalité de la série.
 
 ```{r}
 mean(rend_sp_500)
@@ -724,24 +814,49 @@ mean(rend_sp_500)
 
 La moyenne de la série est proche de 0 comme le veut la théorie des marchés financier comme quoi en moyenne le gain est nul.
 
-On regarde ensuite l'auto-corrélation de la série avec les tests de Ljung-Box et Box-Pierce avec des ordres d'auto-corrélation de 1 et 20. Le package maisons `dobby` utilise la fonction `stats::Box.test()` mais permet d'avoir des résultats pouvant être extraits entre autre.
+#### Auto-corrélation
+
+On regarde ensuite l'auto-corrélation de la série avec les tests de Ljung-Box et Box-Pierce avec des ordres d'auto-corrélation de 1 et 20. Le package maison `dobby` utilise la fonction `stats::Box.test()` mais permet, entre autre, d'avoir des résultats pouvant être extraits.
 
 ```{r}
-# Test de Ljung-Box
-dobby::check_univariate_autocorr(rend_sp_500, "S&P500", test_type = "Ljung-Box", return_output = FALSE)
-
-# Test de Box Pierce
-dobby::check_univariate_autocorr(rend_sp_500, "S&P500", test_type = "Box-Pierce", return_output = FALSE)
+# Exécuter uniquement si le package dobby est installé
+if (is_installed("dobby")){
+  # Test de Ljung-Box
+  dobby::check_univariate_autocorr(
+    rend_sp_500, # Série à tester
+    "S&P500", # Nom à donner à la série
+    test_type = "Ljung-Box", # Nom du test d'auto-corrélation
+    return_output = FALSE # Faut-il retourner un tableau de résultats
+  )
+}
 ```
 
-Les tests de Box-Pierce et Ljung-Box indique tous les deux que la série présente de l'auto-corrélation à l'ordre 1 et 20 pour de très faibles niveaux de risque. L'objectif va être d'essayer de modéliser au maximum cette auto-corrélation.
+```{r}
+# Exécuter uniquement si le package dobby est installé
+if (rlang::is_installed("dobby")){
+ # Test de Box Pierce
+  dobby::check_univariate_autocorr(
+    rend_sp_500, 
+    "S&P500", 
+    test_type = "Box-Pierce", 
+    return_output = FALSE
+  ) 
+}
+```
+
+Les tests de Box-Pierce et Ljung-Box indiquent tous les deux que la série présente de l'auto-corrélation à l'ordre 1 et 20 pour de très faibles niveaux de risque. L'objectif va être d'essayer de modéliser au maximum cette autocorrélation.
 
 ## Modélisation AR(1)
 
 Nous allons commencer par essayer de modéliser la série avec un $AR(1)$.
 
 ```{r}
-ar_1 <- forecast::Arima(rend_sp_500, order = c(1, 0, 0), include.mean = TRUE)
+ar_1 <- 
+  forecast::Arima(
+    rend_sp_500, # Série à modéliser
+    order = c(1, 0, 0), # Ordres AR, I, MA à utiliser
+    include.mean = TRUE # Inclure une constante ou pas
+  )
 
 summary(ar_1)
 ```
@@ -750,6 +865,8 @@ Le modèle $AR(1)$ indique que les rendements dépendent de manière négative d
 
 ```{r}
 # Créer un dataframe pour visualiser les données
+# ar_1$x permet de récupérer les données utilisées pour la modélisation
+# ar_1_fitted permet de récupérer les valeurs prédites de la série
 tibble(
   real_value = as.numeric(ar_1$x), # Valeur réelle
   fitted_value = ar_1$fitted, # Valeur estimée
@@ -758,13 +875,14 @@ tibble(
   # Pivoter en longueur pour avoir les valeurs dans une seule colonne
   # Permet de facilement gérer les couleurs et légendes avec ggplot2
   pivot_longer(
-    cols = !t,
+    cols = !t, # pivoter toutes les colones sauf la date
     names_to = "variable",
     values_to = "rendements"
   ) |> 
   # Garder uniquement les dernières observations pour plus de clarté
   filter(row_number() > 9000) |> 
-  print() |> 
+  print(n = 10) |> 
+  # Faire un graphique simple
   ggplot(aes(x = t, y = rendements, color = variable)) +
   geom_line()
 ```
@@ -772,13 +890,25 @@ tibble(
 On remarque que l'on n'arrive pas bien à reproduire l'amplitude et la volatilité de la série.
 
 ```{r}
-dobby::check_univariate_autocorr(ar_1$residuals, "résidus AR(1)")[1]
+if (rlang::is_installed("dobby")) {
+  dobby::check_univariate_autocorr(
+    ar_1$residuals, 
+    "résidus AR(1)",
+    return_output = TRUE # Retourner graphiques + tableaux
+  )[1] # Simplement garder le 1er élément -> les graphiques 
+}
 ```
 
-Le test d'auto-corrélation nous indique que toute l'auto-corrélation de long-terme n'a pas été prise en compte. Le modèle n'est donc pas valide.
+Le test d'autocorrélation nous indique que toute l'autocorrélation de long-terme n'a pas été prise en compte. Le modèle n'est donc pas valide.
 
 ```{r}
-dobby::check_univariate_normality(as.numeric(rend_sp_500), "résidus AR(1)", return_output = FALSE)
+if (rlang::is_installed("dobby")) {
+  dobby::check_univariate_normality(
+    as.numeric(rend_sp_500), 
+    "résidus AR(1)", 
+    return_output = FALSE
+  ) 
+}
 ```
 
 Comme prévu les résidus ne sont pas normaux. Cela est logique car rien dans la modélisation AR(1) ne permet de prendre en compte la non-normalité. De ce fait, on laissera pour les prochaines modélisations le test de normalité de côté.
@@ -787,19 +917,24 @@ On utilise le test de White pour tester l'homogénéité de la variance ainsi qu
 
 ```{r}
 # test de white
-whitestrap::white_test(ar_1)
+whitestrap::white_test(
+  ar_1 # Modèle dont les résidus sont à tester
+)
 
 # ARCH test
-fDMA::archtest(as.numeric(ar_1$residuals**2), lag = 20)
+fDMA::archtest(
+  as.numeric(ar_1$residuals**2), # Série des résidus au carré
+  lag = 20 # nombre de lags à utiliser
+)
 ```
 
-L'hypothèse d'homogénéité de la variance est rejetée. La variance des résidus ne semble pas constante dans le temps et semble être conditionnellement auto-corrélée.
+L'hypothèse d'homogénéité de la variance est rejetée. La variance des résidus ne semble pas constante dans le temps et semble être conditionnellement autocorrélée.
 
 La modélisation AR(1) ne semble donc pas suffisante pour modéliser correctement notre série des rendements.
 
 ## Modélisation ARMA(p,q)
 
-On peut utiliser la fonction `foreast::auto.arima()` pour déterminer le modèle qui correspond le mieux à nos données selon les critères d'informations
+On peut utiliser la fonction `foreast::auto.arima()` pour déterminer le modèle qui correspond le mieux à nos données selon les critères d'informations. Cette fonction va déterminer le nombre de lags nécessaire pour modéliser notre série selon un critère dd'information
 
 ```{r}
 # Meilleur modèle selon les critères d'informations
@@ -808,27 +943,28 @@ best_arma <-
   print()
 ```
 
-Il semble que selon le critère AIC le meilleur modèle soit un $ARMA(4,5)$. On va tester si les derniers coefficients sont significatifs ou non
+Il semble que selon le critère AIC, le meilleur modèle soit un $ARMA(4,5)$. On va tester si les derniers coefficients sont significatifs ou non
 
 ```{r}
 # Tester la significativité des coefficients
+# Créer un tibble contenant les coefficients
 tibble(
   variable = names(best_arma$coef), # Extraire le nom des coefficients
   coef = best_arma$coef, # Extraire la valeur des coefficients
   std = sqrt(diag(best_arma$var.coef)) # Extraire l'écart-type des coefficients à partir de la matrice de variance-covariance
 ) |> 
   mutate(
-    t_stat = abs(coef / std)
+    t_stat = abs(coef / std) # Calculer la t-stat de chaque coef
   )
 ```
 
-On remarque que tous nos coefficients passent le test de surdimmensionnement puisque toutes les t-stats sont supérieures à 1.96. le modèle est donc validé de ce point de vue.
+On remarque que tous nos coefficients passent le test de surdimmensionnement puisque toutes les t-stats sont supérieures à 1.96. le modèle est donc validé de ce point de vue. (Rappel que le test de surdimmensionnement ne s'applique en général que sur les derniers coefficients de chaque composante).
 
 ```{r}
 dobby::check_univariate_autocorr(best_arma$residuals, "residus")[1]
 ```
 
-La majorité de l'auto-corrélation de la série semble avoir été prise en compte. Il n'y a pas à court-terme d'auto-corrélation. Par contre, on peut voir que le résultat est moins net à plus long-terme. Ici à l'ordre 20, on rejette l'hypothèse nulle de non-significativité à 5%.
+La majorité de l'autocorrélation de la série semble avoir été prise en compte. Il n'y a pas à court-terme d'auto-corrélation. Par contre, on peut voir que le résultat est moins net à plus long-terme. Ici à l'ordre 20, on rejette l'hypothèse nulle de non-significativité à 5%.
 
 La fonction `Box.Ljung.Text()` permet de tracer un graphique indiquant la p.value du test de Ljung-Box pour tous les horizons voulus. On remarque que l'on ne capte pas toute l'auto-corrélation de long-terme avec notre modélisation.
 
@@ -861,17 +997,18 @@ tibble(
     values_to = "rendements"
   ) |> 
   # Garder uniquement les dernières observations pour plus de clarté
-  filter(row_number() > 9000) |> 
-  print() |> 
+  filter(row_number() > 9000) |>
   ggplot(aes(x = t, y = rendements, color = variable)) +
   geom_line()
 ```
 
-Encore une fois, la modélisation ARMA a du mal à reproduire l'amplitude de variation des rendements.
+Encore une fois, la modélisation ARMA a du mal à reproduire l'amplitude de variation des rendements (ce qui est un cas classique).
 
 ## Modélisation de marche aléatoire
 
 Nous allons par la suite comparer la puissance prédictive de nos modèle entre eux mais également nous allons chercher à voir s'ils permettent de mieux prédire et d'expliquer les rendements que le hasard donné par la marche aléatoire.
+
+Rappel qu'une marche aléatoire consiste à explique la valeur actuelle par la totalité de sa valeur passée (coefficient auto-régressif de 1). Il s'agit d'un $ARIMA(0,1,0)$.
 
 ```{r}
 rw <- Arima(rend_sp_500, order = c(0,1,0)) |> 

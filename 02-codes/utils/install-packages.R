@@ -25,6 +25,7 @@ install.packages("dynlm")
 install.packages("ARDL")
 install.packages("sandwich")
 install.packages("timetk")
+install.packages("urca")
 
 devtools::install_github("https://github.com/Xayoux/dobby.git")
 
