@@ -1,0 +1,430 @@
+---
+title: "02-exercices-regressions-lineraires"
+format:
+  html:
+    embed-resources: true
+    code-overflow: wrap
+    toc: true
+    toc-location: left
+    toc-depth: 5
+    toc-expand: 2
+    include-in-header:
+      text: |
+        <style>
+          p {
+            text-align: justify
+          }
+        </style>
+  pdf:
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines=true, breaksymbol=, commandchars=\\\{\}}
+        \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true, breaksymbol=,commandchars=\\\{\}}
+editor: visual
+---
+
+```{r}
+#| eval: false
+#| include: false
+# A UTILISER POUR RENDER EN HTML ET PDF
+quarto::quarto_render(
+    here::here(
+        "02-codes", 
+        "exercices",
+        "02-regressions-lineaires-tests-statistiques", 
+        "correction",
+        "02-correction-regressions-lineaires.qmd"
+    ), 
+    output_format = "all"
+)
+```
+
+# Exercice 1 : Notes et présence en cours
+
+Données : Dataframe `attend` du package `wooldridge`.
+
+Objectif : Estimer l'effet de la présence en cours sur la réussite à un examen.
+
+## Question 1
+
+*Importer les données et découvrir les variables. Quelles sont les potentielles variables exogènes pour répondre à notre objectif ? Quelle serait la principale variable endogène ?*
+
+```{r, message=FALSE}
+# Importer les packages
+source(here::here("02-codes", "utils", "setup.R"))
+
+# Importer les données attend et les stocker dans la avriable df
+df <- 
+  wooldridge::attend |> 
+  # Transformer en tibble pour plus de confort
+  tibble() |> 
+  print()
+
+# help(attend) OU ?attend pour avoir une description des variables
+```
+
+Il y a plusieurs variables qui mesurent la réussite à l'examen :
+
+-   `final`
+
+-   `stndfnl`
+
+`final` donne simplement le score à l'examen final, tandis que `stndfnl` correspond à la variable final centrée réduite. Elle permet de comparer plus facilement les élèves entre eux et d'avoir une comparaison qui indique à quel point un élève à bien performé comparé aux autres élèves. On pourrait également utiliser la variable `termGPA` qui est une moyenne de différentes notes si l'on souhaite mesurer la performance continue. Ici, on va utiliser la variable `stndfnl` pour pouvoir estimer si être assidu rend plus compétitif ou non.
+
+Les potentielles variables exogènes pour mesurer l'assiduité seraient :
+
+-   `attend` : le nombre de classes sur 32 auxquelles l'élève à participé
+
+-   `atndrte` : le pourcentage de classes auxquelles l'élève à participé
+
+-   `missed` : le nombre de classes que l'élève à manqué
+
+Ces 3 variables donnent des informations très similaire. Seule l'interprétation va changer. Ici on va choisir la variable `attend` car il semble plus intéressant de voir si les notes augmentent lorsque l'on assiste à un cours de plus plutôt que si l'on assiste à 1% de cours en plus (ça veut dire quoi assister à 1% de cours en plus ?).
+
+## Question 2
+
+*Quel est l'effet attendu de la présence scolaire sur le résultat à l'examen ?*
+
+On s'attend qu'un élève qui soit davantage présent en cours ait de meilleures notes et soit plus compétitif comparé à un élève qui viendrait moins souvent. En effet, la présence enc ours est un indicateur de la motivation et de sa volonté de travailler. Egalement, il y a souvent des informations importantes données pendant le cours que l'élève n'aura pas ailleurs.
+
+## Question 3
+
+*Représenter graphiquement la relation entre la réussite et la présence en cours. Quelle est la corrélation entre les deux variables ?*
+
+```{r}
+# utiliser notre jeu de données pour créer un graphique
+df |> 
+  # Créer un graphique avec attend en x et stndfnl en y
+  ggplot(aes(x = attend, y = stndfnl)) +
+  # Ajouter des points
+  geom_point() +
+  # Ajouter une droite de régression linéaire
+  geom_smooth(
+    method = "lm", # On utilise une régression linéaire
+    formula = y ~ x, # On modélise y par rapport à x
+    se = TRUE # On indique que l'on veut visualiser l'écart-type de beta
+  )
+```
+
+```{r}
+# Calculer la corrélation entre les deux variables
+cor.test(df$attend, df$stndfnl)
+```
+
+On peut voir qu'on a une corrélation positive bien quelle semble assez faible. Mais il semblerait bien qu'il y ait une corrélation positive entre la présence en cours en la compétitivité à l'examen d'un étudiant. Attention, il ne s'agit que d'une corrélation.
+
+## Question 4
+
+*Estimer la régression linéaire simple entre la réussite et à la présence en classe. Quel est l'effet estimé de la présence sur la réussite ? Cet effet est-il significatif ? Qu'en est-il de la constante ?*
+
+```{r}
+# Estimer la régression linéaire simple
+reg_simple <- lm(stndfnl ~ attend, data = df)
+
+summary(reg_simple)
+```
+
+Assister à une classe de plus fait augmenter la note standardisée de 0.02. L'effet est significatif au seuil de 0.1%. On rejette donc l'hypothèse nulle d'absence d'effet de la présence en cours sur la compétitivité à l'examen.
+
+L'effet semble faible, néanmoins il faut bien prendre en compte qu'il s'agit d'une note standardisée. Si l'on regarde la distribution de cette variable :
+
+```{r}
+# Obtenir un résummé statistique de la variable stndfnl
+quantile(df$stndfnl, seq(0,1,0.1)) |> 
+  as_tibble(rownames = "quantile") |> 
+  print(n = 20)
+```
+
+On peut voir que sa distribution est assez resserrée et que 0.02 peut constituer une augmentation intéressante de la compétitivité. Si jamais l'élève assiste assiste à tous les cours, il aura une note $0.02 \times 32 = 0.64$ plus élevée qu'un élève qui n'aura assisté à aucun cours. Une augmentation standardisée de la note de 0.64 représente une augmentation de plusieurs décile dans la performance à l'examen qui ne semble pas négligeable.
+
+On remarque que la constante est significative et négative. Compte tenu du fait que notre variable est standardisée cela est plausible. Un élève qui n'aura assisté à aucun cours aura en moyenne une note standardisée de -0.64 ce qui le place dans les 30% d'élèves les moins performants à l'examen selon la distribution des valeurs réelles. Mais de manière étonnante, on trouve des valeurs bien plus faibles. (Un indice qu'il manque des variables explicatives ?)
+
+## Question 5
+
+*Les hypothèses de l'estimation par MCO sont-elles respectées ? Que faut-il en conclure pour notre estimation ?*
+
+On va tester la sphéricité des erreurs (homoscédasticité) avec le test de white et de breush-Pagan
+
+```{r}
+# Breusch-Pagan test
+lmtest::bptest(reg_simple) 
+
+# White test
+whitestrap::white_test(reg_simple)
+```
+
+On teste l'hypothèse d'homoscédasticité des résidus -\> leur variance doit être constante. On remarque que la p.value pour les deux tests est inférieure à 5%, on rejette donc l'hypothèse nulle d'homoscédasticité au seuil de 5%. Nos résidus semble avoir une variance qui n'est pas constante. Dans ce cas, les estimateurs ne sont plus de variance minimale. On peut corriger ce problème en intégrant une correction de White aux écarts-types.
+
+On teste maintenant la normalité des résidus
+
+```{r}
+# test de Jarque-Berra
+moments::jarque.test(reg_simple$residuals)
+
+# test de Shapiro-Wilk
+stats::shapiro.test(reg_simple$residuals)
+```
+
+Le test de Jarque-Berra teste l'hypothèse nulle que la skewness de la série est égale à 0 et que la kurtosis de la série est égale à 3 de manière conjointe. La p.value est supérieure à 0.05. On ne peut pas rejeter l'hypothèse nulle. Il semble que nos résidus aient des moments similaires à ceux d'une loi normale.
+
+Le test de Shapiro-Wilk teste l'hypothèse que la série provient d'un processus générateur d'une loi normale. On ne peut pas rejeter l'hypothèse nulle, il semble que nos résidus proviennent d'une loi normale.
+
+Nos résidus semblant normalement distribués, les tests statistiques restent valident.
+
+Pour l'hypothèse d'exogénéité, il est très probable qu'il existe des variables que l'on n'a pas prise en compte et qui affectent à la fois la présence en cours et la compétitivité à l'examen. On peut penser à :
+
+-   Le milieu social : un élève d'un milieu aisé aura en général de meilleures notes et sera plus incité à venir en cours de part la pression sociale
+
+-   Le "talent" un élève plus talentueux aura tendance à avoir de meilleur notes. L'effet sur la présence est plus incertain.
+
+-   Si un élève à du obtenir un crédit pour aller à la fac, il est probable qu'il va plus venir en cours et que cela peut avoir un effet sur les notes
+
+On peut penser à un grand nombre de variables. Si on ne les prend pas en compte, le coefficient associé à la présence devient biaisé et on ne peut pas parler d'effet causal.
+
+## Question 6
+
+*Pourquoi pourrait-il être intéressant d'ajouter l'assiduité dans la remise des devoirs à la régression ? Et pour les anciennes notes à l'université ? Et pour les résultats du test d'entrée à l'université (ACT) ? Quelles sont les relations à attendre avec la réussite à l'examen ?*
+
+L'assiduité dans la remise des devoirs `hwrte` est également une mesure d'assiduité et permet d'introduire un contrôle sur la volonté de travailler de l'élève en dehors des cours ce qui peut influencer sa note.
+
+Les anciennes notes à l'université `priGPA` permettent de contrôler pour la qualité étudiante de l'élève et sa capacité à réussir à la fac. Si on ne contrôle pas pour cette variable, on va comparer des élèves très fort dans leur domaine et des élèves moins fort ce qui risque de biaiser nos résultats.
+
+Il en va de même pour les tests d'entrées à l'université `ACT`
+
+On s'attend pour toutes ces variables à ce que la relation avec la compétitivité à l'examen soit positive.
+
+## Question 7
+
+Estimer cette régression linéaire, interpréter les coefficients et tester les hypothèses des estimateurs MCO. Que peut-on en conclure ?
+
+```{r}
+# Estimer la régression multiple
+reg_mul <- lm(stndfnl ~ attend + hwrte + priGPA + ACT, data = df)
+
+summary(reg_mul)
+```
+
+Le coefficient de la présence en cours en toujours positif mais n'est pas statistiquement significatif. En ajoutant les variables de contrôle, il semblerait que l'effet de la présence en cours sur la compétitivité soit nul. L'assiduité dans la remise des devoirs et positive bien que faible et seulement significative au seuil de 10%. Il semblerait qu'un élève assidu en cours et dans son travail à la maison n'augmente pas sa compétitivité comparé à des élèves moins assidus ayant les mêmes capacités scolaires qu'eux.
+
+En revanche les anciennes notes à l'université ainsi que les notes à l'examen d'entrée sont positives et fortement significatives. Notre modèle explique 20% de la variation des notes et il semblerait que cette variation soit majoritairement expliquée par la capacité scolaire de l'élève plutôt que son assiduité.
+
+```{r}
+# Breusch-Pagan test
+lmtest::bptest(reg_simple) 
+
+# White test
+whitestrap::white_test(reg_simple)
+```
+
+Nos résidus sont toujours hétéroscédastiques. O va donc procéder à une correction de White des écarts-types :
+
+```{r}
+reg_mul |> 
+  lmtest::coeftest(vcov. = car::hccm)
+```
+
+Lorsque l'on corrige nos écarts-types, l'assiduité dans la remise des devoirs perd sa significativité. Il semblerait bien que l'assiduité ne rende pas compétitif. Mais attention, il y a encore probablement des valeurs manquantes (milieu social par exemple, filière, etc...) qui peuvent biaiser nos coefficients et nous empêcher de parler d'effet causal.
+
+```{r}
+# test de Jarque-Berra
+moments::jarque.test(reg_mul$residuals)
+
+# test de Shapiro-Wilk
+stats::shapiro.test(reg_mul$residuals)
+```
+
+Nos résidus semblent toujours normaux, nos tests statistiques restent valides.
+
+```{r}
+# Regarder la multicolinéarité
+performance::check_collinearity(reg_mul)
+```
+
+Il ne semble pas que les écarts-types de nos estimateurs soient fortement inflatés par la présence d'autres variables. Mais on va quand même tester si conjointement nos variables d'assiduité ont un effet.
+
+```{r}
+# Test de Fisher sur les variables d'assiduité
+car::linearHypothesis(
+  reg_mul,
+  c("attend = 0", "hwrte = 0")
+)
+```
+
+Il semble que prises conjointement nos variables d'assiduité aient un effet significatif sur la compétitivité à l'examen. En revanche le gain estimé d'aller à un cours en plus ou de rendre 1% de devoirs en plus est assez faible : 0.009 et 0.003. Ainsi un élève qui va à tous les cours et rend tous les devoirs aura une note standardisée supérieure de $0.009 \times 32 + 0.003 \times 100 = 0.588$ par rapport à un élève qui ne va jamais en cours et ne rend aucun devoir. Cela n'est pas négligeable mais loin de l'effet attendu.
+
+## Question 8
+
+*L'impact de la présence est-il le même pour un freshman que pour un autre élève ?* Le modèle au global est-il le même ?
+
+Pour tester si l'impact est le même pour un fresman, on va inclure la variable binaire `frosh` qui prend la valeur 1 si l'élève est un freshman et 0 sinon. Puis on va inclure un terme d’interaction avec l'ensemble des variables et faire un test de Fisher pour voir si la relation est différente ou pas.
+
+```{r}
+# Regresion avec simplement la binaire : changement d'ordonnée à l'origine
+lm(stndfnl ~ attend + hwrte + priGPA + ACT + frosh, data = df) |> 
+  lmtest::coeftest(vcov. = car::hccm)
+```
+
+Il ne semble pas qu'être un freshman ait un impact sur la compétitivité à l'examen.
+
+```{r}
+# Regresion avec termes d'interaction
+reg_inter <- lm(stndfnl ~ attend * frosh + hwrte* frosh + priGPA* frosh + ACT* frosh, data = df)
+
+reg_inter |> 
+  lmtest::coeftest(vcov. = car::hccm)
+```
+
+```{r}
+# test de Fisher
+car::linearHypothesis(
+  reg_inter,
+  c("attend:frosh = 0", "frosh:hwrte = 0", "frosh:priGPA = 0", "frosh:ACT = 0", "frosh = 0"),
+  vcov. = car::hccm
+)
+```
+
+La p.value du test contraint sur l'ensemble des termes d’interaction est supérieure à 0.05. On ne peut donc pas rejeter l'hypothèse de non significativité conjointe. Il ne semble pas que la relation soit entièrement différente entre un freshman ou un autre élève. En revanche dans ce modèle un freshman va être plus compétitif qu'un autre élève, ce qui peut s'expliquer par une motivation accrue par exemple.
+
+```{r}
+# Regresion avec termes d'interaction que pour la présence en classe
+reg_inter2 <- lm(stndfnl ~ attend * frosh + hwrte + priGPA + ACT, data = df)
+
+reg_inter2 |> 
+  lmtest::coeftest(vcov. = car::hccm)
+```
+
+```{r}
+# test de Fisher
+car::linearHypothesis(
+  reg_inter,
+  c("attend:frosh = 0", "attend = 0"),
+  vcov. = car::hccm
+)
+```
+
+Il ne semble pas que la présence en cours ait un effet significatif sur la compétitivité à l'examen, freshman ou non.
+
+## Exercice2 : Estimation de la valeur d'une maison
+
+Données : `hprice2` du package `wooldridge`.
+
+*Vous travailler pour une agence immobilière qui vous demande d'analyser ses données afin d'expliquer rationnellement les prix de vente des maisons actuellement à la vente. Votre agence souhaite savoir si d'une part la criminalité d'un quartier joue sur le prix du bien immobilier. elle souhaite d'autre part avoir le modèle qui explique le plus possible le prix des maisons (prévoyez des preuves que ce modèle est meilleur que les autres) afin que vous puissiez trouver les maisons qui sont les plus sous-évaluées et qui pourraient ainsi être achetées puis revendues plus cher par l'agence.*
+
+## Exercices 3 : Comprendre le code donné
+
+*Vous travaillez dans un* laboratoire de recherche. Un de vos collègue vous demande de l'aider à comprendre et interpréter le travail d'un stagiaire qui n'a pas laissé d'indications sur ce qu'il a fait. Lisez le code suivant, commenter ce qui y est fait et interprétez les résultats. Quelle politique publique pourriez-vous recommander sur la base de ces résultats ?
+
+```{r, message=FALSE}
+source(here::here("02-codes", "utils", "setup.R"))
+
+data("bwght")
+
+df <- 
+  bwght |> 
+  tibble() |> 
+  select(bwght, faminc, fatheduc, motheduc, cigs, male, white) |>
+  mutate(bwght = bwght * 0.0283495) |> 
+  drop_na()
+```
+
+```{r}
+ggplot(df, aes(x = cigs, y = bwght)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", color = "red") 
+```
+
+```{r}
+model_1 <- lm(bwght ~ cigs + faminc + fatheduc + motheduc + male + white, data = df)
+summary(model_1)
+```
+
+```{r}
+shapiro.test(residuals(model_1))
+bptest(model_1)
+check_collinearity(model_1)
+```
+
+```{r}
+coeftest(model_1, vcov = hccm(model_1, type = "hc0"))
+```
+
+```{r}
+linearHypothesis(
+  model_1, 
+  c("fatheduc = 0", "motheduc = 0"), 
+  vcov = hccm(model_1, type = "hc0")
+)
+
+linearHypothesis(
+  model_1, 
+  c("fatheduc = 0", "motheduc = 0", "faminc = 0"), 
+  vcov = hccm(model_1, type = "hc0")
+)
+```
+
+```{r}
+df |> 
+  select(faminc, fatheduc, motheduc) |> 
+  cor()
+```
+
+```{r}
+model_2 <- lm(bwght ~ cigs + log(faminc) + male + white, data = df)
+coeftest(model_2, vcov = hccm(model_2, type = "hc0"))
+```
+
+```{r}
+model_3 <- lm(bwght ~ cigs + motheduc + male + white, data = df)
+coeftest(model_3, vcov = hccm(model_3, type = "hc0"))
+```
+
+```{r}
+model_4 <- lm(bwght ~ cigs  + male + white, data = df)
+summary(model_4)
+```
+
+```{r}
+model_5 <- lm(bwght ~ cigs*white  + male + white, data = df)
+summary(model_5)
+```
+
+```{r}
+linearHypothesis(
+  model_5, 
+  c("cigs = 0", "cigs:white = 0"),
+  vcov = hccm(model_5, type = "hc0")
+)
+```
+
+```{r}
+coeftest(model_5, vcov = hccm(model_5, type = "hc0"))
+```
+
+```{r}
+list_exported_models <-
+  ls(pattern = "^model_*") |>
+  mget() |>
+  set_names(ls(pattern = "^model_*"))
+```
+
+```{r}
+modelsummary::modelsummary(
+  list_exported_models, 
+  stars = TRUE,
+  gof_map = c("nobs", "adj.r.squared", "aic")
+  ) 
+```
+
+```{r}
+cm <- c("cigs", "cigs:white", "faminc", "log(faminc)", "white", "male", "motheduc",
+        "fatheduc")
+
+modelplot(
+  list_exported_models, 
+  coef_omit = 'Interc', 
+  coef_map = cm, 
+  vcov = \(x) hccm(x, type = "hc0")
+  ) +
+geom_vline(xintercept = 0, color = "black", linewidth = 1.2)
+```

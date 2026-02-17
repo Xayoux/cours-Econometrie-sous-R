@@ -1,9 +1,43 @@
 ---
 title: "02-exercices-regressions-lineraires"
-format: html
-toc: TRUE
-code-fold: FALSE
+format:
+  html:
+    embed-resources: true
+    code-overflow: wrap
+    toc: true
+    toc-location: left
+    toc-depth: 5
+    toc-expand: 2
+    include-in-header:
+      text: |
+        <style>
+          p {
+            text-align: justify
+          }
+        </style>
+  pdf:
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines=true, breaksymbol=, commandchars=\\\{\}}
+        \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true, breaksymbol=,commandchars=\\\{\}}
+editor: visual
 ---
+
+```{r}
+#| eval: false
+#| include: false
+# A UTILISER POUR RENDER EN HTML ET PDF
+quarto::quarto_render(
+    here::here(
+        "02-codes", 
+        "exercices",
+        "02-regressions-lineaires-tests-statistiques", 
+        "02-exercices-regressions-lineraires.qmd"
+    ), 
+    output_format = "all"
+)
+```
 
 # Exercice 1 : Notes et présence en cours
 
@@ -13,7 +47,7 @@ Objectif : Estimer l'effet de la présence en cours sur la réussite à un exame
 
 ## Question 1
 
-*Importer les données et découvrir les variables. Quelles sont les potentielles variables exogènes pour répondre à notre objectif ? Quelle serait la principale variable endogènes ?*
+*Importer les données et découvrir les variables. Quelles sont les potentielles variables exogènes pour répondre à notre objectif ? Quelle serait la principale variable endogène ?*
 
 ## Question 2
 
@@ -51,9 +85,9 @@ Données : `hprice2` du package `wooldridge`.
 
 ## Exercices 3 : Comprendre le code donné
 
-*Vous travaillez dans un* laboratoire de recherche. Un de vos collègue vous demande de l'aider à comprendre et interpréter le travail d'un stagaire qui n'a pas laissé d'indications sur ce qu'il a fait. Lisez le code suivant, commenter ce qui y est fait et interprétez les résultats. Quelle politique publique pourriez-vous recommander sur la base de ces résultats ?
+*Vous travaillez dans un* laboratoire de recherche. Un de vos collègue vous demande de l'aider à comprendre et interpréter le travail d'un stagiaire qui n'a pas laissé d'indications sur ce qu'il a fait. Lisez le code suivant, commenter ce qui y est fait et interprétez les résultats. Quelle politique publique pourriez-vous recommander sur la base de ces résultats ?
 
-```{r}
+```{r, message=FALSE}
 source(here::here("02-codes", "utils", "setup.R"))
 
 data("bwght")

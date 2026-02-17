@@ -1,0 +1,290 @@
+---
+title: "04-exercices-ARDl-cointégration"
+author: "Romain CAPLIEZ"
+format:
+  html:
+    embed-resources: true
+    code-overflow: wrap
+    toc: true
+    toc-location: left
+    toc-depth: 5
+    toc-expand: 2
+    include-in-header:
+      text: |
+        <style>
+          p {
+            text-align: justify
+          }
+        </style>
+  pdf:
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines=true, breaksymbol=, commandchars=\\\{\}}
+        \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true, breaksymbol=,commandchars=\\\{\}}
+editor: visual
+---
+
+```{r}
+#| eval: false
+#| include: false
+# A UTILISER POUR RENDER EN HTML ET PDF
+quarto::quarto_render(
+    here::here(
+        "02-codes", 
+        "exercices",
+        "04-ARDL-cointegration",
+        "04-exercices-ARDL-cointegration.qmd"
+    ), 
+    output_format = "all"
+)
+```
+
+# Exercice 1 : L'Hypothèse de Fisher et la Cointégration
+
+***Données :**`intdef` du package `wooldridge`.*
+
+*Tester la relation de long terme entre le taux d'intérêt des bons du trésor à 3 mois (`i3`) et le taux d'inflation (`inf`). Selon l'effet Fisher, une augmentation de l'inflation devrait se traduire par une augmentation équivalente des taux d'intérêt nominaux à long terme (coefficient de 1).*
+
+## Question 0
+
+*Charger le setup de l'analyse*
+
+## Question 1
+
+*Importer les données `intdef`. Créer un nouvel objet TS contenant les variables `i3` et `inf`. Représenter graphiquement les deux séries sur le même graphique. Semblent-elles évoluer ensemble ?*
+
+## Question 2
+
+*Réaliser les tests de stationnarité sur les deux variables. Sont-elles intégrées du même ordre ? Peut-on réaliser la procédure d'Engle-Granger pour la cointégration ? Si oui tester la cointégration entre ces deux variables avec cette procédure. Estimer le modèle à correction d'erreur lié. Que peut-on en conclure ?*
+
+## Question 3
+
+*Estimer un modèle ARDL pour expliquer `i3` par `inf`. Quel sont les ordres choisi ? Pourquoi ?*
+
+## Question 4
+
+*Réaliser le test des bornes (Bounds Test) sur le modèle estimé. Peut-on conclure à l'existence d'une relation de cointégration entre les taux d'intérêt et l'inflation au seuil de 5% ? Au seuil de 1% ?*
+
+## Question 5
+
+*Si la cointégration est avérée, estimer les coefficients de long terme. Le coefficient associé à l'inflation est-il statistiquement différent de 1 ? L'hypothèse de Fisher est-elle validée sur cette période ?*
+
+## Question 6
+
+*Estimer le modèle à correction d'erreur (ECM) associé. Quelle est la vitesse d'ajustement vers l'équilibre de long terme ? Commentez son signe et sa significativité.*
+
+## Question 7
+
+*Représenter l'équation de long-terme de `i3` et la comparer aux données réelles. Que pouvez-vous en dire ?*
+
+## Question 8
+
+*Le modèle satisfait-il les hypothèses des MCO ? Si non comment pourriez-vous corriger cela ?*
+
+# Exercice 2 : La courbe de Phillips
+
+*Le trésor américain vous demande d'utiliser les données `phillips` du package `woolridge` afin de tester l'existence de la courbe de Phillips, c'est à dire l'existence d'une relation négative entre l'inflation et le chômage. Définissez une stratégie et une modélisation pour tester cette relation. Cette relation existe-t-elle à court- et long-terme ? Comment se situe l'inflation réelle par rapport à son niveau de long-terme ? Que pourriez-vous proposer au trésor américain pour améliorer l'analyse ?*
+
+# Exercice 3 : Fertilité
+
+*Vous venez de récupérer le script R d'un économètre senior qui a quitté le bureau. Il étudie la relation entre le taux de fertilité (`gfr`) et l'exonération fiscale personnelle réelle (`pe`) aux États-Unis sur la période 1913-1984. Expliquez et interprétez les différentes étapes. Que pouvez-vous conclure ? Quelles améliorations et suites pouvez-vous proposer ?*
+
+```{r, message=FALSE}
+source(here::here("02-codes", "utils", "setup.R"))
+```
+
+```{r}
+wooldridge::fertil3 |> 
+  str()
+```
+
+```{r}
+df <- 
+  wooldridge::fertil3  |> 
+  as_tibble() |> 
+  mutate(
+    year = lubridate::make_date(year)
+  ) |> 
+  select(year, gfr, pe, pill, ww2) |> 
+  mutate(
+    across(
+      .cols = c(gfr, pe),
+      .fns = \(var) log(var),
+      .names = "log_{.col}"
+    ),
+    across(
+      .cols = c(gfr, pe),
+      .fns = \(var) log(var) - log(lag(var)),
+      .names = "diff_log_{.col}"
+    ),
+    across(
+      .cols = everything(),
+      .fns = \(var) if_else(is.infinite(var), NA, var)
+    )
+  ) |> 
+  drop_na() |> 
+  print()
+```
+
+```{r}
+df |> 
+  pivot_longer(
+    cols = !c(year, pill, ww2),
+    names_to = "nom",
+    values_to = "valeur"
+  ) |> 
+  mutate(
+    nom = factor(nom, levels = c("gfr", "log_gfr", "diff_log_gfr", "pe", "log_pe", "diff_log_pe"))
+  ) |> 
+  ggplot(aes(x = year, y = valeur)) +
+  geom_line() +
+  facet_wrap("nom", scales=  "free")
+```
+
+```{r}
+df_ts <-
+  df |> 
+  timetk::tk_zooreg(
+    select = !year,
+    start = df$year[1] |>  year(),
+    frequency = 1
+  )
+
+head(df_ts)
+```
+
+```{r}
+urca::ur.df(df$log_gfr, "trend", lags = 20, selectlags = "AIC") |> 
+  summary()
+```
+
+```{r}
+urca::ur.df(df$log_gfr, "drift", lags = 20, selectlags = "AIC") |> 
+  summary()
+```
+
+```{r}
+urca::ur.df(df$log_gfr, "none", lags = 20, selectlags = "AIC") |> 
+  summary()
+```
+
+```{r}
+urca::ur.df(df$log_pe, "trend", lags = 20, selectlags = "AIC") |> 
+  summary()
+```
+
+```{r}
+urca::ur.df(df$log_pe, "drift", lags = 20, selectlags = "AIC") |> 
+  summary()
+```
+
+```{r}
+urca::ur.df(df$log_pe, "none", lags = 20, selectlags = "AIC") |> 
+  summary()
+```
+
+```{r}
+lm_statique <- lm(log_gfr ~ log_pe + pill + ww2, data = df)
+
+summary(lm_statique)
+```
+
+```{r}
+lm_ar <- dynlm::dynlm(log_gfr ~ L(log_gfr) + log_pe + pill + ww2, data = df_ts)
+
+summary(lm_ar)
+```
+
+```{r}
+model_selection <- 
+  ARDL::auto_ardl(
+    log_gfr ~ log_pe | ww2 + pill, 
+    data = df_ts,
+    max_order = 5,
+    selection = "BIC"
+  )
+
+model_selection$top_orders
+```
+
+```{r}
+model <- model_selection$best_model
+
+summary(model)
+```
+
+```{r}
+uecm_model <- ARDL::uecm(model)
+
+summary(uecm_model)
+```
+
+```{r}
+LSTS::Box.Ljung.Test(uecm_model$residuals, lag = 40)
+```
+
+```{r}
+jarque.test(as.numeric(uecm_model$residuals))
+```
+
+```{r}
+lmtest::bptest(uecm_model) 
+```
+
+```{r}
+whitestrap::white_test(uecm_model)
+```
+
+```{r}
+fDMA::archtest(as.numeric(uecm_model$residuals**2), lag = 20)
+```
+
+```{r}
+bounds_f_test(uecm_model, case = 2, alpha = 0.05)[["tab"]]
+```
+
+```{r}
+bounds_t_test(uecm_model, case = 3, alpha = 0.05)[["tab"]]
+```
+
+```{r}
+multipliers(model)
+```
+
+```{r}
+multipliers(model, type = "sr")
+```
+
+```{r}
+ARDL::multipliers(
+  model, 
+  type = 15, 
+  se = TRUE 
+) |> 
+  ARDL::plot_delay(interval = 0.95)
+```
+
+```{r}
+long_run_eq <- ARDL::coint_eq(model, case = 2)
+
+tibble(
+  log_gfr = as.numeric(model$data$log_gfr),
+  long_run = as.numeric(long_run_eq),
+  year = time(model$data)
+) |> 
+  pivot_longer(
+    cols = !year,
+    names_to = "variable",
+    values_to = "value"
+  ) |> 
+  ggplot(aes(x = year, y = value, color = variable)) +
+  geom_line() +
+  scale_color_brewer(palette = "Set1")
+```
+
+```{r}
+recm_model <- recm(model, case = 3)
+
+summary(recm_model)
+```

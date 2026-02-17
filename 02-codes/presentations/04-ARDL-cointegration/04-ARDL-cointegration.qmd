@@ -627,8 +627,7 @@ Commençons par charger les données contenues dans l'objet `ARDL::denmark` et t
 
 ```{r}
 # Visualiser à quoi ressemble l'objet denmark et l'enregister dans l'objet df_ts
-df_ts <- 
-  ARDL::denmark
+df_ts <- ARDL::denmark
 
 df_ts |> head()
 ```
@@ -636,10 +635,11 @@ df_ts |> head()
 Il s'agit d'un objet de classe TS (Time Series) contenant 5 colonnes pour les différentes variables. Les dates sont indiquées en tantque noms des lignes. On peut vouloir transformer ce objet Time Series en un tibble afin d'avoir plus de facilité à manipuler les données ou pour les représenter graphiquement. Pour cela, le package `timetk` propose la fonction `tk_tbl()` pour transformer un objetv Time Series en tibble facilement, en conservant l'unité de temps si on le souhaite.
 
 ```{r}
+# Transfiomer les séries temporelles en un objet tibble
 df <- 
   df_ts |> 
   timetk::tk_tbl(
-    rename_index = "date" # Rename the time variable "date"
+    rename_index = "date" # La variable contenant les indices temporels est renommée "date"
   ) |> 
   print()
 ```
@@ -647,10 +647,11 @@ df <-
 L'index temporel a bien été ajouté dans la variable "date" sous un format `yearqtr` indiquant un format trimestriel. Avec cette tibble on peut facilement utiliser le package `ggplot2` pour représenter graphiquement nos séries. Afin de toutes les mettre dans un seul graphique facilement, on va pivoter les données afin que toutes les valeurs soient dans une seule colonne et que le nom des variables soit dans une autre colonne.
 
 ```{r}
+# Représenter graphiquement nos variables
 df |> 
   # Regrouper toutes les valeurs des variables d'intérêt dans une variable nommée "value" et le nom des variables associées dans une variable nommée "variable"
   pivot_longer(
-    cols = !c(date),
+    cols = !c(date), # Pivoter toutes le svariables sauf la date
     names_to = "variable",
     values_to = "value"
   ) |> 
@@ -679,29 +680,26 @@ if (rlang::is_installed("dobby")) {
   # Appliquer le test ADF sur chaque série (on peut utiliser l'objet tibble ou bien l'objet TS sans distinction)
   # La fonction a besoin de 2 élements : la série et son nom
   purrr::map2_dfr(
-    list(df$LRM, df$LRY, df$IBO, df$IDE), # Série à tester
-    c("LRM", "LRY", "IBO", "IDE"), # Nom de la série
+    list(df$LRM, df$LRY, df$IBO, df$IDE), # Séries à tester
+    c("LRM", "LRY", "IBO", "IDE"), # Noms des séries
     # Créer une fonction prenant deux paramètres : série et name
-    # Cette fonction exécuter la fonction adf_test_auto
+    # Cette fonction exécute la fonction adf_test_auto()
     \(serie, name) dobby::adf_test_auto(
-      serie, name, 
+      serie, 
+      name, 
       lags = 20, 
-      message = FALSE, 
-      return_res = TRUE
+      message = FALSE, # Ne pas afficher les messages de résultats
+      return_res = TRUE # Retourner un tableau de résultat
     )
   )
-} else {
-  print("Le package 'dobby' n'est pas installé.")
 }
-
-
 ```
 
-Les tests ADF nous indiquent que les séries LRY et IBO ne semblent pas stationnaires. Leur inclusion dans un modèle utilisant les MCO peut résulter en une corrélation fallacieuse. Les coefficients associés ont de très fortes chances d'être biaisés fortement. Si le package `dobby` n'est pas installé, le test ADF peut se faire manuellement avec la fonction `urca::ur.df()`. Attention, les p.values indiquées ne sont pas les bonnes, et les valeurs critiques données par la fonction concernent le test joint ADF et pas le test individuel (que l'on préfère généralement).
+Les tests ADF nous indiquent que les séries LRY et IBO ne semblent pas stationnaires. Leur inclusion dans un modèle utilisant les MCO peut résulter en une corrélation fallacieuse. Les coefficients associés ont de très fortes chances d'être biaisés fortement. Si le package `dobby` n'est pas installé, le test ADF peut se faire manuellement avec la fonction `urca::ur.df()`. Attention, les p.values indiquées ne sont pas les bonnes, et les valeurs critiques données par la fonction concernent le test joint ADF et pas le test individuel (que l'on préfère généralement). Pour plus d'informations sur le test ADF et une démonstration de `urca`, voir *03-ARIMA*.
 
 ## Régression statique
 
-Dans un premier temps, modélison la relation (possiblement fallacieuse) suivante :
+Dans un premier temps, modélisons la relation (possiblement fallacieuse) suivante :
 
 $$
 \text{LRM}_t = \alpha + \beta_1 \text{LRY}_t + \beta_2 \text{IBO}_t + \beta_3 \text{IDE}_t +u_t
@@ -755,7 +753,7 @@ On peut obtenir le même résultat en passant directement des opérateurs de sé
 # Utiliser des opérateurs de séries temporelles directement
 dynlm::dynlm(
   LRM ~ d(LRY) + d(IBO) + IDE, # d() -> fait la différence première d'une série 
-  data = df_ts # Obligé de transformer le dataframe en objet Time Series pour faire la différenciation
+  data = df_ts # Obligé d'utiliser un objet Time Series pour faire la différenciation
 ) |> 
   summary()
 ```
@@ -769,11 +767,13 @@ On utilise donc le test de Ljung-Box sur notre série des résidus.
 ```{r}
 # N'exécuter que si le package dobby est installé
 if (rlang::is_installed("dobby")) {
-  dobby::check_univariate_autocorr(reg_statique$residuals, "résidus statiques", test_type = "Box-Pierce", return_output = FALSE)
-} else {
-  print("Le package 'dobby' n'est pas installé")
+  dobby::check_univariate_autocorr(
+    reg_statique$residuals, # Série des résidus à tester
+    "résidus statiques", # Nom de la série
+    test_type = "Ljung-Box", # Type de test
+    return_output = FALSE # Ne pas retourner de tableau de résultats
+  )
 }
-
 ```
 
 On peut voir que nos résidus sont fortement autocorrélés. Cela n'est pas surprenant puisque nous n'avons inclue aucune dynamique dans notre régression. Notre modélisation est donc incomplète.
@@ -804,10 +804,13 @@ On peut re-tester l'autocorrélation des résidus de notre modèle.
 ```{r}
 # N'exécuter que si le package 'dobby' est installé
 if (rlang::is_installed("dobby")) {
-  dobby::check_univariate_autocorr(reg_dep_retard$residuals, "résidus dépendante retardée", test_type = "Box-Pierce", return_output = FALSE)
-} else {
-  print("Le package 'dobby' n'est pas installé")
-}
+  dobby::check_univariate_autocorr(
+    reg_dep_retard$residuals, 
+    "résidus dépendante retardée", 
+    test_type = "Ljung-Box", 
+    return_output = FALSE
+  )
+} 
 ```
 
 Outre le R² ajusté très élevé qui est suspect, on peut voir que l'inclusion de la variable dépendante retardée permet de prendre en compte d'avantage d'autocorrélation à l'ordre 1. En revanche on modélise très mal l'autocorrélation de long-terme. Il s'agit d'un indice indiquant que l'on n'a pas pris en compte assez de retards dans notre modélisation (ou qu'il nous manque des variables explicatives).
@@ -873,7 +876,7 @@ La première étape consiste à trouver et estimer le meilleur ARDL entre les ni
 # Tester "tous" les modèles et les classer en fonction de leur AIC 
 models <- 
   ARDL::auto_ardl(
-    LRM ~ LRY + IBO + IDE, # Variables à utiliser
+    LRM ~ LRY + IBO + IDE, # Variables en niveau à utiliser
     data = df_ts, # Source des variables
     max_order = 5, # Nombre de retards maximum autorisé pour les variables
     selection = "AIC" # critère d'information à utiliser
@@ -903,7 +906,7 @@ On peut, tout comme un modèle linéaire en coupe transversale, tester si les er
 
 ```{r}
 # Breusch-Pagan test
-lmtest::bptest(ardl_3132)
+lmtest::bptest(ardl_3132) # La fonction s'applique sur le modèle directement
 
 # White test
 whitestrap::white_test(ardl_3132)
@@ -912,7 +915,10 @@ whitestrap::white_test(ardl_3132)
 Il semblerait que l'on ne puisse pas rejeter l’hypothèse nulle d'homoscédasticité à partir de ces tests. On peut également tester pour la présence d'effets ARCH, c'est à dire de variance conditionnellement hétéroscédastique avec le test ARCH.
 
 ```{r}
-fDMA::archtest(as.numeric(ardl_3132$residuals**2), lag = 20)
+fDMA::archtest(
+  as.numeric(ardl_3132$residuals**2), # La fonction s'applique sur la série des résidus mise au carré
+  lag = 20
+)
 ```
 
 Une fois de plus, on ne peut pas rejeter l'hypothèse nulle d'homoscédasticité conditionnelle. Il semblerait que nos résidus aient une variance constante.
@@ -923,9 +929,11 @@ Pour tester l'autocorrélation, on peut utiliser les tests de Ljung-Box ou Box-P
 # N'exécuter que si le package dobby est installé
 if (rlang::is_installed("dobby")) {
   # Ljung-Box test for lags 1 and 20 with dobby package
-  dobby::check_univariate_autocorr(ardl_3132$residuals, "résidus ARDL(3132)", return_output = FALSE)
-} else {
-  print("Le package 'dobby' n'est pas installé")
+  dobby::check_univariate_autocorr(
+    ardl_3132$residuals, 
+    "résidus ARDL(3132)", 
+    return_output = FALSE
+  )
 }
 ```
 
@@ -1000,7 +1008,7 @@ ARDL::bounds_f_test(
   case = 2, # Constante dans l'équation de long-terme. Pas de tendance
   alpha = 0.01, # Niveau de significativité de 1%
   vcov_matrix	= sandwich::vcovHAC(uecm_3132) # Correction HAC
-)[["tab"]]
+)[["tab"]] # Sélectionner le tableau de résultat
 ```
 
 Le Bound F-test sans correction de la matrice de variance-covariance nous donne l'intervalle suivant : $[3.67 ; 4.61]$. La valeur de la statistique calculée est $5.12$. Cette statistique est supérieure à la valeur critique supérieure $I(1)$. On rejette donc l'hypothèse nulle de non-significativité conjointe des coefficients en niveau au seuil de 1%. Il semblerait qu'il existe une relation de entre les niveaux des variables sélectionnées. La correction HAC ne change pas notre conclusion.
@@ -1093,7 +1101,7 @@ ARDL::multipliers(
   type = 15, # Nombre de Delays à calculer
   se = TRUE # Indiquer si l'on souhaite obtenir les écarts-types
 ) |> 
-  ARDL::plot_delay(interval = 0.95) # Représenter graphiquement les impacts temporaires avec un intervalle de confiance de 95%
+  ARDL::plot_delay(interval = 0.95) # Représenter graphiquement les impacts temporaires directs avec un intervalle de confiance de 95%
 ```
 
 Notre argument concernant le temps nécessaire aux taux de dépôt bancaire pour faire effet semble se valider puisqu'on peut remarquer que l'effet d'une augmentation temporaire ne se manifeste qu'en $t+2$ puis $t+4$. A l'inverse, on peut voir que l'effet d'une augmentation temporaire des taux d'intérêts va avoir un effet direct sur la quasi totalité des périodes, bien que celui-ci diminue. Rappel que IBO est une variable caractérisée par une variable unitaire. Les chocs qu'elle reçoit sont donc persistants ce qui peut expliquer cet effet persistant.
@@ -1106,12 +1114,16 @@ Il est possible à partir des multiplicateurs de long-terme de construire l'équ
 # Calculer l'éuqation de cointégration (de long-terme de la variable LRM)
 ce <- 
   ARDL::coint_eq(
-    ardl_3132, # Modèle utiliser pour calculer l'équation de cointégration. Doit être un objet TS sinon ça devient bizarre
+    ardl_3132, # Modèle utiliser pour calculer l'équation de cointégration. La première variable du jeu de données utilisée doit être la variable dépendante (c'est nul)
     case = 2 # Constante dans l'équation de long-terme et pas de tendance
   )
 
 # Représenter graphiquement la relation de cointégration contre les vraies valeurs de LRM
-ARDL::plot_lr(ardl_3132, coint_eq = ce, show.legend = TRUE)
+ARDL::plot_lr(
+  ardl_3132, # Modèle utilisé
+  coint_eq = ce, # Equation de long-terme calculée
+  show.legend = TRUE # Afficher une légence
+)
 ```
 
 On peut voir que sur les dernières années disponibles, l'offre de monnaie réelle a généralement été inférieure à son niveau de long-terme, impliquant des chocs lui faisant dévier de son équilibre. On peut retrouver la vitesse d'ajustement à ces chocs à partir du modèle $UECM$ ou $RECM$. Ce dernier étant plus parcimonieux, les estimateurs devraient être légèrement plus précis.

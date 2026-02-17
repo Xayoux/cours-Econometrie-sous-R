@@ -1,0 +1,273 @@
+---
+title: "03-exercices-ARIMA"
+author: "Romain CAPLIEZ"
+format:
+  html:
+    embed-resources: true
+    code-overflow: wrap
+    toc: true
+    toc-location: left
+    toc-depth: 5
+    toc-expand: 2
+    include-in-header:
+      text: |
+        <style>
+          p {
+            text-align: justify
+          }
+        </style>
+  pdf:
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines=true, breaksymbol=, commandchars=\\\{\}}
+        \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true, breaksymbol=,commandchars=\\\{\}}
+editor: visual
+---
+
+```{r}
+#| eval: false
+#| include: false
+# A UTILISER POUR RENDER EN HTML ET PDF
+quarto::quarto_render(
+    here::here(
+        "02-codes", 
+        "exercices",
+        "03-ARIMA",
+        "03-exercices-ARIMA.qmd"
+    ), 
+    output_format = "all"
+)
+```
+
+# Exercice 1 : Modéliser le PIB américain
+
+Données : `GDP` à partir de la `FRED`
+
+## Question 1
+
+Obtenir les données du PIB américain fournies par la FRED. Quelles sont les dates de début et de fin de la série ? Combien d'observation comporte-t-elle ?
+
+## Question 2
+
+Représenter graphiquement la série et la décrire. Cette série semble-t-elle stationnaire ou non ?
+
+## Question 3
+
+Stationnariser si besoin la série. La représenter, la décrire. Est-elle stationnaire ?
+
+## Question 4
+
+Etudier la normalité ainsi que les fonctions d'auto-corrélation et auto-corrélation partielle de la série stationnaire. Quelle est la moyenne de la série ? Quel est sa variance et son écart-type ?
+
+## Question 5
+
+Modéliser la série avec un AR(1) et étudier les propriétés des résidus. Que peut-on en déduire ?
+
+## Question 6
+
+Modéliser la série avec un AR(8) et étudier les propriétés des résidus. Que peut-on en déduire ?
+
+## Question 7
+
+Quel est le meilleur modèle selon le critère BIC en in-sample ? (Important : imposer la recherche aux modèles stationnaires. Etudier les propriétés des résidus. Que peut-on en déduire ?
+
+## Question 8
+
+Représenter les valeurs prédites et les comparer avec les vraies valeurs de la série. Le modèle semble-t-il correctement modéliser la série ?
+
+## Question 9
+
+Prédire les valeurs des 5 prochains trimestres et commenter.
+
+# Exercice 2 : Prédire la population de Lynx aux USA
+
+Données : `lynx` disponibles de base dans R.
+
+*Vous devez prédire la population de lynx aux Etats-Unis sur les 5 prochaines années. Proposez au minimum trois modèles concurrents. Quel est le modèle le plus adapté à la prévision ? Semble-t-il être plus fiable que de l'aléatoire ?*
+
+*Finissez par utiliser la fonction `forecast::dm.test()` afin de tester si la prédiction de votre meilleur modèle est significativement meilleure que l'aléatoire. Qu'en est-il par rapport aux autres modèles ?*
+
+# Exercices 3 : Les importations de barium
+
+*Vous travaillez comme économètre pour une organisation de commerce international. On vous remet le script R suivant qui analyse l'évolution des importations d'un produit chimique. Commentez les étapes de ce code, expliquez les résultats, justifier les différentes étapes. Quelles critiques pourriez-vous faire de cette analyse dont le but serait ultimement de prédire les futures importations chinoises de barium.*
+
+```{r, message=FALSE}
+source(here::here("02-codes", "utils", "setup.R"))
+```
+
+```{r}
+ts_imports <- 
+  wooldridge::barium |>  
+  mutate(chnimp = log (chnimp)) |> 
+  select(chnimp) |> 
+  ts(start = c(1978, 2), frequency = 12) |> 
+  print()
+```
+
+```{r}
+forecast::tsdisplay(ts_imports)
+```
+
+```{r}
+urca::ur.df(ts_imports, "trend", lags = 20, selectlags = "AIC") |> summary()
+```
+
+```{r}
+urca::ur.df(ts_imports, "drift", lags = 20, selectlags = "AIC") |> 
+  summary()
+```
+
+```{r}
+urca::ur.df(ts_imports, "none", lags = 20, selectlags = "AIC") |> 
+  summary()
+```
+
+```{r}
+ts_imports_detrend <- dynlm::dynlm(ts_imports ~ trend(ts_imports))[["residuals"]]
+```
+
+```{r}
+forecast::tsdisplay(ts_imports_detrend)
+```
+
+```{r}
+urca::ur.df(ts_imports_detrend, "trend", lags = 20, selectlags = "AIC") |> 
+  summary()
+```
+
+```{r}
+urca::ur.df(ts_imports_detrend, "drift", lags = 20, selectlags = "AIC") |> 
+  summary()
+```
+
+```{r}
+urca::ur.df(ts_imports_detrend, "none", lags = 20, selectlags = "AIC") |> 
+  summary()
+```
+
+```{r}
+seasonplot(ts_imports_detrend)
+```
+
+```{r}
+LSTS::Box.Ljung.Test(ts_imports_detrend, lag = 40)
+```
+
+```{r}
+gen_arima <- forecast::auto.arima(ts_imports_detrend)
+
+gen_arima |> 
+  summary()
+```
+
+```{r}
+moments::agostino.test(gen_arima$residuals)
+```
+
+```{r}
+moments::anscombe.test(gen_arima$residuals)
+```
+
+```{r}
+moments::jarque.test(as.numeric(gen_arima$residuals))
+```
+
+```{r}
+stats::shapiro.test(gen_arima$residuals)
+```
+
+```{r}
+LSTS::Box.Ljung.Test(gen_arima$residuals, lag = 40)
+```
+
+```{r}
+tibble(
+  imports = gen_arima$x,
+  fitted_imports = gen_arima$fitted,
+  date = time(gen_arima$x)
+) |> 
+  pivot_longer(
+    cols = !date,
+    names_to = "variable",
+    values_to = "value"
+  ) |> 
+  ggplot(aes(x = date, y = value, color = variable)) +
+  geom_line() +
+  scale_color_brewer(palette = "Set1")
+```
+
+```{r}
+arma <- Arima(ts_imports_detrend, order = c(1,0,0))
+
+arma |> 
+  summary()
+```
+
+```{r}
+LSTS::Box.Ljung.Test(arma$residuals, lag = 40)
+```
+
+```{r}
+tibble(
+  imports = arma$x,
+  fitted_imports = arma$fitted,
+  date = time(arma$x)
+) |> 
+  pivot_longer(
+    cols = !date,
+    names_to = "variable",
+    values_to = "value"
+  ) |> 
+  ggplot(aes(x = date, y = value, color = variable)) +
+  geom_line() +
+  scale_color_brewer(palette = "Set1")
+```
+
+```{r}
+rw <- Arima(ts_imports_detrend, order = c(0,1,0))
+
+rw |> 
+  summary()
+```
+
+```{r}
+LSTS::Box.Ljung.Test(rw$residuals, lag = 40)
+```
+
+```{r}
+tibble(
+  imports = rw$x,
+  fitted_imports = rw$fitted,
+  date = time(rw$x)
+) |> 
+  pivot_longer(
+    cols = !date,
+    names_to = "variable",
+    values_to = "value"
+  ) |> 
+  ggplot(aes(x = date, y = value, color = variable)) +
+  geom_line() +
+  scale_color_brewer(palette = "Set1")
+```
+
+```{r}
+tibble(
+  model = c("best ARIMA", "AR(1)", "RW"),
+  AIC = c(AIC(gen_arima), AIC(arma), AIC(rw)),
+  BIC = c(BIC(gen_arima), BIC(arma), BIC(rw)),
+  RMSE = c(performance::rmse(gen_arima), rmse(arma), rmse(rw))
+)
+```
+
+```{r}
+autoplot(forecast(gen_arima, h = 12))
+```
+
+```{r}
+autoplot(forecast(arma, h = 12))
+```
+
+```{r}
+autoplot(forecast(rw, h = 12))
+```
