@@ -41,9 +41,13 @@ quarto::quarto_render(
 
 # Exercice 1 : Notes et présence en cours
 
-Données : Dataframe `attend` du package `wooldridge`.
+*Données : Dataframe `attend` du package `wooldridge`.*
 
-Objectif : Estimer l'effet de la présence en cours sur la réussite à un examen.
+*Objectif : Estimer l'effet de la présence en cours sur la réussite à un examen.*
+
+## Question 0
+
+*Importer le setup de l'analyse*
 
 ## Question 1
 
@@ -79,13 +83,13 @@ Estimer cette régression linéaire, interpréter les coefficients et tester les
 
 ## Exercice2 : Estimation de la valeur d'une maison
 
-Données : `hprice2` du package `wooldridge`.
+*Données : `hprice2` du package `wooldridge`.*
 
 *Vous travailler pour une agence immobilière qui vous demande d'analyser ses données afin d'expliquer rationnellement les prix de vente des maisons actuellement à la vente. Votre agence souhaite savoir si d'une part la criminalité d'un quartier joue sur le prix du bien immobilier. elle souhaite d'autre part avoir le modèle qui explique le plus possible le prix des maisons (prévoyez des preuves que ce modèle est meilleur que les autres) afin que vous puissiez trouver les maisons qui sont les plus sous-évaluées et qui pourraient ainsi être achetées puis revendues plus cher par l'agence.*
 
 ## Exercices 3 : Comprendre le code donné
 
-*Vous travaillez dans un* laboratoire de recherche. Un de vos collègue vous demande de l'aider à comprendre et interpréter le travail d'un stagiaire qui n'a pas laissé d'indications sur ce qu'il a fait. Lisez le code suivant, commenter ce qui y est fait et interprétez les résultats. Quelle politique publique pourriez-vous recommander sur la base de ces résultats ?
+*Vous travaillez dans un laboratoire de recherche. Un de vos collègue vous demande de l'aider à comprendre et interpréter le travail d'un stagiaire qui n'a pas laissé d'indications sur ce qu'il a fait. Lisez le code suivant, commenter ce qui y est fait et interprétez les résultats. Quelle politique publique pourriez-vous recommander sur la base de ces résultats ?*
 
 ```{r, message=FALSE}
 source(here::here("02-codes", "utils", "setup.R"))

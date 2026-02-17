@@ -2215,6 +2215,7 @@ text-align: justify
   <ul>
   <li><a href="#exercice-1-modéliser-le-pib-américain" id="toc-exercice-1-modéliser-le-pib-américain" class="nav-link active" data-scroll-target="#exercice-1-modéliser-le-pib-américain">Exercice 1 : Modéliser le PIB américain</a>
   <ul>
+  <li><a href="#question-0" id="toc-question-0" class="nav-link" data-scroll-target="#question-0">Question 0</a></li>
   <li><a href="#question-1" id="toc-question-1" class="nav-link" data-scroll-target="#question-1">Question 1</a></li>
   <li><a href="#question-2" id="toc-question-2" class="nav-link" data-scroll-target="#question-2">Question 2</a></li>
   <li><a href="#question-3" id="toc-question-3" class="nav-link" data-scroll-target="#question-3">Question 3</a></li>
@@ -2261,47 +2262,51 @@ text-align: justify
 
 <section id="exercice-1-modéliser-le-pib-américain" class="level1">
 <h1>Exercice 1 : Modéliser le PIB américain</h1>
-<p>Données : <code>GDP</code> à partir de la <code>FRED</code></p>
+<p><em>Données : <code>GDP</code> à partir de la <code>FRED</code></em></p>
+<section id="question-0" class="level2">
+<h2 class="anchored" data-anchor-id="question-0">Question 0</h2>
+<p><em>Importer le setup de l’analyse</em></p>
+</section>
 <section id="question-1" class="level2">
 <h2 class="anchored" data-anchor-id="question-1">Question 1</h2>
-<p>Obtenir les données du PIB américain fournies par la FRED. Quelles sont les dates de début et de fin de la série ? Combien d’observation comporte-t-elle ?</p>
+<p><em>Obtenir les données du PIB américain fournies par la FRED. Quelles sont les dates de début et de fin de la série ? Combien d’observation comporte-t-elle ?</em></p>
 </section>
 <section id="question-2" class="level2">
 <h2 class="anchored" data-anchor-id="question-2">Question 2</h2>
-<p>Représenter graphiquement la série et la décrire. Cette série semble-t-elle stationnaire ou non ?</p>
+<p><em>Représenter graphiquement la série et la décrire. Cette série semble-t-elle stationnaire ou non ?</em></p>
 </section>
 <section id="question-3" class="level2">
 <h2 class="anchored" data-anchor-id="question-3">Question 3</h2>
-<p>Stationnariser si besoin la série. La représenter, la décrire. Est-elle stationnaire ?</p>
+<p><em>Stationnariser si besoin la série. La représenter, la décrire. Est-elle stationnaire ?</em></p>
 </section>
 <section id="question-4" class="level2">
 <h2 class="anchored" data-anchor-id="question-4">Question 4</h2>
-<p>Etudier la normalité ainsi que les fonctions d’auto-corrélation et auto-corrélation partielle de la série stationnaire. Quelle est la moyenne de la série ? Quel est sa variance et son écart-type ?</p>
+<p><em>Etudier la normalité ainsi que les fonctions d’auto-corrélation et auto-corrélation partielle de la série stationnaire. Quelle est la moyenne de la série ? Quel est sa variance et son écart-type ?</em></p>
 </section>
 <section id="question-5" class="level2">
 <h2 class="anchored" data-anchor-id="question-5">Question 5</h2>
-<p>Modéliser la série avec un AR(1) et étudier les propriétés des résidus. Que peut-on en déduire ?</p>
+<p><em>Modéliser la série avec un AR(1) et étudier les propriétés des résidus. Que peut-on en déduire ?</em></p>
 </section>
 <section id="question-6" class="level2">
 <h2 class="anchored" data-anchor-id="question-6">Question 6</h2>
-<p>Modéliser la série avec un AR(8) et étudier les propriétés des résidus. Que peut-on en déduire ?</p>
+<p><em>Modéliser la série avec un AR(8) et étudier les propriétés des résidus. Que peut-on en déduire ?</em></p>
 </section>
 <section id="question-7" class="level2">
 <h2 class="anchored" data-anchor-id="question-7">Question 7</h2>
-<p>Quel est le meilleur modèle selon le critère BIC en in-sample ? (Important : imposer la recherche aux modèles stationnaires. Etudier les propriétés des résidus. Que peut-on en déduire ?</p>
+<p><em>Quel est le meilleur modèle selon le critère BIC en in-sample ? (Important : imposer la recherche aux modèles stationnaires. Etudier les propriétés des résidus. Que peut-on en déduire ?</em></p>
 </section>
 <section id="question-8" class="level2">
 <h2 class="anchored" data-anchor-id="question-8">Question 8</h2>
-<p>Représenter les valeurs prédites et les comparer avec les vraies valeurs de la série. Le modèle semble-t-il correctement modéliser la série ?</p>
+<p><em>Représenter les valeurs prédites et les comparer avec les vraies valeurs de la série. Le modèle semble-t-il correctement modéliser la série ?</em></p>
 </section>
 <section id="question-9" class="level2">
 <h2 class="anchored" data-anchor-id="question-9">Question 9</h2>
-<p>Prédire les valeurs des 5 prochains trimestres et commenter.</p>
+<p><em>Prédire les valeurs des 5 prochains trimestres et commenter.</em></p>
 </section>
 </section>
 <section id="exercice-2-prédire-la-population-de-lynx-aux-usa" class="level1">
 <h1>Exercice 2 : Prédire la population de Lynx aux USA</h1>
-<p>Données : <code>lynx</code> disponibles de base dans R.</p>
+<p><em>Données : <code>lynx</code> disponibles de base dans R.</em></p>
 <p><em>Vous devez prédire la population de lynx aux Etats-Unis sur les 5 prochaines années. Proposez au minimum trois modèles concurrents. Quel est le modèle le plus adapté à la prévision ? Semble-t-il être plus fiable que de l’aléatoire ?</em></p>
 <p><em>Finissez par utiliser la fonction <code>forecast::dm.test()</code> afin de tester si la prédiction de votre meilleur modèle est significativement meilleure que l’aléatoire. Qu’en est-il par rapport aux autres modèles ?</em></p>
 </section>

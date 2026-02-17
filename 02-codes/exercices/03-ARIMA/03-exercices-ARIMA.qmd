@@ -42,47 +42,51 @@ quarto::quarto_render(
 
 # Exercice 1 : Modéliser le PIB américain
 
-Données : `GDP` à partir de la `FRED`
+*Données : `GDP` à partir de la `FRED`*
+
+## Question 0
+
+*Importer le setup de l'analyse*
 
 ## Question 1
 
-Obtenir les données du PIB américain fournies par la FRED. Quelles sont les dates de début et de fin de la série ? Combien d'observation comporte-t-elle ?
+*Obtenir les données du PIB américain fournies par la FRED. Quelles sont les dates de début et de fin de la série ? Combien d'observation comporte-t-elle ?*
 
 ## Question 2
 
-Représenter graphiquement la série et la décrire. Cette série semble-t-elle stationnaire ou non ?
+*Représenter graphiquement la série et la décrire. Cette série semble-t-elle stationnaire ou non ?*
 
 ## Question 3
 
-Stationnariser si besoin la série. La représenter, la décrire. Est-elle stationnaire ?
+*Stationnariser si besoin la série. La représenter, la décrire. Est-elle stationnaire ?*
 
 ## Question 4
 
-Etudier la normalité ainsi que les fonctions d'auto-corrélation et auto-corrélation partielle de la série stationnaire. Quelle est la moyenne de la série ? Quel est sa variance et son écart-type ?
+*Etudier la normalité ainsi que les fonctions d'auto-corrélation et auto-corrélation partielle de la série stationnaire. Quelle est la moyenne de la série ? Quel est sa variance et son écart-type ?*
 
 ## Question 5
 
-Modéliser la série avec un AR(1) et étudier les propriétés des résidus. Que peut-on en déduire ?
+*Modéliser la série avec un AR(1) et étudier les propriétés des résidus. Que peut-on en déduire ?*
 
 ## Question 6
 
-Modéliser la série avec un AR(8) et étudier les propriétés des résidus. Que peut-on en déduire ?
+*Modéliser la série avec un AR(8) et étudier les propriétés des résidus. Que peut-on en déduire ?*
 
 ## Question 7
 
-Quel est le meilleur modèle selon le critère BIC en in-sample ? (Important : imposer la recherche aux modèles stationnaires. Etudier les propriétés des résidus. Que peut-on en déduire ?
+*Quel est le meilleur modèle selon le critère BIC en in-sample ? (Important : imposer la recherche aux modèles stationnaires. Etudier les propriétés des résidus. Que peut-on en déduire ?*
 
 ## Question 8
 
-Représenter les valeurs prédites et les comparer avec les vraies valeurs de la série. Le modèle semble-t-il correctement modéliser la série ?
+*Représenter les valeurs prédites et les comparer avec les vraies valeurs de la série. Le modèle semble-t-il correctement modéliser la série ?*
 
 ## Question 9
 
-Prédire les valeurs des 5 prochains trimestres et commenter.
+*Prédire les valeurs des 5 prochains trimestres et commenter.*
 
 # Exercice 2 : Prédire la population de Lynx aux USA
 
-Données : `lynx` disponibles de base dans R.
+*Données : `lynx` disponibles de base dans R.*
 
 *Vous devez prédire la population de lynx aux Etats-Unis sur les 5 prochaines années. Proposez au minimum trois modèles concurrents. Quel est le modèle le plus adapté à la prévision ? Semble-t-il être plus fiable que de l'aléatoire ?*
 
