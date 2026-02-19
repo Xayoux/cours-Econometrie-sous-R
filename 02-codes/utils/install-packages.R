@@ -26,6 +26,7 @@ install.packages("ARDL")
 install.packages("sandwich")
 install.packages("timetk")
 install.packages("urca")
+install.packages("quarto")
 
 devtools::install_github("https://github.com/Xayoux/dobby.git")
 
