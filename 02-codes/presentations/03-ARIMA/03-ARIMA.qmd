@@ -199,9 +199,9 @@ $$ Les valeurs critiques pour chaque modèles sont disponibles dans la sous-sect
 
 Ce test étant un test unilatéral et les valeurs critiques étant négatives, la règle de décision est différente de la règle habituelle. **Attention, il ne faut pas prendre la valeur absolue de la statistique de test**.
 
--   Si $|t_{\hat{\phi}}| \leq t_{\text{ADF}}$ : On rejette l'hypothèse nulle de présence d'au moins une racine unitaire. La série ne comporte donc pas de racine unitaire. La série est donc stationnaire et peut être utilisée dans une modélisation standard.
+-   Si $t_{\hat{\phi}} \leq t_{\text{ADF}}$ : On rejette l'hypothèse nulle de présence d'au moins une racine unitaire. La série ne comporte donc pas de racine unitaire. La série est donc stationnaire et peut être utilisée dans une modélisation standard.
 
--   $|t_{\hat{\phi}}| > t_{\text{ADF}}$ : On ne peut pas rejeter l'hypothèse nulle de la présence d'au moins une racine unitaire. La série comporte donc au moins une racine unitaire. La série n'est pas stationnaire. Elle ne peut pas être utilisée dans une modélisation standard. Elle doit d'abord être stationnarisée (généralement en la log-différenciant).
+-   $t_{\hat{\phi}} > t_{\text{ADF}}$ : On ne peut pas rejeter l'hypothèse nulle de la présence d'au moins une racine unitaire. La série comporte donc au moins une racine unitaire. La série n'est pas stationnaire. Elle ne peut pas être utilisée dans une modélisation standard. Elle doit d'abord être stationnarisée (généralement en la log-différenciant).
 
 ### Valeurs critiques de Dickey-Fuller
 
