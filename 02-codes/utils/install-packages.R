@@ -27,6 +27,13 @@ install.packages("sandwich")
 install.packages("timetk")
 install.packages("urca")
 install.packages("quarto")
+install.packages("plm")
+install.packages("DiagrammeR")
+install.packages("DiagrammeRsvg")
+install.packages("rsvg")
+install.packages("xtbhst")
+install.packages("poobly")
+install.packages("patchwork")
 
 devtools::install_github("https://github.com/Xayoux/dobby.git")
 

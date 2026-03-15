@@ -12,6 +12,7 @@ library(janitor)
 library(glue)
 library(conflicted)
 library(timetk)
+library(patchwork)
 
 # Package pour les données utilisées dans Wooldrige
 require(wooldridge)
@@ -35,6 +36,11 @@ library(urca)
 # PAckage pour les ARDl
 library(dynlm)
 library(ARDL)
+
+# Packages pour les panels
+library(plm)
+library(xtbhst)
+library(poobly)
 
 # PAckage maison pour le test ADF
 library(dobby)

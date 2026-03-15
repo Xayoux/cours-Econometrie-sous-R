@@ -1219,17 +1219,17 @@ $$
 \end{aligned}
 $$
 
-On peut également contraindre certains coefficients à être fixes (ne pas changer selon les individus) avec l'estimateur Pooled Mean group qui va contraindre un certain nombre de coefficient à être considéré comme fixes (Pooled). 
+On peut également contraindre certains coefficients à être fixes (ne pas changer selon les individus) avec l'estimateur Pooled Mean group qui va contraindre un certain nombre de coefficient à être considéré comme fixes (Pooled).
 
 ## Tester l'hétérogénéité des coefficients de pente
 
-Pour tester l'hétérogénéité des coefficients de pente, on peut utiliser la procédure de Hsiao, qui par élimination nous permet de déduire que les coefficients de pente sont hétérogènes. Cependant cette procédure ne permet pas de déterminer les groupes de variables dont les coefficients de pente sont hétérogènes. Dans cette procédure l'ensemble des coefficients sont hétérogènes ou homogènes. 
+Pour tester l'hétérogénéité des coefficients de pente, on peut utiliser la procédure de Hsiao, qui par élimination nous permet de déduire que les coefficients de pente sont hétérogènes. Cependant cette procédure ne permet pas de déterminer les groupes de variables dont les coefficients de pente sont hétérogènes. Dans cette procédure l'ensemble des coefficients sont hétérogènes ou homogènes.
 
 ### Test de Haussman
 
-On peut utiliser le test de Haussman pour comparer l'estimateur Mean Group qui sera toujours consistant avec l'estimateur Pooled Mean group qui ne sera consistant que sous l'hypothèse nulle d'homogénéité des coefficients de pente.  
+On peut utiliser le test de Haussman pour comparer l'estimateur Mean Group qui sera toujours consistant avec l'estimateur Pooled Mean group qui ne sera consistant que sous l'hypothèse nulle d'homogénéité des coefficients de pente.
 
-On peut tester l'hypothèse nulle d'homogénéité des coefficients de pente de toutes les variables ou bien seulement l'homogénéité des coefficients d'un sous-ensemble de variables : 
+On peut tester l'hypothèse nulle d'homogénéité des coefficients de pente de toutes les variables ou bien seulement l'homogénéité des coefficients d'un sous-ensemble de variables :
 
 $$
 \begin{cases}
@@ -1245,15 +1245,15 @@ $$
 \end{cases}
 $$
 
-Avec $k$ un un sous-ensemble de variables. Les autres variables sont considérées comme ayant des coefficients hétérogènes. 
+Avec $k$ un un sous-ensemble de variables. Les autres variables sont considérées comme ayant des coefficients hétérogènes.
 
-Le problème de ce test réside dans son hypothèse d'erreurs homoskédastiques (variance constante et non-autocorrélation). De plus ce test performe assez mal à moins que $T>N$ ce qui est assez rare. 
+Le problème de ce test réside dans son hypothèse d'erreurs homoskédastiques (variance constante et non-autocorrélation). De plus ce test performe assez mal à moins que $T>N$ ce qui est assez rare.
 
 ### Delta Test
 
-Pesaran et Yamagata (2008) ont proposé un test d'hétérogénéité des coefficients de pente dans le cas où $T$ et $N$ sont grands et où $N > T$. Ce test produit une statistique de test sous l'hypothèse nulle qui va suivre une loi standard. L'idée de ce test est de comparer la distance entre les coefficients obtenus par un estimateur à effet fixes (coefficients de pente constants) et les coefficients obtenus par des régressions individuelles. Cette différence entre les coefficients va être pondérée par les erreurs standard de chaque individu afin de relâcher l'hypothèse d'homosckédasticité des erreurs. 
+Pesaran et Yamagata (2008) ont proposé un test d'hétérogénéité des coefficients de pente dans le cas où $T$ et $N$ sont grands et où $N > T$. Ce test produit une statistique de test sous l'hypothèse nulle qui va suivre une loi standard. L'idée de ce test est de comparer la distance entre les coefficients obtenus par un estimateur à effet fixes (coefficients de pente constants) et les coefficients obtenus par des régressions individuelles. Cette différence entre les coefficients va être pondérée par les erreurs standard de chaque individu afin de relâcher l'hypothèse d'homosckédasticité des erreurs.
 
-On va tester : 
+On va tester :
 
 $$
 \begin{cases}
@@ -1262,28 +1262,27 @@ $$
 \end{cases}
 $$
 
-$\beta_{2,i}$ correspond au sous-ensemble de variables dont on souhaite tester l'homogénéité des coefficients de pente. Les autres variables sont considérés comme ayant des coefficients de pente hétérogènes. Le test a été étendu par Blomquist et Westerlund (2013) pour donner une statistique de teste robuste à l'hétéroskédasticité (HAC robust). 
-
+$\beta_{2,i}$ correspond au sous-ensemble de variables dont on souhaite tester l'homogénéité des coefficients de pente. Les autres variables sont considérés comme ayant des coefficients de pente hétérogènes. Le test a été étendu par Blomquist et Westerlund (2013) pour donner une statistique de teste robuste à l'hétéroskédasticité (HAC robust).
 
 ## Dépendance Cross-Section (CSD)
 
-L'étude de la corrélation entre les différents individus du panel se fait de plus en plus fréquente dans la littérature macroéconomique et financière à cause des forts liens qui sont relevés entre les différentes économies et les différents agents économiques. La littérature montre que ne pas corriger pour cette dépendance cross-section amène à estimer des coefficients inconsistants et biaisés (Pesaran 2006). 
+L'étude de la corrélation entre les différents individus du panel se fait de plus en plus fréquente dans la littérature macroéconomique et financière à cause des forts liens qui sont relevés entre les différentes économies et les différents agents économiques. La littérature montre que ne pas corriger pour cette dépendance cross-section amène à estimer des coefficients inconsistants et biaisés (Pesaran 2006).
 
-La littérature distingue deux types de dépendance cross-section : 
+La littérature distingue deux types de dépendance cross-section :
 
-- **La faible dépendance cross-section** : lorsque la corrélation entre individus converge vers $0$ lorsque $N$ tend vers l'infini. Un exemple courant de faible dépendance cross-section est la corrélation spatiale (traitée par l'économétrie spatiale). 
+-   **La faible dépendance cross-section** : lorsque la corrélation entre individus converge vers $0$ lorsque $N$ tend vers l'infini. Un exemple courant de faible dépendance cross-section est la corrélation spatiale (traitée par l'économétrie spatiale).
 
-- **La forte dépendance cross-section**  : lorsque la corrélation entre les individus converge vers une constante différente de $0$ lorsque $N$ tend vers l'infini. Cette forte dépendance provient de facteurs communs inobservés qui vont lier les individus ensembles : pandémies, crises, changement technologique. 
+-   **La forte dépendance cross-section** : lorsque la corrélation entre les individus converge vers une constante différente de $0$ lorsque $N$ tend vers l'infini. Cette forte dépendance provient de facteurs communs inobservés qui vont lier les individus ensembles : pandémies, crises, changement technologique.
 
-Traditionnellement, cette dépendance est prise en compte par l'utilisation des effets fixes temporels qui permettent d'isoler l'impact de facteurs commun sur l'ensemble des individus à une période de temps donnée. Cependant cette méthode suppose que les facteurs communs affectent tous les individus de la même manière. Hors un certain nombre d'études montrent que les facteurs structurels impactent différemment les individus. Dans un tel cas, les effets fixes ne permettent pas de correctement modéliser la dépendance cross-sectionnelle. 
+Traditionnellement, cette dépendance est prise en compte par l'utilisation des effets fixes temporels qui permettent d'isoler l'impact de facteurs commun sur l'ensemble des individus à une période de temps donnée. Cependant cette méthode suppose que les facteurs communs affectent tous les individus de la même manière. Hors un certain nombre d'études montrent que les facteurs structurels impactent différemment les individus. Dans un tel cas, les effets fixes ne permettent pas de correctement modéliser la dépendance cross-sectionnelle.
 
-Ne pas prendre en compte la dépendance cross-section peut amener les coefficients à être biaisés et non consistants si les régresseurs ne sont pas strictement exogènes avec les facteurs commun non pris en compte. Ne pas prendre en compte ces facteurs commun peut également entrainer l'apparition de résidus corrélés entre les différents individus et donc augmenter la variance des individus. 
+Ne pas prendre en compte la dépendance cross-section peut amener les coefficients à être biaisés et non consistants si les régresseurs ne sont pas strictement exogènes avec les facteurs commun non pris en compte. Ne pas prendre en compte ces facteurs commun peut également entrainer l'apparition de résidus corrélés entre les différents individus et donc augmenter la variance des individus.
 
 ## Tester la présence de dépendance cross-section
 
 ### Breush-Pagan LM test
 
-Dans le cas d'un panel avec $T$ large et $N$ plus petit (pas si large), on peut tester la dépendance cross-section avec une statistique LM. On teste : 
+Dans le cas d'un panel avec $T$ large et $N$ plus petit (pas si large), on peut tester la dépendance cross-section avec une statistique LM. On teste :
 
 $$
 \begin{cases}
@@ -1292,14 +1291,13 @@ $$
 \end{cases}
 $$
 
-Où $\hat{\rho}_{i,j}$ correspond à la corrélation cross-section (entre deux individus) : 
+Où $\hat{\rho}_{i,j}$ correspond à la corrélation cross-section (entre deux individus) :
 
 $$
 \begin{aligned}
   \hat{\rho}_{i,j} = \frac{\sum_{t=1}^T \hat{\varepsilon}_{i,t} \hat{\varepsilon}_{j,t}}{\left( \sum_{t=1}^T \hat{\varepsilon}_{i,t} \right)^{1/2} \left( \sum_{t=1}^T \hat{\varepsilon}_{j,t} \right)^{1/2}}  
 \end{aligned}
-$$
-ON utilise une statistique LM pour effectuer le test : 
+$$ ON utilise une statistique LM pour effectuer le test :
 
 $$
 \begin{aligned}
@@ -1307,32 +1305,30 @@ $$
 \end{aligned}
 $$
 
-La règle de décision est la suivante : 
+La règle de décision est la suivante :
 
-- Si $|LM| \geq \chi^2(N[N-1]/2)$ : alors on rejette l'hypothèse nulle de non-corrélation inter-individuelle. Il existe une corrélation significative entre les individus de notre panel. Il convient donc de la modéliser correctement. 
+-   Si $|LM| \geq \chi^2(N[N-1]/2)$ : alors on rejette l'hypothèse nulle de non-corrélation inter-individuelle. Il existe une corrélation significative entre les individus de notre panel. Il convient donc de la modéliser correctement.
 
-- Si $|LM| < \chi^2(N[N-1]/2)$ : alors on ne peut pas rejeter l'hypothèse nulle de non-corrélation inter-individuelle. Il n'existe pas de corrélation inter-individuelle assez significative dans notre panel.
+-   Si $|LM| < \chi^2(N[N-1]/2)$ : alors on ne peut pas rejeter l'hypothèse nulle de non-corrélation inter-individuelle. Il n'existe pas de corrélation inter-individuelle assez significative dans notre panel.
 
-Ce tests souffre de plusieurs problèmes notamment lorsque N est extrême : 
+Ce tests souffre de plusieurs problèmes notamment lorsque N est extrême :
 
-- ce test tend à être surestimé lorsque $N$ est grand et $T \rightarrow \infty$. 
+-   ce test tend à être surestimé lorsque $N$ est grand et $T \rightarrow \infty$.
 
-- L'hypothèse nulle est très sensible dans le cas de petits panels : $N$ faible et $T \rightarrow \infty$. 
-
+-   L'hypothèse nulle est très sensible dans le cas de petits panels : $N$ faible et $T \rightarrow \infty$.
 
 ### CD-LM test
 
-Pesaran (2004) argumente sur le fait qu'imposer l'absence de corrélation inter-individuelle sur l'ensemble des individus du panel est trop restrictif. Il propose plutôt de tester si la corrélation inter-individuelle est suffisament faible pour être ignorée ou non. Il propose donc le test $CD_{LM}$ qui est une version augmentée du test LM de Breush-Pagan. 
+Pesaran (2004) argumente sur le fait qu'imposer l'absence de corrélation inter-individuelle sur l'ensemble des individus du panel est trop restrictif. Il propose plutôt de tester si la corrélation inter-individuelle est suffisament faible pour être ignorée ou non. Il propose donc le test $CD_{LM}$ qui est une version augmentée du test LM de Breush-Pagan.
 
-On teste : 
+On teste :
 
 $$
 \begin{cases}
   H0 : \text{Faible CSD} \\[2ex]
   H1 : \text{Forte CSD}
 \end{cases}
-$$
-Et on utilise la statistique de test : 
+$$ Et on utilise la statistique de test :
 
 $$
 \begin{aligned}
@@ -1340,33 +1336,30 @@ $$
 \end{aligned}
 $$
 
-La règle de décision est la suivante : 
+La règle de décision est la suivante :
 
-- Si $|CM_{LM}| \geq \mathcal{N}(0,1)$ : alors on rejette l'hypothèse nulle de faible corrélation inter-individuelle. Il existe une forte corrélation entre les individus de notre panel. Il convient donc de la modéliser correctement. 
+-   Si $|CM_{LM}| \geq \mathcal{N}(0,1)$ : alors on rejette l'hypothèse nulle de faible corrélation inter-individuelle. Il existe une forte corrélation entre les individus de notre panel. Il convient donc de la modéliser correctement.
 
-- Si $|CM_{LM}| < \mathcal{N}(0,1)$ : alors on ne peut pas rejeter l'hypothèse nulle de faible corrélation inter-individuelle. La corrélation inter-individuelle n'est pas assez importante pour être prise en compte. 
+-   Si $|CM_{LM}| < \mathcal{N}(0,1)$ : alors on ne peut pas rejeter l'hypothèse nulle de faible corrélation inter-individuelle. La corrélation inter-individuelle n'est pas assez importante pour être prise en compte.
 
-Ce test souffre lui aussi de différents problèmes : 
+Ce test souffre lui aussi de différents problèmes :
 
-- Il n'est pas correctement centré à $0$ lorsque $T$ est fini et il est probable qu'il subisse des distorsions de taille lorsque $N$ augmente.
+-   Il n'est pas correctement centré à $0$ lorsque $T$ est fini et il est probable qu'il subisse des distorsions de taille lorsque $N$ augmente.
 
-- La distribution normale peut être une mauvaise approximation de la loi suivie par la statistique sous l'hypothèse nulle amenant ainsi des distorsions de forte amplitudes. 
+-   La distribution normale peut être une mauvaise approximation de la loi suivie par la statistique sous l'hypothèse nulle amenant ainsi des distorsions de forte amplitudes.
 
-
-Pour résoudre ces problèmes Pesaran et al (2008) on développé une statistique LM ajustée ($LM_{Adj}$) en utilisant des approximation en échantillons finis. Ces approximations ne sont cependant valides que dans le cas de régresseurs strictement exogènes et d'erreurs normalement distribuées. 
-
+Pour résoudre ces problèmes Pesaran et al (2008) on développé une statistique LM ajustée ($LM_{Adj}$) en utilisant des approximation en échantillons finis. Ces approximations ne sont cependant valides que dans le cas de régresseurs strictement exogènes et d'erreurs normalement distribuées.
 
 ### CD test
 
-Pesaran (2015) propose une statistique CD qui propose une moyenne d'exactement $0$ pour des valeurs fixes de $T$ et de $N$. Le jeu d'hypothèse est similaire : 
+Pesaran (2015) propose une statistique CD qui propose une moyenne d'exactement $0$ pour des valeurs fixes de $T$ et de $N$. Le jeu d'hypothèse est similaire :
 
 $$
 \begin{cases}
   H0 : \text{Faible CSD} \\[2ex]
   H1 : \text{Forte CSD}
 \end{cases}
-$$
-La statistique de test est donnée par : 
+$$ La statistique de test est donnée par :
 
 $$
 \begin{aligned}
@@ -1374,30 +1367,29 @@ $$
 \end{aligned}
 $$
 
-La règle de décision est la suivante : 
+La règle de décision est la suivante :
 
-- Si $|CM| \geq \mathcal{N}(0,1)$ : alors on rejette l'hypothèse nulle de faible corrélation inter-individuelle. Il existe une forte corrélation entre les individus de notre panel. Il convient donc de la modéliser correctement. 
+-   Si $|CM| \geq \mathcal{N}(0,1)$ : alors on rejette l'hypothèse nulle de faible corrélation inter-individuelle. Il existe une forte corrélation entre les individus de notre panel. Il convient donc de la modéliser correctement.
 
-- Si $|CM| < \mathcal{N}(0,1)$ : alors on ne peut pas rejeter l'hypothèse nulle de faible corrélation inter-individuelle. La corrélation inter-individuelle n'est pas assez importante pour être prise en compte. 
+-   Si $|CM| < \mathcal{N}(0,1)$ : alors on ne peut pas rejeter l'hypothèse nulle de faible corrélation inter-individuelle. La corrélation inter-individuelle n'est pas assez importante pour être prise en compte.
 
+Ce test dispose d'une taille correcte dans le cas de modèle dynamiques (modèles qui étaient problématiques avec les tests précédents) tant que les erreurs sont symétriquement distribuées.
 
-Ce test dispose d'une taille correcte dans le cas de modèle dynamiques (modèles qui étaient problématiques avec les tests précédents) tant que les erreurs sont symétriquement distribuées. 
+Cependant, il aura tendance à sur-rejeter l'hypothèse nulle dans le cas de régresseurs faiblement exogènes lorsque $N$ est bien plus grand que $T$.
 
-Cependant, il aura tendance à sur-rejeter l'hypothèse nulle dans le cas de régresseurs faiblement exogènes lorsque $N$ est bien plus grand que $T$. 
+Des corrections ont été apportées afin de corriger certain de ces problèmes :
 
-Des corrections ont été apportées afin de corriger certain de ces problèmes : 
+-   Weighted CD Test : $CD_w$
 
-- Weighted CD Test : $CD_w$
+-   Power enhanced $CD_w$ Test : $CD_{w+}$
 
-- Power enhanced $CD_w$ Test : $CD_{w+}$
+-   Bias corrected CD Test : $CD^{*}$
 
-- Bias corrected CD Test : $CD^{*}$
-
-Ces trois derniers tests doivent être appliqués sur les résidus d'un modèle estimé. Le test $CD$ peut être appliqué sur le srésidus ou sur les données réelles. 
+Ces trois derniers tests doivent être appliqués sur les résidus d'un modèle estimé. Le test $CD$ peut être appliqué sur le srésidus ou sur les données réelles.
 
 ## Estimateur des effets communs corrélés (CCE) statique
 
-En présence de corrélation inter-individuelle, on peut chercher à estimer le modèle suivant : 
+En présence de corrélation inter-individuelle, on peut chercher à estimer le modèle suivant :
 
 $$
 \begin{aligned}
@@ -1406,13 +1398,13 @@ $$
 \end{aligned}
 $$
 
-Ce modèle est caractérisé par des effets fixes individuels, des coefficients de pente hétérogènes aléatoires et un ensemble de facteurs communs inobservés temporels qui vont affecter tous les individus sur une période de temps, mais de manière hétérogène (impact du facteur commun hétérogène entre les individus). 
+Ce modèle est caractérisé par des effets fixes individuels, des coefficients de pente hétérogènes aléatoires et un ensemble de facteurs communs inobservés temporels qui vont affecter tous les individus sur une période de temps, mais de manière hétérogène (impact du facteur commun hétérogène entre les individus).
 
-L'estimateur des effets communs corrélés (CCE) proposé par Pesaran (2006) possède l'avantage de ne pas avoir besoin de connaître ou d'estimer les $m$ facteurs communs. 
+L'estimateur des effets communs corrélés (CCE) proposé par Pesaran (2006) possède l'avantage de ne pas avoir besoin de connaître ou d'estimer les $m$ facteurs communs.
 
-Cet estimateur consiste à approximer la combinaison linéaire des facteurs inobservés en prenant les moyennes cross-sectionnelles (la moyenne de tous les individus pour chaque période de temps) des variables dépendante et explicatives, puis d'effectuer une régression panel standard en ajoutant ces moyennes cross-sectionnelle au modèle. 
+Cet estimateur consiste à approximer la combinaison linéaire des facteurs inobservés en prenant les moyennes cross-sectionnelles (la moyenne de tous les individus pour chaque période de temps) des variables dépendante et explicatives, puis d'effectuer une régression panel standard en ajoutant ces moyennes cross-sectionnelle au modèle.
 
-Le modèle estimé devient : 
+Le modèle estimé devient :
 
 $$
 \begin{aligned}
@@ -1422,14 +1414,13 @@ $$
 \end{aligned}
 $$
 
-On peut appliquer l'estimateur Mean Group (ou tout autre estimateur) sur l'équation précédente : 
+On peut appliquer l'estimateur Mean Group (ou tout autre estimateur) sur l'équation précédente :
 
 $$
 \begin{aligned}
   \hat{\beta}_{\text{CCEMG}} = \frac{1}{N} \sum_{i=1}^N \hat{\beta}_{i, \text{CCE}}  
 \end{aligned}
-$$
-Sous les conditions générales d'exogénéité des régresseurs, cet estimateur est asymptotiquement non biaisé pour $\beta$. 
+$$ Sous les conditions générales d'exogénéité des régresseurs, cet estimateur est asymptotiquement non biaisé pour $\beta$.
 
 $$
 \begin{aligned}
@@ -1448,9 +1439,9 @@ $$
 \end{aligned}
 $$
 
-Dans un tel cas, l'hypothèse de stricte exogénéité posée pour l'estimateur CCE statique ne tient plus puisque la variable dépendante retardée n'est plus exogène. Chudik et Pesaran (2015) ont montré que l'estimateur pouvait être plus consistant si l'on ajoutait des retards aux moyennes cross-sectionnelles dans le modèle. 
+Dans un tel cas, l'hypothèse de stricte exogénéité posée pour l'estimateur CCE statique ne tient plus puisque la variable dépendante retardée n'est plus exogène. Chudik et Pesaran (2015) ont montré que l'estimateur pouvait être plus consistant si l'on ajoutait des retards aux moyennes cross-sectionnelles dans le modèle.
 
-L'équation estimée devient : 
+L'équation estimée devient :
 
 $$
 \begin{aligned}
@@ -1459,17 +1450,9 @@ $$
 \end{aligned}
 $$
 
-On peut appliquer l'estimateur Mean-Group sur ce modèle. Selon des simulations, le nombre de retards optimal serait $P_T = T^{1/3}$. 
+On peut appliquer l'estimateur Mean-Group sur ce modèle. Selon des simulations, le nombre de retards optimal serait $P_T = T^{1/3}$.
 
-Cette modélisation peut être augmenté pour intégrer d'avantages de retards des variables explicative ou dépendante. 
-
-  
-
-
-
-
-
-
+Cette modélisation peut être augmenté pour intégrer d'avantages de retards des variables explicative ou dépendante.
 
 # Code
 
@@ -1487,3 +1470,234 @@ Charger les librairies et tous les objets de setup. Comme rien n'est chargé pou
 # Exécute le script setup.R pour charger tous les éléments importants
 source(here::here("02-codes", "utils", "setup.R"))
 ```
+
+## Préparation des données
+
+On va s'intéresser au lien entre le prix de l'essence et la richesse d'un pays.
+
+On veut modifier le prix de l'essence comme une fonction linéaire de la consommation d'essence, du nombre de voiture et de la richesse du pays.
+
+Le modèle de base serait donc :
+
+$$ 
+\begin{aligned}   \text{lrpmg}_{i,t} = \alpha + \beta_1 \text{lgaspcar} + \beta_2 \text{lcarpcap} + \beta_3 \text{lincomep} + \varepsilon_{i,t} \end{aligned} 
+$$
+
+```{r}
+# Importer les données Males du package plm
+data(Gasoline, package = "plm")
+df <- 
+  Gasoline |> 
+  as_tibble() |> 
+  print()
+```
+
+```{r}
+# Information sur le nombre d'individus
+nb_indiv <- 
+  df |> 
+  pull(country) |> 
+  unique() |> 
+  length()
+
+# Information sur le nombre d'années
+nb_temps <- 
+  df |> 
+  pull(year) |> 
+  unique() |> 
+  length()
+
+# Information sur le nombre d'observations
+nb_obs <- nrow(df)
+
+# Afficher les informations
+cat("Le nombre d'individus du panel est de", nb_indiv, "\n")
+cat("Le nombre d'années du panel est de", nb_temps, "\n")
+cat("Le nombre d'observations du panel est de", nb_obs)
+```
+
+Le package que l'on va majoritairement utiliser pour l'estimation des modèles de panel est le package `plm`. Désormais ce package permet de travailler directement avec des dataframes classiques **tant que les deux premières colonnes sont respectivement les variable indiquant les individus et les périodes temporelles**. Ici c'est bien notre cas, puisque la première colonne `country` indique les pays (individus) du panel tandis que la deuxième colonne `year` indique les années (périodes temporelles) du panel.
+
+On peut, si on le souhaite, créer un panel dataframe avec la fonction `plm::pdata.frame()` afin d'obtenir facilement les indices individuels et temporels de notre panel.
+
+```{r}
+# Créer un objet pdata.frame
+df_panel <- 
+  df |> 
+  plm::pdata.frame(
+    index = c("country", "year"), # Indiquer les colonnes contenant les indices
+    drop.index = TRUE, # Les variables contenant les indices doivent-elles être retirées ?
+    row.names = TRUE # Afficher les noms de ligne comme des identifiants i-t
+  )
+
+df_panel |> 
+  head() |> 
+  print()
+```
+
+```{r}
+# Afficher les indices individuels et temporels du panel
+head(attr(df_panel, "index"))
+```
+
+Il faut faire attention lorsque l'on veut modifier les données de panel pour y inclure des retards ou créer les données en différence. En effet les fonctions `lag()`, `diff()` etc... de `baseR` ou de `tidyverse` ne prennent pas en compte qu'il y a plusieurs individus dans le panel. Ces fonctions vont considérer qu'il ne s'agit que d'une série temporelle et on va donc parfois avoir le retard d'un autre individu.
+
+Pour éviter ce problème, il faut soit grouper les données par individu, soit utiliser les fonctions `plm::lag()` et `plm::diff()` qui prennent en compte le fait que les données soient des données de panel.
+
+```{r}
+# Créer une variable pour le lag de lrpmg
+df <- 
+  df |> 
+  mutate(
+    .by = country, # Grouper les données par individu : les calculs sont appliqués par individus et non plus sur l'ensemble de df
+    lag_lrpmg = lag(lrpmg) # Créer la variable en lag
+  ) |> 
+  print()
+```
+
+La fonction `plm::lag()` permet facilement d'obtenir les retards d'une variables (ici les données en $t$ et les deux retards qui suivent).
+
+```{r}
+head(plm::lag(df_panel$lgaspcar, 0:2))
+```
+
+```{r}
+df_panel$lag_lrpmg <- plm::lag(df_panel$lrpmg, 1)
+
+df_panel |>
+  head() |> 
+  print()
+```
+
+## Procédure de Hsiao
+
+La stationnarité n'étant pas un problème ici (pas assez de données temporelles), la première chose à faire est de déterminer s'il existe de l'hétérogénéité dans nos données. On peut commencer par une analyse graphique en représentant la moyenne et l'écart-type individuel/temporel de nos données à l'aide de graphiques à barre d'erreur.
+
+```{r}
+# Calculer les moyennes individuelles (une moyenne par individu) pour la variable lgaspcar
+df_country <- 
+  df |> 
+  # summarize permet d'appliquer des calculs sur un semble de ligne et retourne un dataframe plus petit
+  summarize(
+    .by = country, # Effectuer les calculs pour chaque individu
+    mean_val = mean(lgaspcar, na.rm = TRUE), # Calculer la moyenne de lgaspcar
+    sd_val = sd(lgaspcar, na.rm = TRUE), # Calculer l'écart-type de lgaspcar
+    n = n(), # Calculer le nombre d'observations temporelles par individus (le nombre d'obs par groupe)
+    se_val = sd_val / sqrt(n), # Calculer l'erreur-standard
+    lower = mean_val - 1.96 * se_val, # Borne inférieure de l'IC (95%)
+    upper = mean_val + 1.96 * se_val  # Borne supérieure de l'IC (95%)
+  ) |> 
+  # On trie les pays par moyenne pour un graphique plus lisible
+  arrange(mean_val) |> 
+  # Mettre les pays en factor
+  mutate(country = factor(country, levels = country)) |> 
+  print(n = 6)
+```
+
+```{r}
+# Calculer les moyennes temporelles (une moyenne par année) pour la variable lgaspcar
+df_year <- 
+  df |> 
+  # summarize permet d'appliquer des calculs sur un semble de ligne et retourne un dataframe plus petit
+  summarize(
+    .by = year, # Effectuer les calculs pour chaque individu
+    mean_val = mean(lgaspcar, na.rm = TRUE), # Calculer la moyenne de lgaspcar
+    sd_val = sd(lgaspcar, na.rm = TRUE), # Calculer l'écart-type de lgaspcar
+    n = n(), # Calculer le nombre d'observations temporelles par individus (le nombre d'obs par groupe)
+    se_val = sd_val / sqrt(n), # Calculer l'erreur-standard
+    lower = mean_val - 1.96 * se_val, # Borne inférieure de l'IC (95%)
+    upper = mean_val + 1.96 * se_val  # Borne supérieure de l'IC (95%)
+  ) |> 
+  # On trie les années par ordre croissant
+  arrange(year) |> 
+  print(n = 6)
+```
+
+```{r}
+# Créer le graphique à barre d'erreur pour les individus
+p_indiv <- 
+  # Df contenant les moyennes par individus calculés
+  df_country |> 
+  ggplot(aes(x = country, y = mean_val)) +
+  geom_point(color = "#2c3e50", size = 3) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2, color = "#e74c3c", linewidth = 0.8) +
+  coord_flip() + # On tourne le graphique pour bien lire les noms des pays
+  labs(
+    title = "Hétérogénéité individuelle",
+    subtitle = "Moyenne et IC (95%) par pays",
+    x = "Pays",
+    y = "Log(Consommation d'essence moyenne par voiture)"
+  )
+
+# Créer le graphique à barre d'erreur pour les années
+p_temp <- 
+  # Df contenant les moyennes par années calculées
+  df_year |> 
+  ggplot(aes(x = year, y = mean_val)) +
+  geom_line(color = "#2c3e50", alpha = 0.5) + # Ligne de tendance
+  geom_point(color = "#2c3e50", size = 2) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.3, color = "#3498db", linewidth = 0.8) +
+  scale_x_continuous(breaks = seq(min(as.numeric(as.character(df_year$year))), 
+                                  max(as.numeric(as.character(df_year$year))), by = 2)) +
+  labs(
+    title = "Hétérogénéité temporelle",
+    subtitle = "Moyenne et IC (95%) par année",
+    x = "Année",
+    y = "Log(Consommation d'essence moyenne par voiture) [lgaspcar]"
+  )
+
+# Associer les graphiques l'un à coté de l'autre (nécessite le package patchwork pour fonctionner)
+p_indiv + p_temp
+```
+
+Ces graphiques permettent d'observer s'il existe de forte disparité en moyenne entre les individus/années et donc de commencer à se rendre compte du degré d'hétérogénéité qu'il peut exister dans nos données. On remarque qu'il existe des différences de moyennes individuelles entre les pays. Ainsi le Japon, les USA, le Canada, la Grèce et la Turquie semble largement se démarquer des autres pays. Ces pays pourraient être une source d'hétérogénéité. 
+
+Concernant les années, on remarque une tendance décroissante avec les années. En moyenne il semblerait que les années soient assez différentes les une des autres ce qui pourrait être un signe d'hétérogénéité temporelle. 
+
+Ici, nous n'avons observé qu'une seule variable. En pratique, il faudrait observer toutes les variables pour se rendre bien compte de l'hétérogénéité présente dans chaque variable et donc dans celle potentiellement présente dans l'estimation panel. 
+
+Pour s'assurer de la forme que prend l'hétérogénéité dans nos données, on va dans un premier temps effectuer la procédure de Hsiao grâce à la fonction `poobly::hsiao()` qui va effectuer les trois étapes de la procédure de manière automatique. Cette fonction (comme les fonctions du package `plm` peut prendre comme jeu de donnée un objet `pdata.frame` ou un normal `data.frame`. Dans ce dernier cas, il faudrait spécifier dans l'argument `index` les noms des variables contenant les indices individuels et temporels dans cet ordre). 
+
+```{r}
+# Procédure de Hsiao en utilisant un objet pdata.frame
+poobly::hsiao(
+  formula = lrpmg ~ lgaspcar + lcarpcap + lincomep,
+  data = df_panel
+)
+```
+
+```{r}
+# Procédure de Hsiao en utilisant un objet data.frame
+poobly::hsiao(
+  formula = lrpmg ~ lgaspcar + lcarpcap + lincomep,
+  data = df,
+  index = c("country", "year")
+)
+```
+
+La premièr étape consiste à tester s'il existe de l'hétérogénéité dans le modèle. On rejette l'hypothèse nulle à un seuil de 5% (p.value < 0.001). Il semble donc qu'il existe de l'hétérogénéité au sein de notre modèle. Il nous faut maintenant en découvrir la forme. 
+
+On passe donc à l'étape 2 qui teste l'homogénéité des coefficients de pente tout en autorisant des effets individuels. On rejette l'hypothèse d'homogénéité des coefficients de pente (p.value < 0.001). L'hypothèse nulle étant rejetée, on conclu qu'il semble exister une hétérogénéité globale au sein de notre modèle. **Dans ce cas, on ne passe pas à l'étape 3**. 
+
+Il faut noter que cette fonction ne teste que pour la présence d'effets individuels et pas d'effets temporels. 
+
+
+```{r}
+xtbhst::xtbhst(
+  formula = lrpmg ~ lgaspcar + lcarpcap + lincomep,
+  data = df,
+  id = "country",
+  time = "year",
+  seed = 123
+)
+```
+
+
+
+
+
+
+
+
+
+
