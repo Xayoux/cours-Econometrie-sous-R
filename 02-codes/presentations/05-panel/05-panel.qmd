@@ -1233,15 +1233,15 @@ On peut tester l'hypothèse nulle d'homogénéité des coefficients de pente de 
 
 $$
 \begin{cases}
-  &H0 : \beta_1 = \cdots = \beta_N \quad \forall i \in [1,N] \\[2ex]
-  &H1 : \exists \hspace{0.2cm} \beta_i \neq \beta_j \quad   i \neq j 
+  H0 : \beta_1 = \cdots = \beta_N \quad \forall i \in [1,N] \\[2ex]
+  H1 : \exists \hspace{0.2cm} \beta_i \neq \beta_j \quad   i \neq j 
 \end{cases}
 $$
 
 $$
 \begin{cases}
-  &H0 : \beta_{1,k} = \cdots = \beta_{N,k} \quad \forall i \in [1,N] \\[2ex]
-  &H1 : \exists \hspace{0.2cm} \beta_{i,k} \neq \beta_{j,k} \quad i \neq j 
+  H0 : \beta_{1,k} = \cdots = \beta_{N,k} \quad \forall i \in [1,N] \\[2ex]
+  H1 : \exists \hspace{0.2cm} \beta_{i,k} \neq \beta_{j,k} \quad i \neq j 
 \end{cases}
 $$
 
@@ -1256,13 +1256,216 @@ Pesaran et Yamagata (2008) ont proposé un test d'hétérogénéité des coeffic
 On va tester : 
 
 $$
-\begin{aligned}
-  &H0 : \beta_{2,i} = \beta_2 \quad \forall i \\[2ex]
-  &H1 : \exists \hspace{0.2cm} \beta_{2,i} \neq \beta_2
-\end{aligned}
+\begin{cases}
+  H0 : \beta_{2,i} = \beta_2 \quad \forall i \\[2ex]
+  H1 : \exists \hspace{0.2cm} \beta_{2,i} \neq \beta_2
+\end{cases}
 $$
 
 $\beta_{2,i}$ correspond au sous-ensemble de variables dont on souhaite tester l'homogénéité des coefficients de pente. Les autres variables sont considérés comme ayant des coefficients de pente hétérogènes. Le test a été étendu par Blomquist et Westerlund (2013) pour donner une statistique de teste robuste à l'hétéroskédasticité (HAC robust). 
+
+
+## Dépendance Cross-Section (CSD)
+
+L'étude de la corrélation entre les différents individus du panel se fait de plus en plus fréquente dans la littérature macroéconomique et financière à cause des forts liens qui sont relevés entre les différentes économies et les différents agents économiques. La littérature montre que ne pas corriger pour cette dépendance cross-section amène à estimer des coefficients inconsistants et biaisés (Pesaran 2006). 
+
+La littérature distingue deux types de dépendance cross-section : 
+
+- **La faible dépendance cross-section** : lorsque la corrélation entre individus converge vers $0$ lorsque $N$ tend vers l'infini. Un exemple courant de faible dépendance cross-section est la corrélation spatiale (traitée par l'économétrie spatiale). 
+
+- **La forte dépendance cross-section**  : lorsque la corrélation entre les individus converge vers une constante différente de $0$ lorsque $N$ tend vers l'infini. Cette forte dépendance provient de facteurs communs inobservés qui vont lier les individus ensembles : pandémies, crises, changement technologique. 
+
+Traditionnellement, cette dépendance est prise en compte par l'utilisation des effets fixes temporels qui permettent d'isoler l'impact de facteurs commun sur l'ensemble des individus à une période de temps donnée. Cependant cette méthode suppose que les facteurs communs affectent tous les individus de la même manière. Hors un certain nombre d'études montrent que les facteurs structurels impactent différemment les individus. Dans un tel cas, les effets fixes ne permettent pas de correctement modéliser la dépendance cross-sectionnelle. 
+
+Ne pas prendre en compte la dépendance cross-section peut amener les coefficients à être biaisés et non consistants si les régresseurs ne sont pas strictement exogènes avec les facteurs commun non pris en compte. Ne pas prendre en compte ces facteurs commun peut également entrainer l'apparition de résidus corrélés entre les différents individus et donc augmenter la variance des individus. 
+
+## Tester la présence de dépendance cross-section
+
+### Breush-Pagan LM test
+
+Dans le cas d'un panel avec $T$ large et $N$ plus petit (pas si large), on peut tester la dépendance cross-section avec une statistique LM. On teste : 
+
+$$
+\begin{cases}
+  H0 : \rho_{i,j} = 0 \quad \forall i \neq j \\[2ex]
+  H1 : \exists \hspace{0.2cm} \rho_{i,j} \neq 0 \quad i \neq j
+\end{cases}
+$$
+
+Où $\hat{\rho}_{i,j}$ correspond à la corrélation cross-section (entre deux individus) : 
+
+$$
+\begin{aligned}
+  \hat{\rho}_{i,j} = \frac{\sum_{t=1}^T \hat{\varepsilon}_{i,t} \hat{\varepsilon}_{j,t}}{\left( \sum_{t=1}^T \hat{\varepsilon}_{i,t} \right)^{1/2} \left( \sum_{t=1}^T \hat{\varepsilon}_{j,t} \right)^{1/2}}  
+\end{aligned}
+$$
+ON utilise une statistique LM pour effectuer le test : 
+
+$$
+\begin{aligned}
+  LM = T \sum_{i=1}^{N-1} \sum_{j=i+1}^N \hat{\rho}_{i,j}^2 \sim \chi^2(N[N-1]/2)
+\end{aligned}
+$$
+
+La règle de décision est la suivante : 
+
+- Si $|LM| \geq \chi^2(N[N-1]/2)$ : alors on rejette l'hypothèse nulle de non-corrélation inter-individuelle. Il existe une corrélation significative entre les individus de notre panel. Il convient donc de la modéliser correctement. 
+
+- Si $|LM| < \chi^2(N[N-1]/2)$ : alors on ne peut pas rejeter l'hypothèse nulle de non-corrélation inter-individuelle. Il n'existe pas de corrélation inter-individuelle assez significative dans notre panel.
+
+Ce tests souffre de plusieurs problèmes notamment lorsque N est extrême : 
+
+- ce test tend à être surestimé lorsque $N$ est grand et $T \rightarrow \infty$. 
+
+- L'hypothèse nulle est très sensible dans le cas de petits panels : $N$ faible et $T \rightarrow \infty$. 
+
+
+### CD-LM test
+
+Pesaran (2004) argumente sur le fait qu'imposer l'absence de corrélation inter-individuelle sur l'ensemble des individus du panel est trop restrictif. Il propose plutôt de tester si la corrélation inter-individuelle est suffisament faible pour être ignorée ou non. Il propose donc le test $CD_{LM}$ qui est une version augmentée du test LM de Breush-Pagan. 
+
+On teste : 
+
+$$
+\begin{cases}
+  H0 : \text{Faible CSD} \\[2ex]
+  H1 : \text{Forte CSD}
+\end{cases}
+$$
+Et on utilise la statistique de test : 
+
+$$
+\begin{aligned}
+  CD_{LM} = \sqrt{\frac{1}{N(N-1)}} \sum_{i=1}^N \sum_{j=i+1}^N \left( T \times \hat{\rho}_{i,j} -1 \right) \sim \mathcal{N}(0,1)  
+\end{aligned}
+$$
+
+La règle de décision est la suivante : 
+
+- Si $|CM_{LM}| \geq \mathcal{N}(0,1)$ : alors on rejette l'hypothèse nulle de faible corrélation inter-individuelle. Il existe une forte corrélation entre les individus de notre panel. Il convient donc de la modéliser correctement. 
+
+- Si $|CM_{LM}| < \mathcal{N}(0,1)$ : alors on ne peut pas rejeter l'hypothèse nulle de faible corrélation inter-individuelle. La corrélation inter-individuelle n'est pas assez importante pour être prise en compte. 
+
+Ce test souffre lui aussi de différents problèmes : 
+
+- Il n'est pas correctement centré à $0$ lorsque $T$ est fini et il est probable qu'il subisse des distorsions de taille lorsque $N$ augmente.
+
+- La distribution normale peut être une mauvaise approximation de la loi suivie par la statistique sous l'hypothèse nulle amenant ainsi des distorsions de forte amplitudes. 
+
+
+Pour résoudre ces problèmes Pesaran et al (2008) on développé une statistique LM ajustée ($LM_{Adj}$) en utilisant des approximation en échantillons finis. Ces approximations ne sont cependant valides que dans le cas de régresseurs strictement exogènes et d'erreurs normalement distribuées. 
+
+
+### CD test
+
+Pesaran (2015) propose une statistique CD qui propose une moyenne d'exactement $0$ pour des valeurs fixes de $T$ et de $N$. Le jeu d'hypothèse est similaire : 
+
+$$
+\begin{cases}
+  H0 : \text{Faible CSD} \\[2ex]
+  H1 : \text{Forte CSD}
+\end{cases}
+$$
+La statistique de test est donnée par : 
+
+$$
+\begin{aligned}
+  CD = \sqrt{\frac{2T}{N(N-1)}} \left( \sum_{i=1}^N \sum_{j=i+1}^N \hat{\rho}_{i,j} \right) \sim \mathcal{N}(0,1)  
+\end{aligned}
+$$
+
+La règle de décision est la suivante : 
+
+- Si $|CM| \geq \mathcal{N}(0,1)$ : alors on rejette l'hypothèse nulle de faible corrélation inter-individuelle. Il existe une forte corrélation entre les individus de notre panel. Il convient donc de la modéliser correctement. 
+
+- Si $|CM| < \mathcal{N}(0,1)$ : alors on ne peut pas rejeter l'hypothèse nulle de faible corrélation inter-individuelle. La corrélation inter-individuelle n'est pas assez importante pour être prise en compte. 
+
+
+Ce test dispose d'une taille correcte dans le cas de modèle dynamiques (modèles qui étaient problématiques avec les tests précédents) tant que les erreurs sont symétriquement distribuées. 
+
+Cependant, il aura tendance à sur-rejeter l'hypothèse nulle dans le cas de régresseurs faiblement exogènes lorsque $N$ est bien plus grand que $T$. 
+
+Des corrections ont été apportées afin de corriger certain de ces problèmes : 
+
+- Weighted CD Test : $CD_w$
+
+- Power enhanced $CD_w$ Test : $CD_{w+}$
+
+- Bias corrected CD Test : $CD^{*}$
+
+Ces trois derniers tests doivent être appliqués sur les résidus d'un modèle estimé. Le test $CD$ peut être appliqué sur le srésidus ou sur les données réelles. 
+
+## Estimateur des effets communs corrélés (CCE) statique
+
+En présence de corrélation inter-individuelle, on peut chercher à estimer le modèle suivant : 
+
+$$
+\begin{aligned}
+  &y_{i,t} = \alpha_i + \beta_i^{'}x_{i,t} + \mu_{i,t} \\[2ex]
+  &\mu_{i,t} = \sum_{l=1}^m \gamma_{l,t} f_{l,t} + e_{i,t} \equiv \gamma_i^{'}f_t + e_{i,t}
+\end{aligned}
+$$
+
+Ce modèle est caractérisé par des effets fixes individuels, des coefficients de pente hétérogènes aléatoires et un ensemble de facteurs communs inobservés temporels qui vont affecter tous les individus sur une période de temps, mais de manière hétérogène (impact du facteur commun hétérogène entre les individus). 
+
+L'estimateur des effets communs corrélés (CCE) proposé par Pesaran (2006) possède l'avantage de ne pas avoir besoin de connaître ou d'estimer les $m$ facteurs communs. 
+
+Cet estimateur consiste à approximer la combinaison linéaire des facteurs inobservés en prenant les moyennes cross-sectionnelles (la moyenne de tous les individus pour chaque période de temps) des variables dépendante et explicatives, puis d'effectuer une régression panel standard en ajoutant ces moyennes cross-sectionnelle au modèle. 
+
+Le modèle estimé devient : 
+
+$$
+\begin{aligned}
+  &y_{i,t} = \alpha_i + \beta_i^{'}x_{i,t} + \gamma_1^{'} \bar{y}_t + \gamma_2^{'} \bar{x}_t + \varepsilon_{i,t}  \\[2ex]
+  &\bar{y}_t = \frac{1}{N}\sum_{i=1}^N y_{i,t} \\[2ex]
+  &\bar{x}_t = \frac{1}{N}\sum_{i=1}^N x_{i,t} 
+\end{aligned}
+$$
+
+On peut appliquer l'estimateur Mean Group (ou tout autre estimateur) sur l'équation précédente : 
+
+$$
+\begin{aligned}
+  \hat{\beta}_{\text{CCEMG}} = \frac{1}{N} \sum_{i=1}^N \hat{\beta}_{i, \text{CCE}}  
+\end{aligned}
+$$
+Sous les conditions générales d'exogénéité des régresseurs, cet estimateur est asymptotiquement non biaisé pour $\beta$. 
+
+$$
+\begin{aligned}
+  V\left( \hat{\beta}^{\text{CCMG}} \right) = \frac{1}{N(N-1)} \sum_{i=1}^N \left( \hat{\beta}_{i}^{\text{CCE}} - \hat{\beta}^{\text{CCEMG}} \right) \left( \hat{\beta}_{i}^{\text{CCE}} - \hat{\beta}^{\text{CCEMG}} \right)^{' }  
+\end{aligned}
+$$
+
+## Estimateur des effets communs corrélés (CCE) dynamique
+
+On peut également vouloir intégrer de la dynamique dans note modèle :
+
+$$
+\begin{aligned}
+  &y_{i,t} = \alpha_i + \lambda_i y_{i, t-1} + \beta_i^{'}x_{i,t} + \mu_{i,t} \\[2ex]
+  &\mu_{i,t} = \sum_{l=1}^m \gamma_{l,t} f_{l,t} + e_{i,t} \equiv \gamma_i^{'}f_t + e_{i,t}
+\end{aligned}
+$$
+
+Dans un tel cas, l'hypothèse de stricte exogénéité posée pour l'estimateur CCE statique ne tient plus puisque la variable dépendante retardée n'est plus exogène. Chudik et Pesaran (2015) ont montré que l'estimateur pouvait être plus consistant si l'on ajoutait des retards aux moyennes cross-sectionnelles dans le modèle. 
+
+L'équation estimée devient : 
+
+$$
+\begin{aligned}
+  &y_{i,t} = \alpha_i + \lambda_i y_{i, t-1} + \beta_i^{'}x_{i,t} + \sum_{l=0}^{P_T} \gamma_{i,l}^{'} \bar{z}_{t-l} + \varepsilon_{i,t}  \\[2ex]
+  &\bar{z}_{t} = (\bar{y}_t, \bar{x}_t)
+\end{aligned}
+$$
+
+On peut appliquer l'estimateur Mean-Group sur ce modèle. Selon des simulations, le nombre de retards optimal serait $P_T = T^{1/3}$. 
+
+Cette modélisation peut être augmenté pour intégrer d'avantages de retards des variables explicative ou dépendante. 
+
+  
+
+
 
 
 
