@@ -274,11 +274,11 @@ $$
 \end{cases}
 $$
 
-Avec : 
+Avec :
 
-- $\bar{x} = \frac{1}{NT}\sum_{i=1}^N \sum_{t=1}^T x_{i,t}$ 
+-   $\bar{x} = \frac{1}{NT}\sum_{i=1}^N \sum_{t=1}^T x_{i,t}$
 
-- $\bar{y} = \frac{1}{NT}\sum_{i=1}^N \sum_{t=1}^T y_{i,t}$
+-   $\bar{y} = \frac{1}{NT}\sum_{i=1}^N \sum_{t=1}^T y_{i,t}$
 
 L'estimateur POLS est non-biaisé et consistant si $x_{i,t}$ est strictement exogène (non-corrélé de quelconque manière que ce soit avec le terme d'erreur) et si les constantes sont réellement homogènes. En cas d'hétérogénéité des constantes (et dans le cas où elles sont corrélées avec $x_{i,t}$), alors l'estimateur POL est biaisé.
 
@@ -737,8 +737,8 @@ Ce qui revient à écrire : $$
 \end{aligned}
 $$
 
--   Lorsque $\Psi \rightarrow 1$, l'estimateur GLS converge vers l'estimateur Pooled.
--   Lorsque $\Psi \rightarrow 0$ ou $T \rightarrow \infty$, l'estimateur GLS converge vers l'estimateur Within/LSDV/FE.
+-   Lorsque $\Psi \rightarrow 1$ (faible variance individuelle, peu de différences entre les individus) ou $T \rightarrow 0$ (lorsque l'échantillon se réduit), l'estimateur GLS converge vers l'estimateur Pooled.
+-   Lorsque $\Psi \rightarrow 0$ (Forte variance individuelle. Il y a beaucoup de différences individuelles qu'on doit contrôler) ou $T \rightarrow \infty$ (lorsque l'échantillon devient très grand), l'estimateur GLS converge vers l'estimateur Within/LSDV/FE.
 -   Lorsque $0 < \Psi < 1$, la structure des effets aléatoires constitue une solution intermédiaire entre le modèle sans effets individuels et le modèle à effets fixes individuels.
 
 La constante $\Psi$ mesure le poids donné à la variation inter-groupe. Cette dimension est complètement ignorée par l'estimateur LSDV. Il ne prend en compte que la variation au sein d'un même groupe.
@@ -757,7 +757,9 @@ $$
 \begin{aligned}
   V(\hat{\beta}_{\text{GLS}}) < V(\hat{\beta}_{\text{Within}})  
 \end{aligned}
-$$ Cette différence tend à se réduire à mesure que $T \rightarrow \infty$ puisque pour des panels de dimension infinie, l'estimateur GLS tend à devenir l'estimateur Within. Cela s'explique par le fait que dans un tel cas, on a un nombre infini d'observations pour chaque $i$. Dans ce cas, on peut considérer chaque $\alpha_i$ comme une variable aléatoire qui a été tirée une bonne fois pour toute et ainsi chaque $\alpha_i$ peut prétendre être comme un paramètre fixe.
+$$
+
+Cette différence tend à se réduire à mesure que $T \rightarrow \infty$ puisque pour des panels de dimension infinie, l'estimateur GLS tend à devenir l'estimateur Within. Cela s'explique par le fait que dans un tel cas, on a un nombre infini d'observations pour chaque $i$. Dans ce cas, on peut considérer chaque $\alpha_i$ comme une variable aléatoire qui a été tirée une bonne fois pour toute et ainsi chaque $\alpha_i$ peut prétendre être comme un paramètre fixe.
 
 ### Simplification de l'estimation GLS
 
@@ -818,9 +820,9 @@ $$
 \begin{aligned}
   \hat{\Psi} = \left( \frac{\hat{\sigma}^2_v}{\hat{\sigma}_v^2 + T \hat{\sigma}_{\alpha}^2} \right) = \left[ \frac{\text{RSS}^{\text{Within}} / (N(T-1)-K)}{T \times \text{RSS}^{\text{Between}} / (N - (K+1))} \right] 
 \end{aligned}
-$$ 
+$$
 
-4) Calculer l'estimateur $\hat{\theta} = \left( 1 - \hat{\Psi}^{1/2} \right)$
+4)  Calculer l'estimateur $\hat{\theta} = \left( 1 - \hat{\Psi}^{1/2} \right)$
 
 5)  Obtenir l'estimateur FGLS en utilisant les MCO sur le modèle :
 
@@ -829,6 +831,339 @@ $$
   \left( y_{i,t} - \hat{\theta} \bar{Y}_i \right) = \bar{\omega} + \left( x_{i,t} - \hat{\theta} \bar{X}_i \right) \beta + \left( \varepsilon_{i,t} - \hat{\theta} \bar{\varepsilon_i} \right)  
 \end{aligned}
 $$
+
+## Déterminer la forme d'hétérogénéité : La procédure de Hsiao
+
+### Les formes d'hétérogénéité et principe du test
+
+Déterminer la forme que prend l'hétérogénéité dans un modèle de données de panel est fondamental. En effet, si l'hétérogénéité est mal spécifiée elle peut se traduire par des biais conséquents sur les estimateurs, principalement lorsque les facteurs d'hétérogénéités non pris en compte sont corrélés avec les variables explicatives.
+
+Si l'on prend la spécification la plus générale :
+
+$$
+\begin{aligned}
+  y_{i,t} = \alpha_{i,t} + \beta^{'}_{i,t} x_{i,t} + \varepsilon_{i,t}   
+\end{aligned}
+$$ 
+
+On peut voir que l'on introduit de les effets individuels et temporels : il existe des effets communs à toutes les périodes de temps mais qui dépendent des individus et il existe des effets communs à tous les individus mais qui diffèrent à chaque période de temps. On voit également que la pente gouvernant la relation entre $x$ et $y$ varie à la fois pour chaque individu, mais aussi pour chaque période temps. On est dans une hétérogénéité totale.
+
+A partir de cette spécification générale, on peut tester :
+
+-   l'absence d'hétérogénéité : constante et coefficient de pente qui ne varient pas
+-   l'homogénéité des coefficients de pente (pentes qui ne varient pas)
+-   l'homogénéité de la constante (constantes qui ne varient pas)
+-   la stabilité temporelle des estimateurs (pas abordé ici. Question qui n'est pas spécifique aux données de panel)
+
+On va assumer ici que les paramètres sont constants dans le temps, mais qu'ils peuvent varier entre les individus (mais la procédure peut se généraliser en ajoutant des effets temporels). Cela donne la spécification générale suivante :
+
+$$
+\begin{aligned}
+  y_{i,t} = \alpha_{i} + \beta^{'}_{i} x_{i,t} + \varepsilon_{i,t}   
+\end{aligned}
+$$ On peut imposer trois types de restrictions sur cette spécification :
+
+1)  Les paramètres de pente sont identiques, mais les constantes diffèrent entre les individus. La relation est la même pour tous les individus mais il existe des facteurs individuels qui vont introduire des différences systématiques entre les différents individus (Modèle FE/RE)
+
+$$
+\begin{aligned}
+  y_{i,t} = \alpha_{i} + \beta^{'} x_{i,t} + \varepsilon_{i,t}   
+\end{aligned}
+$$
+
+2)  Les constantes sont identiques pour tous les individus, mais les coefficients de pente diffèrent. La force de la relation diffèrent pour chaque individu mais la valeur prédite lorsque $X = 0$ est la même pour tous les individus (Peu usuel)
+
+$$
+\begin{aligned}
+  y_{i,t} = \alpha + \beta^{'}_{i} x_{i,t} + \varepsilon_{i,t}   
+\end{aligned}
+$$
+
+3)  Les constantes et paramètres de pente sont les mêmes pour tous les individus. La relation est la même pour tous les individus et il n'existe pas d'effet individuel entrainant des différences systématiques entre les individus.
+
+$$
+\begin{aligned}
+  y_{i,t} = \alpha + \beta^{'} x_{i,t} + \varepsilon_{i,t}   
+\end{aligned}
+$$
+
+Le procédure de spécification de Hisao vise à discriminer parmi ces différents cas d'hétérogénéité. Il s'agit d'une procédure séquentielle qui va imposer différentes restrictions sur des modèles plus ou moins généraux (à l'aide de test contraints de Fisher) afin de déterminer quelles sont les contraintes les plus importantes.
+
+![](../images/hsiao-procedure.png)
+
+### Etape 1 : Tester l'homogénéité totale
+
+La première étape consiste à tester l'hypothèse nulle d'homogénéité totale des pentes et des constantes. 
+
+$$
+\begin{cases}
+  H0_1 : \alpha_i = \alpha \hspace{0.2cm} ; \hspace{0.2cm} \beta_i = \beta \quad \forall i \in [1,N] \\[2ex]
+  H1_1 : \exists \hspace{0.2cm} \alpha_i \neq \alpha \hspace{0.3cm} |\hspace{0.3cm}  \exists \hspace{0.2cm} \beta_i \neq \beta
+\end{cases}
+$$
+Cela revient à tester : 
+
+$$
+\begin{cases}
+  H0_1 : y_{i,t} = \alpha + \beta x_{i,t} + \varepsilon_{i,t} \\[2ex]
+  H1_1 : y_{i,t} = \alpha_i + \beta_i x_{i,t} + \varepsilon_{i,t}
+\end{cases}
+$$
+
+Cela revient à poser $(K+1)(N-1)$ restrictions sur le modèle général. La statistique de test est donnée par : 
+
+$$
+\begin{aligned}
+  F_1 = \frac{\left( \text{RSS}_{1,c} - \text{RSS}_1 \right) / \left[ (N-1)(K+1) \right]}{\text{RSS}_1 / \left[ NT-N(K+1) \right]} \sim \mathcal{F} \left([N-1][K+1], NT-N[K+1]\right)   
+\end{aligned}
+$$
+
+Avec : 
+
+- $\text{RSS}_1$ la somme des résidus au carré du modèle non-contraint (celui de l'hypothèse alternative). Il s'agit de la somme des $N$ sommes des carrés des résidus associées aux $N$ régressions individuelles. Le modèle sous l'hypothèse alternative revient à estimer $N$ régressions individuelles. 
+- $\text{RSS}_{1,c}$ la somme des résidus au carré du modèle contraint (celui de l'hypothèse nulle). Le modèle sous l'hypothsèe nulle revient à estimer un modèle pooled. 
+
+La somme des carrés des résidus du modèle non-contraint peut être calculée de la manière suivante :
+
+$$
+\begin{aligned}
+  &\text{RSS}_1 = \sum_{i=1}^N \text{RSS}_{1, i} = \sum_{n=1}^N \left[ S_{yy,i} - S_{xy,i}^{' } S_{xx,i}^{-1} S_{xy,i} \right] \\[2ex]
+  &S_{yy,i} = \sum_{t=1}^T \left( y_{i,t} - \bar{y}_i \right)^2 \\[2ex]
+  &S_{xy,i} = \sum_{t=1}^T \left( x_{i,t} - \bar{x}_i \right) \left( y_{i,t} - \bar{y}_i \right)^{'} \\[2ex]
+  &S_{xx,i} = \sum_{t=1}^T \left( x_{i,t} - \bar{x}_i \right) \left( x_{i,t} - \bar{x}_i \right)^{'} \\[2ex]
+  &\bar{y}_i = \frac{1}{T}\sum_{t=1}^T y_{i,t} \\[2ex]
+  &\bar{x}_i = \frac{1}{T}\sum_{t=1}^T x_{i,t} 
+\end{aligned}
+$$
+
+La somme des carrés des résidus du modèle contraint peut être calculée de la manière suivante : 
+
+$$
+\begin{aligned}
+  &\text{RSS}_{1,c}  =  S_{yy} - S_{xy}^{' } S_{xx}^{-1} S_{xy}  \\[2ex]
+  &S_{yy} = \sum_{i=1}^N \sum_{t=1}^T \left( y_{i,t} - \bar{y} \right)^2 \\[2ex]
+  &S_{xy} = \sum_{i=1}^N \sum_{t=1}^T \left( x_{i,t} - \bar{x} \right) \left( y_{i,t} - \bar{y} \right)^{'} \\[2ex]
+  &S_{xx} = \sum_{i=1}^N \sum_{t=1}^T \left( x_{i,t} - \bar{x} \right) \left( x_{i,t} - \bar{x} \right)^{'} \\[2ex]
+  &\bar{y} =  \frac{1}{NT}\sum_{i=1}^N\sum_{t=1}^T y_{i,t} \\[2ex]
+  &\bar{x} = \frac{1}{NT}\sum_{i=1}^N\sum_{t=1}^T x_{i,t} 
+\end{aligned}
+$$
+
+La règle de décision est la suivante : 
+
+- Si $|F_1| \geq \mathcal{F} \left([N-1][K+1], NT-N[K+1]\right)$, alors on rejette l'hypothèse nulle d'homogénéité des coefficients. Cependant, on ne sait pas si ce sont les constantes qui sont hétérogènes ou bien les pentes. **Il faut donc passer à la deuxième étape de la procédure**. 
+
+- Si $|F_1| < \mathcal{F} \left([N-1][K+1], NT-N[K+1]\right)$, alors on ne peut pas rejeter l'hypothèse nulle d'homogénéité des coefficients. Les coefficients de pente et de constantes sont identiques pour tous les individus. **Il faut donc estimer un modèle Pooled**. 
+
+### Etape 2 : Tester l'homogénéité des pentes 
+
+La première étape permet simplement de discriminer entre un modèle complètement homogène et un modèle hétérogène. Mais il ne nous apprend rien sur la nature de l'hétérogénéité. Pour affiner l'analyse, on va tester si les coefficients de pente sont homogènes. On autorise donc la présence d'effets individuels.   
+
+On teste : 
+
+$$
+\begin{cases}
+  H0_2 : \beta_i = \beta \quad \forall i \in [1,N] \\[2ex]
+  H1_2 : \exists \hspace{0.2cm} \beta_i \neq \beta
+\end{cases}
+$$
+
+Cela revient à tester : 
+
+$$
+\begin{cases}
+  H0_2 : y_{i,t} = \alpha_i + \beta x_{i,t} + \varepsilon_{i,t} \\[2ex]
+  H1_2 : y_{i,t} = \alpha_i + \beta_i x_{i,t} + \varepsilon_{i,t}
+\end{cases}
+$$
+
+On impose $(N-1)K$ restrictions sur le modèle général. La statistique de test est donnée par : 
+
+$$
+\begin{aligned}
+  F_2 = \frac{\left( \text{RSS}_{2,c} - \text{RSS}_1 \right) / \left[ (N-1)K \right]}{\text{RSS}_1 / \left[ NT-N(K+1) \right]} \sim \mathcal{F} \left([N-1]K, NT-N[K+1]\right)   
+\end{aligned}
+$$
+
+Avec : 
+
+- $\text{RSS}_1$ la somme des résidus au carré du modèle général non-contraint (celui de l'hypothèse alternative). Il s'agit de la somme des $N$ sommes des carrés des résidus associées aux $N$ régressions individuelles. Le modèle sous l'hypothèse alternative revient à estimer $N$ régressions individuelles. 
+- $\text{RSS}_{2,c}$ la somme des résidus au carré du modèle contraint (celui de l'hypothèse nulle). Le modèle sous l'hypothèse nulle revient à estimer un modèle avec des effets fixes individuels (FE/RE). 
+
+La somme des carrés des résidus du modèle non-contraint peut être calculée de la manière suivante (même chose que lors de l'étape 1):
+
+$$
+\begin{aligned}
+  &\text{RSS}_1 = \sum_{i=1}^N \text{RSS}_{1, i} = \sum_{n=1}^N \left[ S_{yy,i} - S_{xy,i}^{' } S_{xx,i}^{-1} S_{xy,i} \right] \\[2ex]
+  &S_{yy,i} = \sum_{t=1}^T \left( y_{i,t} - \bar{y}_i \right)^2 \\[2ex]
+  &S_{xy,i} = \sum_{t=1}^T \left( x_{i,t} - \bar{x}_i \right) \left( y_{i,t} - \bar{y}_i \right)^{'} \\[2ex]
+  &S_{xx,i} = \sum_{t=1}^T \left( x_{i,t} - \bar{x}_i \right) \left( x_{i,t} - \bar{x}_i \right)^{'} \\[2ex]
+  &\bar{y}_i = \frac{1}{T}\sum_{t=1}^T y_{i,t} \\[2ex]
+  &\bar{x}_i = \frac{1}{T}\sum_{t=1}^T x_{i,t} 
+\end{aligned}
+$$
+
+La somme des carrés des résidus du modèle contraint peut être calculée de la manière suivante : 
+
+$$
+\begin{aligned}
+  &\text{RSS}_{2,c}  = \sum_{i=1}^N S_{yy,i} - \left(\sum_{i=1}^N S_{xy, i}\right)^{' } \left( \sum_{i=1}^N S_{xx, i}\right)^{-1} \left( \sum_{i=1}^N S_{xy,i} \right)  \\[2ex]
+  &S_{yy, i} = \sum_{t=1}^T \left( y_{i,t} - \bar{y}_i \right)^2 \\[2ex]
+  &S_{xy, i} = \sum_{t=1}^T \left( x_{i,t} - \bar{x}_i \right) \left( y_{i,t} - \bar{y}_i \right)^{'} \\[2ex]
+  &S_{xx, i} = \sum_{t=1}^T \left( x_{i,t} - \bar{x}_i \right) \left( x_{i,t} - \bar{x}_i \right)^{'} \\[2ex]
+  &\bar{y}_i =  \frac{1}{T}\sum_{t=1}^T y_{i,t} \\[2ex]
+  &\bar{x}_i = \frac{1}{T}\sum_{t=1}^T x_{i,t} 
+\end{aligned}
+$$
+
+La règle de décision est la suivante : 
+
+- Si $|F_2| \geq \mathcal{F} \left([N-1]K, NT-N[K+1]\right)$, alors on rejette l'hypothèse nulle d'homogénéité des coefficients de pente. On sait donc qu'il y a de l'hétérogénéité dans notre modèle et qu'au moins une partie de cette hétérogénéité s'explique par des relations différentes entre les individus (coefficients de pente différents). Comme il est très rare d'avoir des coefficients de pentes différents par individus mais des coefficients de constante égaux, alors on suppose dans ce cas qu'il y a une hétérogénéité totale aussi bien des constantes que des pentes. **Il faut donc estimer un modèle par individu ou utiliser un estimateur prenant en compte l'hétérogénéité des pentes : PMG**.  
+
+- Si $|F_2| < \mathcal{F} \left([N-1]K, NT-N[K+1]\right)$, alors on ne peut pas rejeter l'hypothèse nulle d'homogénéité des coefficients pente. On sait donc grâce au test 1 qu'il semble y avoir de l'hétérogénéité dans notre modèle. Le test 2 nous informe que cette hétérogénéité ne s'explique pas par des coefficients de pente différents. On va donc devoir tester si cette hétérogénéité s'explique par des coefficients de constantes qui diffèrent selon les individus. **Il faut donc passer à l'étape 3 de la procédure**. 
+
+### Etape 3 : Tester l'homogénéité des constantes
+
+On sait désormais que les coefficients de pente ne diffèrent pas entre les individus. Normalement la seule source d'hétérogénéité restant concerne les coefficients de constante. On pourrait se dire que ne pas rejeter l'hypothèse nulle de l'étape 2 revient à considérer les constantes comme étant différentes pour chaque individu. Cependant, le test effectué lors de l'étape 1 est un tests avec un grand nombre de contraintes et le rejet de son hypothèse nulle n'est pas assez précis pour nous permettre d'être sûr que l'hétérogénéité qui semble s'observer est due à des constantes différentes même si les coefficients de pentes sont fixes. 
+
+On va donc utiliser le résultat du test de l'étape 2 afin de fixer les coefficients de pente pour qu'ils soient égaux entre tous les individus et tester l'homogénéité des pentes seules. Cela permet d'obtenir un test plus précis que celui à l'étape 1. 
+
+On teste : 
+
+$$
+\begin{cases}
+  H083 : \alpha_i = \alpha \quad \forall i \in [1,N] \quad \text{sachant } \beta_i = \beta \\[2ex]
+  H1_3 : \exists \hspace{0.2cm} \alpha_i \neq \alpha
+\end{cases}
+$$
+
+Cela revient à tester : 
+
+$$
+\begin{cases}
+  H0_3 : y_{i,t} = \alpha + \beta x_{i,t} + \varepsilon_{i,t} \\[2ex]
+  H1_3 : y_{i,t} = \alpha_i + \beta x_{i,t} + \varepsilon_{i,t}
+\end{cases}
+$$
+
+La statistique de test est donnée par : 
+
+$$
+\begin{aligned}
+  F_3 = \frac{\left( \text{RSS}_{1,c} - \text{RSS}_{2,c} \right) / \left( N-1 \right)}{\text{RSS}_{2,c} / \left[ N(T-1) - K \right]} \sim \mathcal{F} \left(N-1, N(T-1)-K\right)   
+\end{aligned}
+$$
+
+Avec : 
+
+- $\text{RSS}_{2,c}$ la somme des résidus au carré du modèle général non-contraint (celui de l'hypothèse alternative). Le modèle sous l'hypothèse alternative revient à estimer un modèle avec des effets fixes individuels.
+- $\text{RSS}_{1,c}$ la somme des résidus au carré du modèle contraint (celui de l'hypothèse nulle). Le modèle sous l'hypothèse nulle revient à estimer un modèle Pooled. 
+
+La somme des carrés des résidus du modèle non-contraint peut être calculée de la manière suivante (même chose que lors de l'étape 2):
+
+$$
+\begin{aligned}
+  &\text{RSS}_{2,c}  = \sum_{i=1}^N S_{yy,i} - \left(\sum_{i=1}^N S_{xy, i}\right)^{' } \left( \sum_{i=1}^N S_{xx, i}\right)^{-1} \left( \sum_{i=1}^N S_{xy,i} \right)  \\[2ex]
+  &S_{yy, i} = \sum_{t=1}^T \left( y_{i,t} - \bar{y}_i \right)^2 \\[2ex]
+  &S_{xy, i} = \sum_{t=1}^T \left( x_{i,t} - \bar{x}_i \right) \left( y_{i,t} - \bar{y}_i \right)^{'} \\[2ex]
+  &S_{xx, i} = \sum_{t=1}^T \left( x_{i,t} - \bar{x}_i \right) \left( x_{i,t} - \bar{x}_i \right)^{'} \\[2ex]
+  &\bar{y}_i =  \frac{1}{T}\sum_{t=1}^T y_{i,t} \\[2ex]
+  &\bar{x}_i = \frac{1}{T}\sum_{t=1}^T x_{i,t} 
+\end{aligned}
+$$
+
+La somme des carrés des résidus du modèle contraint peut être calculée de la manière suivante (même chose qu'à l'étape 1): 
+
+$$
+\begin{aligned}
+  &\text{RSS}_{1,c}  =  S_{yy} - S_{xy}^{' } S_{xx}^{-1} S_{xy}  \\[2ex]
+  &S_{yy} = \sum_{i=1}^N \sum_{t=1}^T \left( y_{i,t} - \bar{y} \right)^2 \\[2ex]
+  &S_{xy} = \sum_{i=1}^N \sum_{t=1}^T \left( x_{i,t} - \bar{x} \right) \left( y_{i,t} - \bar{y} \right)^{'} \\[2ex]
+  &S_{xx} = \sum_{i=1}^N \sum_{t=1}^T \left( x_{i,t} - \bar{x} \right) \left( x_{i,t} - \bar{x} \right)^{'} \\[2ex]
+  &\bar{y} =  \frac{1}{NT}\sum_{i=1}^N\sum_{t=1}^T y_{i,t} \\[2ex]
+  &\bar{x} = \frac{1}{NT}\sum_{i=1}^N\sum_{t=1}^T x_{i,t} 
+\end{aligned}
+$$
+
+La règle de décision est la suivante : 
+
+- Si $|F_3| \geq \mathcal{F} \left(N-1, N(T-1)-K\right)$, alors on rejette l'hypothèse nulle d'homogénéité des coefficients de constante. On sait désormais que l'hétérogénéité observée lors de l'étape 1 est due à des effets individuels systématiques pour les individus (constantes différentes) et non pas à des relations différentes selon les individus. **Il faut donc estimer un modèle à effets individuels : FE/RE**. 
+
+- Si $|F_3| < \mathcal{F} \left(N-1, N(T-1)-K\right)$, alors on ne peut pas rejeter l'hypothèse nulle d'homogénéité des coefficients de constante. On n'avait pu déclarer l'absence d'hétérogénéité lors du premier test général. Cependant la batterie de tests suivante nous permet de dire qu'il ne semble pas y avoir des coefficients de pente ou de constantes différentes selon les individus. **Il faut donc estimer un modèle Pooled**. 
+
+
+## Test d'Haussman : Effets fixes ou aléatoires ? 
+
+La procédure de Hsiao permet de déterminer la forme d'hétérogénéité à modéliser. Si l'on détermine que l'hétérogénéité se trouve dans des effets individuels / temporels, il reste encore à déterminer l'estimateur à utiliser pour modéliser au mieux cette hétérogénéité. Globalement le choix se fait entre l'estimateur à effets fixes (FE) et l'estimateur à effets aléatoires (RE). 
+
+Pour choisir entre ces deux estimateurs, on va utiliser le test de Haussman. Il s'agit d'un test permettant de comparer deux estimateurs ayant des consistances différentes. Avec ce test on cherche à comparer un estimateur convergent et asymptotiquement efficace sous l'hypothèse nulle avec un estimateur qui est toujours convergent aussi bien sous l'hypothèse nulle que sous l'hypothèse alternative. 
+
+Le modèle sous-jacent de chaque estimateur est le suivant : 
+
+$$
+\begin{aligned}
+  y_{i,t} = \alpha_i + \beta x_{i,t} + \varepsilon_{i,t}  
+\end{aligned}
+$$
+
+On va tester l'hypothèse nulle d'absence de corrélation entre les effets individuels et les variables explicatives : 
+
+$$
+\begin{cases}
+  H0 :  E[\alpha_i | x_{i,t} = 0] \\[2ex]
+  H1 : E[\alpha_i | x_{i,t} \neq 0]
+\end{cases}
+$$
+
+On sait que 
+
+- Si $E[\alpha_i | x_{i,t} = 0]$ : 
+  - $\beta_\text{LSDV}$ et $\beta_\text{GLS}$ convergent : $\beta_\text{LSDV} - \beta_\text{GLS} \approx 0$. Comme les deux estimateur sont convergents, ils vont donner des valeurs à peu près similaires. 
+  - $V(\beta_\text{LSDV}) > V(\beta_\text{GLS})$. L'estimateur GLS des effets aléatoires est BLUE lorsque les effets individuels sont aléatoires et non-corrélés avec les variables explicatives. Sa variance est donc plus faible que celle de l'estimateur LSDV. 
+
+- Si $E[\alpha_i | x_{i,t} \neq 0]$ : 
+  - $\beta_\text{LSDV}$ converge : $\beta_\text{LSDV} - \beta_\text{GLS} \neq 0$. Comme l'estimateur GLS devient biaisé lorsque les effets individuels sont corrélés avec les variables explciatives, on va observer un écart important entre les valeurs données par les deux estimateurs. 
+  - $V(\beta_\text{LSDV}) > V(\beta_\text{GLS})$
+  
+L'idée du test de Haussman est d'utiliser ces propriétés de convergence pour déterminer si les effets individuels sont effectivement corrélés avec les variables explicatives ou non. Si les effets individuels ne sont pas corrélés avec les variables explicatives, alors on observera peud d'écart entre les estimateurs LSDV et GLS. En revanche la variance de ce dernier sera plus faible. Si on observe un tel décalage significatif, alors on peut déterminer que les effets individuels sont corrélées avec les variables explicatives.  
+
+
+La statistique de test est donnée par : 
+
+$$
+\begin{aligned}
+  W = \left( \hat{\beta}_{\text{LSDV}} - \hat{\beta}_{\text{GLS}} \right)^{' } \left[ V(\hat{\beta}_{\text{LSDV}} - V(\hat{\beta}_{\text{GLS}})) \right]^{-1} \left( \hat{\beta}_{\text{LSDV}} - \hat{\beta}_{\text{GLS}} \right) \sim \chi^2(K)  
+\end{aligned}
+$$
+
+Avec $K$ le nombre de variables explicatives du modèle. 
+
+La règle de décision est la suivante : 
+
+- Si $|W| \geq \chi^2(K)$ : alors on rejette l'hypothèse nulle de non corrélation entre les effets individuels et les variables explicatives. Dans ce cas, il ne faut pas utiliser l'estimateur GLS des effets aléatoires puisqu'il sera biaisé. Il faut donc utiliser un modèle permettant de modéliser les effets individuels comme des effets fixes : **estimateur LSDV**. 
+
+- Si $|W| < \chi^2(K)$ : alors on ne peut rejeter l'hypothèse nulle de non corrélation entre les effets individuels et les variables explicatives. Dans ce cas, il faut utiliser l'estimateur GLS des effets aléatoires puisqu'il sera non-biaisé et aura une variance plus faible que les autres estimateurs à effets fixes. **Il faut donc utiliser l'estimateur GLS des effets aléatoires**. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Code
 
