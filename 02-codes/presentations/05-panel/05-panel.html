@@ -2384,6 +2384,14 @@ window.Quarto = {
   <li><a href="#hypothèses-et-propriétés" id="toc-hypothèses-et-propriétés" class="nav-link" data-scroll-target="#hypothèses-et-propriétés">Hypothèses et propriétés</a></li>
   </ul></li>
   <li><a href="#estimateur-between" id="toc-estimateur-between" class="nav-link" data-scroll-target="#estimateur-between">Estimateur Between</a></li>
+  <li><a href="#estimateur-à-effets-aléatoires" id="toc-estimateur-à-effets-aléatoires" class="nav-link" data-scroll-target="#estimateur-à-effets-aléatoires">Estimateur à Effets Aléatoires</a>
+  <ul>
+  <li><a href="#définition-et-hypothèses-des-effets-aléatoires" id="toc-définition-et-hypothèses-des-effets-aléatoires" class="nav-link" data-scroll-target="#définition-et-hypothèses-des-effets-aléatoires">Définition et hypothèses des effets aléatoires</a></li>
+  <li><a href="#rappel-estimateur-gls-pour-une-équation" id="toc-rappel-estimateur-gls-pour-une-équation" class="nav-link" data-scroll-target="#rappel-estimateur-gls-pour-une-équation">Rappel : Estimateur GLS pour une équation</a></li>
+  <li><a href="#estimateur-gls-dans-le-cas-de-données-de-panel" id="toc-estimateur-gls-dans-le-cas-de-données-de-panel" class="nav-link" data-scroll-target="#estimateur-gls-dans-le-cas-de-données-de-panel">Estimateur GLS dans le cas de données de panel</a></li>
+  <li><a href="#simplification-de-lestimation-gls" id="toc-simplification-de-lestimation-gls" class="nav-link" data-scroll-target="#simplification-de-lestimation-gls">Simplification de l’estimation GLS</a></li>
+  <li><a href="#estimateur-fgls" id="toc-estimateur-fgls" class="nav-link" data-scroll-target="#estimateur-fgls">Estimateur FGLS</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#code" id="toc-code" class="nav-link" data-scroll-target="#code">Code</a>
   <ul>
@@ -2560,15 +2568,15 @@ window.Quarto = {
 <p>Le principe est identique pour les facteurs communs qui varient dans le temps, mais sont identiques pour chaque individus.</p>
 <p><span class="math display">\[
 \begin{aligned}
-  y_{i,t} = \gamma_t + \beta x_{i,t} + \varepsilon_{i,t}   
+  y_{i,t} = \lambda_t + \beta x_{i,t} + \varepsilon_{i,t}   
 \end{aligned}
-\]</span> Il faut voir <span class="math inline">\(\gamma_t\)</span> comme une ordonnée à l’origine spécifique pour chaque unité temporelle. Encore une fois, la force de la relation reste identique à chaque période de temps : <span class="math inline">\(\beta\)</span>.</p>
+\]</span> Il faut voir <span class="math inline">\(\lambda_t\)</span> comme une ordonnée à l’origine spécifique pour chaque unité temporelle. Encore une fois, la force de la relation reste identique à chaque période de temps : <span class="math inline">\(\beta\)</span>.</p>
 <p>On peut évidemment inclure les facteurs invariants dans le temps et les facteurs commun au sein d’un même modèle :</p>
 <p><span class="math display">\[
 \begin{aligned}
-  y_{i,t} = \alpha_i + \gamma_t + \beta x_{i,t} + \varepsilon_{i,t}   
+  y_{i,t} = \alpha_i + \lambda_t + \beta x_{i,t} + \varepsilon_{i,t}   
 \end{aligned}
-\]</span> Les interprétations de <span class="math inline">\(\alpha_i\)</span> et <span class="math inline">\(\gamma_t\)</span> restent inchangées.</p>
+\]</span> Les interprétations de <span class="math inline">\(\alpha_i\)</span> et <span class="math inline">\(\lambda_t\)</span> restent inchangées.</p>
 </section>
 <section id="hétérogénéité-totale" class="level3">
 <h3 class="anchored" data-anchor-id="hétérogénéité-totale">Hétérogénéité totale</h3>
@@ -2631,7 +2639,11 @@ window.Quarto = {
   \hat{\alpha}_{\text{OLS}} &amp;= \bar{y} - \hat{\beta}_{\text{OLS}} \times \bar{x}
 \end{cases}
 \]</span></p>
-<p>Avec : - <span class="math inline">\(\bar{x} = \frac{1}{NT}\sum_{i=1}^N \sum_{t=1}^T x_{i,t}\)</span> - <span class="math inline">\(\bar{y} = \frac{1}{NT}\sum_{i=1}^N \sum_{t=1}^T y_{i,t}\)</span></p>
+<p>Avec :</p>
+<ul>
+<li><p><span class="math inline">\(\bar{x} = \frac{1}{NT}\sum_{i=1}^N \sum_{t=1}^T x_{i,t}\)</span></p></li>
+<li><p><span class="math inline">\(\bar{y} = \frac{1}{NT}\sum_{i=1}^N \sum_{t=1}^T y_{i,t}\)</span></p></li>
+</ul>
 <p>L’estimateur POLS est non-biaisé et consistant si <span class="math inline">\(x_{i,t}\)</span> est strictement exogène (non-corrélé de quelconque manière que ce soit avec le terme d’erreur) et si les constantes sont réellement homogènes. En cas d’hétérogénéité des constantes (et dans le cas où elles sont corrélées avec <span class="math inline">\(x_{i,t}\)</span>), alors l’estimateur POL est biaisé.</p>
 <p>Comme pour une estimation OLS classique, la présence d’hétéroscédasticité (variance nonc-constante des erreurs) ou d’auto-corrélation des erreurs n’affecte pas le biais de l’estimateur. Cela impact l’inférence en rendant la variance de l’estimateur non-minimale. Dans de tels cas des correction (White, Newey-West, etc…) peuvent être appliquées sur la matrice de variance-covariance.</p>
 </section>
@@ -2796,7 +2808,7 @@ x_{1,i,T}
 <p>On peut généraliser le modèle à effets fixes pour inclure également effets temporels spécifiques qui ne varient pas entre les individus. On considère ainsi le modèle suivant :</p>
 <p><span class="math display">\[
 \begin{aligned}
-  y_{i,t} = \alpha_i + \gamma_t + \beta x_{i,t} + \varepsilon_{i,t}   
+  y_{i,t} = \alpha_i + \lambda_t + \beta x_{i,t} + \varepsilon_{i,t}   
 \end{aligned}
 \]</span> On peut introduire une variable binaire pour chaque individu et une variable binaire pour chaque période temporelle : <span class="math inline">\((N \times T)\)</span> variables binaires, ou bien on peut comme pour l’estimateur FE, procéder à une transformation des variables telles que :</p>
 <p><span class="math display">\[
@@ -2864,15 +2876,15 @@ x_{1,i,T}
 <p><span class="math display">\[
 \begin{aligned}
   By_i &amp;= \left[ e_T \times \left( e_T^{&#39;}e_T \right) \times e_T^{&#39;} \right] y_i  \\[2ex]
-  By_i &amp;= \left[ e_T \times \left( \frac{1}{T} \right) \times e_T^{&#39;} \right] y_i \\[2ex]
-  B y_i &amp;= \left( \frac{1}{T} e_T e_T&#39; \right) y_i \\[2ex]
-B y_i &amp;= e_T \left( \frac{1}{T} e_T&#39; y_i \right) \\[2ex]
-B y_i &amp;= e_T \left[ \frac{1}{T} \begin{pmatrix} 1 &amp; 1 &amp; \dots &amp; 1 \end{pmatrix} \begin{pmatrix} y_{i,1} \\ y_{i,2} \\ \vdots \\ y_{i,T} \end{pmatrix} \right] \\[2ex]
-B y_i &amp;= e_T \left( \frac{1}{T} \sum_{t=1}^T y_{i,t} \right) \\[2ex]
-B y_i &amp;= e_T \bar{y}_i \\[2ex]
-B y_i &amp;= \begin{pmatrix} 1 \\ 1 \\ \vdots \\ 1 \end{pmatrix}  \bar{y}_i  \\[2ex]
-B y_i &amp;= \begin{pmatrix} \bar{y}_i \\ \bar{y}_i \\ \vdots \\ \bar{y}_i \end{pmatrix} \\[2ex]
-B y_i &amp;= \bar{y}_i
+  \Leftrightarrow By_i &amp;= \left[ e_T \times \left( \frac{1}{T} \right) \times e_T^{&#39;} \right] y_i \\[2ex]
+  \Leftrightarrow B y_i &amp;= \left( \frac{1}{T} e_T e_T&#39; \right) y_i \\[2ex]
+\Leftrightarrow B y_i &amp;= e_T \left( \frac{1}{T} e_T&#39; y_i \right) \\[2ex]
+\Leftrightarrow B y_i &amp;= e_T \left[ \frac{1}{T} \begin{pmatrix} 1 &amp; 1 &amp; \dots &amp; 1 \end{pmatrix} \begin{pmatrix} y_{i,1} \\ y_{i,2} \\ \vdots \\ y_{i,T} \end{pmatrix} \right] \\[2ex]
+\Leftrightarrow B y_i &amp;= e_T \left( \frac{1}{T} \sum_{t=1}^T y_{i,t} \right) \\[2ex]
+\Leftrightarrow B y_i &amp;= e_T \bar{y}_i \\[2ex]
+\Leftrightarrow B y_i &amp;= \begin{pmatrix} 1 \\ 1 \\ \vdots \\ 1 \end{pmatrix}  \bar{y}_i  \\[2ex]
+\Leftrightarrow B y_i &amp;= \begin{pmatrix} \bar{y}_i \\ \bar{y}_i \\ \vdots \\ \bar{y}_i \end{pmatrix} \\[2ex]
+\Leftrightarrow B y_i &amp;= \bar{y}_i
 \end{aligned}
 \]</span></p>
 <p>L’estimateur between est le suivant :</p>
@@ -2883,6 +2895,209 @@ B y_i &amp;= \bar{y}_i
 \]</span></p>
 <p>Cet estimateur utilise seulement les données en coupe transversale. La variation temporelle intra-individuelle disparaît. On perd donc des observations et de la puissance statistique puisque l’on garde seulement <span class="math inline">\(N\)</span> points d’observation.</p>
 <p>Sous les hypothèses classiques, cet estimateur est consistant et non-biaisé.</p>
+</section>
+<section id="estimateur-à-effets-aléatoires" class="level2">
+<h2 class="anchored" data-anchor-id="estimateur-à-effets-aléatoires">Estimateur à Effets Aléatoires</h2>
+<section id="définition-et-hypothèses-des-effets-aléatoires" class="level3">
+<h3 class="anchored" data-anchor-id="définition-et-hypothèses-des-effets-aléatoires">Définition et hypothèses des effets aléatoires</h3>
+<p>Nous supposons maintenant que les effets individuels et temporels ne sont corrélés d’aucune manière que ce soit avec la variable explicative <span class="math inline">\(x_{i,t}\)</span> :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  &amp;E(\alpha_i | x_{i,1}, \cdots, x_{i,T}) = 0 \\[2ex]
+  &amp;E(\lambda_t | x_{i,1}, \cdots, x_{i,T}) = 0  
+\end{aligned}
+\]</span></p>
+<p>On considère donc que <span class="math inline">\(\alpha_i\)</span> est une variable aléatoire. Dans ce cas, le fait de considérer les effets inobservés comme une spécification aléatoire est un cas particulier d’un modèle à composante d’erreur dans lequel les erreurs sont supposées constituées de 3 composantes : les effets individuels et temporels et un terme d’erreur idiosyncratique <span class="math inline">\(v_{i,t}\)</span> qui comprend tous les effets non pris en compte affectant un individu <span class="math inline">\(i\)</span> à la période <span class="math inline">\(t\)</span>.</p>
+<p><span class="math display">\[
+\begin{aligned}
+  y_{i,t} &amp;= \beta^{&#39;}x_{i,t} + \varepsilon_{i,t} \quad\forall i \hspace{0.2cm} \forall t \\[2ex]
+  \varepsilon_{i,t} &amp;= \alpha_i + \lambda_t + v_{i,t}
+\end{aligned}
+\]</span></p>
+<p>On peut dans ce cas décomposer la variance conditionnelle de <span class="math inline">\(y_{i,t}\)</span> comme étant la somme de 3 composantes :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  V(y_{i,t} | x_{i,t}) = \sigma^2_y = \sigma^2_\alpha + \sigma^2_\lambda + \sigma^2_v  
+\end{aligned}
+\]</span> On pose les hypothèses suivantes sur le terme d’erreur <span class="math inline">\(\varepsilon_{i,t}\)</span> :</p>
+<p><span class="math display">\[
+\begin{aligned}
+&amp;\alpha_i + \lambda_t + v_{i,t} \sim \text{i.i.d} \quad \forall i \hspace{0.2cm} \forall t \\[2ex]
+&amp;E(\alpha_i) = E(\lambda_t) = E(v_{it}) = 0 \\[2ex]
+&amp;E(\alpha_i \alpha_j) =
+\begin{cases}
+\sigma_\alpha^2 &amp; \text{si } i = j \\
+0 &amp; \text{si } i \neq j
+\end{cases} \\[2ex]
+&amp;E(\lambda_t \lambda_s) =
+\begin{cases}
+\sigma_\lambda^2 &amp; \text{si } t = s \\
+0 &amp; \text{si } t \neq s
+\end{cases} \\[2ex]
+&amp;E(v_{it} v_{js}) =
+\begin{cases}
+\sigma_v^2 &amp; \text{si } i = j \text{ et } t = s \\
+0 &amp; \text{sinon}
+\end{cases} \\[2ex]
+&amp;E(\alpha_i \lambda_t) = E(\alpha_i v_{js}) = E(\lambda_t v_{is}) = 0 \\[2ex]
+&amp;E(\alpha_i x^{&#39;}_{i,t}) = E(\alpha_i x^{&#39;}_{i,t}) = E(\lambda_t x^{&#39;}_{i,t}) = 0
+\end{aligned}
+\]</span></p>
+<p>On suppose donc que les erreurs sont de moyennes nulles (en moyenne on ne fait pas d’erreur systématique de prévision). On suppose également que la variance des différents termes de l’erreur est constante pour chaque terme (hypothèse d’homoscédasticité individuelle et temporelle). On suppose qu’il n’existe pas d’auto-corrélation aussi bien temporelle qu’individuelle : les erreurs ne sont pas corrélées dans le temps au sein d’un individu et ne sont pas corrélées à une même période entre différents individus. On suppose également que les différents termes de l’erreur ne sont pas corrélés entre eux : les effets individuels n’ont pas de liens avec les effets temporels ou les chocs idiosyncratiques. Ces hypothèses permettent d’obtenir les propriétés désirables pour la variance des estimateurs.</p>
+<p>La dernière hypothèse est l’hypothèse d’exogénéité. On suppose que les différents termes de l’erreur ne sont pas corrélés avec les variables explicatives. Cela permet d’obtenir des estimateurs sans biais. Cette hypothèse est d’autant plus forte dans le cadre des effets aléatoires puisque le terme d’erreur est constitué de davantage de composantes. Ainsi, aussi bien les effets individuel que temporels ne doivent âs être corrélés avec les variables explicatives sous peine de biaiser l’estimation.</p>
+<p>On peut montrer que sous ces hypothèses, lorsque les effets inobservés individuels ou temporels sont traités comme des variables aléatoires, <strong>l’estimateur LSDV n’est plus l’estimateur BLUE</strong>. Il reste toujours sans-biais et consistant, mais il n’est plus l’estimateur de variance minimale. En effet, utiliser l’estimateur LSDV alors que les effets inobservés sont des variables aléatoires conduit à introduire de la corrélation sérielle (auto-corrélation temporelle) au sein des erreurs.</p>
+<p>Lorsque les effets inobservés sont traités comme des variables aléatoires, <strong>l’estimateur BLUE devient alors l’estimateur des moindres carrés généralisés (Generalized Least Square (GLS))</strong>.</p>
+</section>
+<section id="rappel-estimateur-gls-pour-une-équation" class="level3">
+<h3 class="anchored" data-anchor-id="rappel-estimateur-gls-pour-une-équation">Rappel : Estimateur GLS pour une équation</h3>
+<p>Dans le cas d’un modèle à une équation (données de coupes transversales) :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  &amp;Y = X \beta + \varepsilon \\[2ex]
+  &amp;V(\varepsilon) = E[\varepsilon \varepsilon^{&#39;}] = \Omega \neq \sigma_\varepsilon^2 I_T
+\end{aligned}
+\]</span></p>
+<p>L’estimateur GLS consiste à pondérer les observations par la matrice de variance-covariance <span class="math inline">\(\Omega\)</span> :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  &amp;\hat{\beta}_{\text{GLS}} = \left( X^{&#39; }\Omega^{-1}X \right)^{-1} \left( X^{&#39; }\Omega^{-1}X \right) \\[2ex]
+  &amp;V \left( \hat{\beta}_{\text{GLS}} \right) = \left( X^{&#39; }\Omega^{-1}X \right)^{-1}
+\end{aligned}
+\]</span></p>
+<p>Ce qui revient au même que d’utiliser les OLS sur le modèle transformé suivant :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  \tilde{Y} &amp;= \tilde{X}\beta + \tilde{\varepsilon} \\[2ex]
+  \tilde{Y} &amp;= \Omega^{-1/2}Y \\[2ex]
+  \tilde{X} &amp;= \Omega^{-1/2}X \\[2ex]
+\end{aligned}
+\]</span></p>
+<p>Dans le cas de données de panel, il faut savoir : - Quelle est la transformation GLS de la matrice <span class="math inline">\(\Omega^{-1/2}\)</span> - l’estimateur Feasible GLS lorsque <span class="math inline">\(\Omega\)</span> est inconnue</p>
+</section>
+<section id="estimateur-gls-dans-le-cas-de-données-de-panel" class="level3">
+<h3 class="anchored" data-anchor-id="estimateur-gls-dans-le-cas-de-données-de-panel">Estimateur GLS dans le cas de données de panel</h3>
+<p>Considérons le modèle écrit pour chaque individu :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  Y_i = \tilde{X}_i \gamma + \varepsilon_i \quad \forall i= 1, \cdots, N
+\end{aligned}
+\]</span> Avec :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  \varepsilon_i &amp;= \alpha_i e + v_i \\[2ex]
+  \tilde{X}_i &amp;= (e, X_i) \\[2ex]
+  \gamma^{&#39;} &amp;= (\mu, \beta^{&#39;}) \\[2ex]
+  V &amp;= E[\varepsilon_i \varepsilon_i^{&#39;}] \quad \text{connue}
+\end{aligned}
+\]</span></p>
+<p>Dans ce modèle, on suppose qu’il n’y a pas d’effets temporels communs à tous les individus (<span class="math inline">\(\lambda_t = 0\)</span> mais on peut géénraliser pour inclure les effets temporels). On suppose également que les effets individuels inobservables sont caractérisés par une moyenne non-nulle que l’on prend en compte via l’ajout d’une constante <span class="math inline">\(\mu\)</span>.</p>
+<p>Lorsque la matrice de variance covariance <span class="math inline">\(V\)</span> est connue, et que l’on connait donc les composantes individuelles et idiosyncratiques de la variance : <span class="math inline">\(\sigma^2_\alpha\)</span> et <span class="math inline">\(\sigma^2_v\)</span>, l’estimateur GLS du vecteur de paramètres <span class="math inline">\(\gamma\)</span> est :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  \hat{\gamma}_{\text{GLS}} = \left[ \sum_{i=1}^N \tilde{X}_i^{&#39; }V^{-1} \tilde{X}_i \right]^{-1} \left[ \sum_{i=1}^N \tilde{X}_i^{&#39; }V^{-1} \tilde{Y}_i \right]  
+\end{aligned}
+\]</span></p>
+<p>Sous les hypothèses données précédemment cet estimateur est BLUE.</p>
+<p>On peut écrire la matrice <span class="math inline">\(V^{-1}\)</span> comme :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  &amp;V^{-1} = \frac{1}{\sigma_v^2} \left[ Q + \Psi \frac{1}{T}ee^{&#39; } \right] \\[2ex]
+  &amp;Q = \left( I_T - \frac{ee^{&#39;}}{T} \right) \\[2ex]
+  &amp;\Psi = \left( \frac{\sigma^2_v}{\sigma_v^2 + T \sigma_{\alpha}^2} \right)
+\end{aligned}
+\]</span></p>
+<p>A partir de là, on peut réécrire l’estimateur GLS comme une moyenne pondérée de l’estimateur Within et de l’estimateur Between :</p>
+<p><span class="math display">\[
+\begin{aligned}
+\hat{\beta}_{\text{GLS}} = \left[ \frac{1}{T} \sum_{i=1}^N X_i^{&#39; }QX_i + \Psi \sum_{i=1}^N \left( \bar{X}_i - \bar{X} \right) \left( \bar{X}_i - \bar{X} \right)^{&#39; } \right]^{-1} \left[ \frac{1}{T} \sum_{i=1}^N X_i^{&#39; }QY_i + \Psi \sum_{i=1}^N \left( \bar{X}_i - \bar{X} \right) \left( \bar{Y}_i - \bar{Y} \right) \right]
+\end{aligned}
+\]</span></p>
+<p>Ce qui revient à écrire : <span class="math display">\[
+\begin{aligned}
+  &amp;\hat{\beta}_{\text{GLS}} = \Delta \hat{\beta}_{\text{Between}} + \left( I_k - \Delta \right) \hat{\beta}_{\text{Within}} \\[2ex]
+  &amp;\Delta = \Psi T \left[ \sum_{i=1}^N X_i^{&#39; }QX_i + \Psi T \sum_{i=1}^N \left( \bar{X}_i - \bar{X} \right) \left( \bar{X}_i - \bar{X} \right)^{&#39; } \right]^{-1} \left[ \sum_{i=1}^N \left( \bar{X}_i - \bar{X} \right) \left( \bar{X}_i - \bar{X} \right)^{&#39; } \right]
+\end{aligned}
+\]</span></p>
+<ul>
+<li>Lorsque <span class="math inline">\(\Psi \rightarrow 1\)</span>, l’estimateur GLS converge vers l’estimateur Pooled.</li>
+<li>Lorsque <span class="math inline">\(\Psi \rightarrow 0\)</span> ou <span class="math inline">\(T \rightarrow \infty\)</span>, l’estimateur GLS converge vers l’estimateur Within/LSDV/FE.</li>
+<li>Lorsque <span class="math inline">\(0 &lt; \Psi &lt; 1\)</span>, la structure des effets aléatoires constitue une solution intermédiaire entre le modèle sans effets individuels et le modèle à effets fixes individuels.</li>
+</ul>
+<p>La constante <span class="math inline">\(\Psi\)</span> mesure le poids donné à la variation inter-groupe. Cette dimension est complètement ignorée par l’estimateur LSDV. Il ne prend en compte que la variation au sein d’un même groupe.</p>
+<p>On peut montrer que la variance de l’estimateur GLS est :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  V(\hat{\beta}_{\text{GLS}}) = \sigma^2_v \left[ \sum_{i=1}^N X_i^{&#39; }QX_i + \Psi T \sum_{i=1}^N \left( \bar{X}_i - \bar{X} \right) \left( \bar{X}_i - \bar{X} \right)^{&#39; } \right]^{-1}  
+\end{aligned}
+\]</span></p>
+<p>Lorsque le paramètre <span class="math inline">\(\Psi &gt; 0\)</span>, la variance de l’estimateur LGS est toujours inférieure à celle de l’estimateur Within :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  V(\hat{\beta}_{\text{GLS}}) &lt; V(\hat{\beta}_{\text{Within}})  
+\end{aligned}
+\]</span> Cette différence tend à se réduire à mesure que <span class="math inline">\(T \rightarrow \infty\)</span> puisque pour des panels de dimension infinie, l’estimateur GLS tend à devenir l’estimateur Within. Cela s’explique par le fait que dans un tel cas, on a un nombre infini d’observations pour chaque <span class="math inline">\(i\)</span>. Dans ce cas, on peut considérer chaque <span class="math inline">\(\alpha_i\)</span> comme une variable aléatoire qui a été tirée une bonne fois pour toute et ainsi chaque <span class="math inline">\(\alpha_i\)</span> peut prétendre être comme un paramètre fixe.</p>
+</section>
+<section id="simplification-de-lestimation-gls" class="level3">
+<h3 class="anchored" data-anchor-id="simplification-de-lestimation-gls">Simplification de l’estimation GLS</h3>
+<p>On peut simplifier l’estimation GLS en introduisant une matrice de transformation P telle que :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  &amp;P = \left[ I_T - \left( 1 - \Psi^{1/2} \right)  \frac{1}{T} ee^{&#39; } \right] \\[2ex]
+  \Rightarrow &amp;V^{-1} = \frac{1}{\sigma^2_v}P^{&#39;}P
+\end{aligned}
+\]</span></p>
+<p>On prémultiplie ensuite le modèle par cette matrice P :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  PY_i  = P \tilde{X}_i \beta + Pv_i  
+\end{aligned}
+\]</span> Cette transformation équivaut à préalablement transformer les données en leur retirant la fraction <span class="math inline">\(\theta = (1 - \Psi^{1/2})\)</span> de leur moyenne individuelle :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  \left( Y_{i,t} - \theta \bar{Y}_i \right) = \bar{\omega} + \left( X_{i,t} - \theta \bar{X}_i \right) \beta + \left( \varepsilon_{i,t} - \theta \bar{\varepsilon_i} \right)  
+\end{aligned}
+\]</span></p>
+<p>L’estimateur GLS est obtenu en appliquant l’estimateur OLS sur ce modèle transformé. Cette méthodologie s’appelle “Partial Group Mean deviation” ou “quasi-demeaning”.</p>
+</section>
+<section id="estimateur-fgls" class="level3">
+<h3 class="anchored" data-anchor-id="estimateur-fgls">Estimateur FGLS</h3>
+<p>La méthodologie GLS fonctionne lorsque l’on connait la matrice de variance covariance et donc les composantes individuelles et idiosyncratiques de la variance : <span class="math inline">\(\sigma^2_{\alpha}\)</span> et <span class="math inline">\(\sigma^2_{\varepsilon}\)</span>. Lorsqu’on ne les connait pas, il faut recourir à une estimation GLS en deux étapes (Feasible GLS).</p>
+<ol type="1">
+<li>On estime les composantes de la variance en utilisant des estimateurs consistants</li>
+<li>On substitue les estimations de ces composantes dans la formule :</li>
+</ol>
+<p><span class="math display">\[
+\begin{aligned}
+  \hat{\gamma}_{\text{GLS}} = \left[ \sum_{i=1}^N \tilde{X}_i^{&#39; } \widehat{V}^{-1} \tilde{X}_i \right]^{-1} \left[ \sum_{i=1}^N \tilde{X}_i^{&#39; } \widehat{V}^{-1} \tilde{Y}_i \right]  
+\end{aligned}
+\]</span> Ou bien dans le modèle modifié suivant :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  &amp;\left( y_{i,t} - \theta \bar{Y}_i \right) = \bar{\omega} + \left( x_{i,t} - \theta \bar{X}_i \right) \beta + \left( \varepsilon_{i,t} - \theta \bar{\varepsilon_i} \right)  \\[2ex]
+  &amp; \theta = \left( 1 - \Psi^{1/2} \right)
+\end{aligned}
+\]</span></p>
+<p>Pour cela il faut un estimateur consistant de <span class="math inline">\(\theta\)</span>. On va alors :</p>
+<ol type="1">
+<li><p>Estimer le modèle en dimension Within (estimateur Within) pour obtenir <span class="math inline">\(\hat{\sigma}^2_v\)</span></p></li>
+<li><p>Estimer le modèle en dimension Between (estimateur Between) pour obtenir <span class="math inline">\(\hat{\sigma}^2_\alpha + \left( \frac{1}{T} \right) \hat{\sigma}^2_v\)</span></p></li>
+<li><p>Calculer l’estimateur <span class="math inline">\(\hat{\Psi}\)</span> tel que :</p></li>
+</ol>
+<p><span class="math display">\[
+\begin{aligned}
+  \hat{\Psi} = \left( \frac{\hat{\sigma}^2_v}{\hat{\sigma}_v^2 + T \hat{\sigma}_{\alpha}^2} \right) = \left[ \frac{\text{RSS}^{\text{Within}} / (N(T-1)-K)}{T \times \text{RSS}^{\text{Between}} / (N - (K+1))} \right]
+\end{aligned}
+\]</span></p>
+<ol start="4" type="1">
+<li><p>Calculer l’estimateur <span class="math inline">\(\hat{\theta} = \left( 1 - \hat{\Psi}^{1/2} \right)\)</span></p></li>
+<li><p>Obtenir l’estimateur FGLS en utilisant les MCO sur le modèle :</p></li>
+</ol>
+<p><span class="math display">\[
+\begin{aligned}
+  \left( y_{i,t} - \hat{\theta} \bar{Y}_i \right) = \bar{\omega} + \left( x_{i,t} - \hat{\theta} \bar{X}_i \right) \beta + \left( \varepsilon_{i,t} - \hat{\theta} \bar{\varepsilon_i} \right)  
+\end{aligned}
+\]</span></p>
+</section>
 </section>
 </section>
 <section id="code" class="level1">

@@ -48,9 +48,9 @@ quarto::quarto_render(
 
 Des données dites de "panel" sont des données qui suivent un échantillon d'individus à travers le temps. Ces données permettent d'avoir de multiples observations pour chaque individu de l'échantillon (**Hsiao 2003)**).
 
-On utilisera l'indexation $i$ pour indiquer les individus (pays, régions, firmes...) et l'indexation $t$ pour indiquer les unités temporelles (années, mois...). 
+On utilisera l'indexation $i$ pour indiquer les individus (pays, régions, firmes...) et l'indexation $t$ pour indiquer les unités temporelles (années, mois...).
 
-On notera donc : 
+On notera donc :
 
 $$
 \begin{aligned}
@@ -59,48 +59,41 @@ $$
 $$
 
 ## Avantages des données de panel
+
 ### Meilleure précision des estimateurs
 
-Les données de panel permettent généralement d'obtenir un plus grand nombre de données que les données en temporelles ou en coupe transversales puisque les deux dimensions existent en panel. Le nombre d'observations disponibles pour des données de panel est de $(N \times T)$. Un plus grand nombre d'observations entraîne un plus grand nombre de degrés de libertés et une réduction de la colinéarité entre les différentes variables explicatives. Les données de panel sont ainsi censées permettre d'augmenter l'efficacité de l'analyse économétrique. 
+Les données de panel permettent généralement d'obtenir un plus grand nombre de données que les données en temporelles ou en coupe transversales puisque les deux dimensions existent en panel. Le nombre d'observations disponibles pour des données de panel est de $(N \times T)$. Un plus grand nombre d'observations entraîne un plus grand nombre de degrés de libertés et une réduction de la colinéarité entre les différentes variables explicatives. Les données de panel sont ainsi censées permettre d'augmenter l'efficacité de l'analyse économétrique.
 
-Cependant, plus d'observations n'implique pas nécessairement une augmentation de l'information. Les données de panel entraine en effet l'apparition de nouveaux biais, comme le biais d'hétérogénéité, qu'il faut prendre en compte. 
+Cependant, plus d'observations n'implique pas nécessairement une augmentation de l'information. Les données de panel entraine en effet l'apparition de nouveaux biais, comme le biais d'hétérogénéité, qu'il faut prendre en compte.
 
- 
 ### Prise en compte de l'hétérogénéité
-Les données de panel permettent de contrôler (dans une certaine mesure) pour des variables qui ne sont pas observables ou mesurables telles que les différences culturelles, pratiques commerciales, politiques nationales, crises globales etc... Ces données permettent de prendre en compte **l'hétérogénéité individuelle et/ou temporelle**. 
 
-Enfin, les données de panel permettent également d'inclure des variables à différents niveaux d'analyse (étudiants, écoles, état etc...) permettent ainsi des analyses multi-niveaux. 
+Les données de panel permettent de contrôler (dans une certaine mesure) pour des variables qui ne sont pas observables ou mesurables telles que les différences culturelles, pratiques commerciales, politiques nationales, crises globales etc... Ces données permettent de prendre en compte **l'hétérogénéité individuelle et/ou temporelle**.
 
-Considérons le modèle de régression suivant : 
+Enfin, les données de panel permettent également d'inclure des variables à différents niveaux d'analyse (étudiants, écoles, état etc...) permettent ainsi des analyses multi-niveaux.
+
+Considérons le modèle de régression suivant :
 
 $$
 \begin{aligned}
   y_{it} = \alpha + \beta^{'} x_{it} + \rho^{' }z_{it} + \epsilon_{it}  
 \end{aligned}
-$$
-Où : 
-- $i = 1, \cdots, N$
-- $t = 1, \cdots, T$
-- $x_{it}$ et $z_{it}$ sont des variables exogènes
-- $\alpha$, $\beta$ et $\rho$ sont des paramètres
-- $\varepsilon_{it}$ est le vecteur d'erreurs du modèle. Les erreurs sont $i.i.d$ à travers les dimensions individuelles et temporelles avec $V(\varepsilon_{it}) = \sigma^2_\varepsilon$. 
+$$ Où : - $i = 1, \cdots, N$ - $t = 1, \cdots, T$ - $x_{it}$ et $z_{it}$ sont des variables exogènes - $\alpha$, $\beta$ et $\rho$ sont des paramètres - $\varepsilon_{it}$ est le vecteur d'erreurs du modèle. Les erreurs sont $i.i.d$ à travers les dimensions individuelles et temporelles avec $V(\varepsilon_{it}) = \sigma^2_\varepsilon$.
 
-Supposons, que la variable $z_{it}$ n'est pas observable et est corrélée d'une manière quelconque avec la variable $x_{it}$ : 
+Supposons, que la variable $z_{it}$ n'est pas observable et est corrélée d'une manière quelconque avec la variable $x_{it}$ :
 
 $$
 \begin{aligned}
   cov(x_{it} \hspace{0.1cm} , \hspace{0.1cm} z_{it}) \neq 0  
 \end{aligned}
-$$
-Dans un tel cas, le modèle estimé devient : 
+$$ Dans un tel cas, le modèle estimé devient :
 
 $$
 \begin{aligned}
   y_{it} &= \alpha + \beta^{'} x_{it} + u_{it} \\
   u_{it} &= \rho^{' }z_{it} + \varepsilon_{it}
 \end{aligned}
-$$
-Puisque la variable $x_{it}$ est corrélée avec la variable $z_{it}$ ($cov(x_{it} \hspace{0.1cm} , \hspace{0.1cm} z_{it}) \neq 0$) contenue désormais dans le terme d'erreur $u_{it}$, ce terme d'erreur devient corrélé avec la variable $x_{it}$ : 
+$$ Puisque la variable $x_{it}$ est corrélée avec la variable $z_{it}$ ($cov(x_{it} \hspace{0.1cm} , \hspace{0.1cm} z_{it}) \neq 0$) contenue désormais dans le terme d'erreur $u_{it}$, ce terme d'erreur devient corrélé avec la variable $x_{it}$ :
 
 $$
 \begin{aligned}
@@ -108,9 +101,9 @@ $$
 \end{aligned}
 $$
 
-Le coefficient $\beta$ est donc biaisé puisque l'hypothèse d'exogénéité ne tient plus. 
+Le coefficient $\beta$ est donc biaisé puisque l'hypothèse d'exogénéité ne tient plus.
 
-Si l'on suppose maintenant que $z_{it} = z_i$, c'est à dire que les valeurs de $z$ sont constantes dans le temps pour chaque individu, mais diffèrent entre chaque individu, alors le modèle devient : 
+Si l'on suppose maintenant que $z_{it} = z_i$, c'est à dire que les valeurs de $z$ sont constantes dans le temps pour chaque individu, mais diffèrent entre chaque individu, alors le modèle devient :
 
 $$
 \begin{aligned}
@@ -120,17 +113,16 @@ $$
 \end{aligned}
 $$
 
-Il est possible de purger l'effet inobservé de la variable $z_i$ en prenant la première différence de chaque individu à travers le temps : 
+Il est possible de purger l'effet inobservé de la variable $z_i$ en prenant la première différence de chaque individu à travers le temps :
 
 $$
 \begin{aligned}
   y_{it} - y_{i,t-1} &= \beta^{'} \left( x_{i,t} - x_{i,t-1} \right) + u_{i,t} - u_{i,t-1} \\
   u_{i,t} - u_{i,t-1} &= \rho^{' }z_i - \rho^{' } z_i + \varepsilon_{i,t} - \varepsilon_{i,t-1} = \varepsilon_{i,t} - \varepsilon_{i,t-1}
 \end{aligned}
-$$
-Puisque $z_i$ est invariant dans le temps, $z_{i,t} = z_{i,t-1} = z_i$. Prendre la première différence temporelle pour chaque individu permet de purger l'effet de $z_i$ pour chaque individu et ainsi prendre en compte une variable inobservable qui aurait biaiser notre modèle. 
+$$ Puisque $z_i$ est invariant dans le temps, $z_{i,t} = z_{i,t-1} = z_i$. Prendre la première différence temporelle pour chaque individu permet de purger l'effet de $z_i$ pour chaque individu et ainsi prendre en compte une variable inobservable qui aurait biaiser notre modèle.
 
-Il est possible de mener l'exact même raisonnement dans le cas où $z$ serait le même entre tous les individus pour chaque période de temps, mais varierait à chaque période temporelle : $z_{i,t} = z_t$. La variable $z_t$ est appelée **facteur commun**. Le modèle devient : 
+Il est possible de mener l'exact même raisonnement dans le cas où $z$ serait le même entre tous les individus pour chaque période de temps, mais varierait à chaque période temporelle : $z_{i,t} = z_t$. La variable $z_t$ est appelée **facteur commun**. Le modèle devient :
 
 $$
 \begin{aligned}
@@ -140,54 +132,52 @@ $$
 \end{aligned}
 $$
 
-Pour prendre en compte cet effet inobservé, il suffit de prendre la différence entre la valeur observée et la moyenne entre les individus pour chaque période de temps : 
+Pour prendre en compte cet effet inobservé, il suffit de prendre la différence entre la valeur observée et la moyenne entre les individus pour chaque période de temps :
 
 $$
 \begin{aligned}
   &y_{i,t} - \bar{y}_t = \beta^{' } \left( x_{i,t} - \bar{x}_t \right) + u_{i,t} - \bar{u}_t \\
   &u_{i,t} - \bar{u}_t = \rho^{' } z_t - \rho^{' } \bar{z}_t + \varepsilon_{i,t} + \bar{\varepsilon}_t = \varepsilon_{i,t} + \bar{\varepsilon}_t
 \end{aligned}
-$$
-Avec : $\bar{y}_t = \frac{1}{N} \sum_{i=1}^N y_{i,t}$, $\bar{x}_t = \frac{1}{N} \sum_{i=1}^N x_{i,t}$, $\bar{u}_t = \frac{1}{N} \sum_{i=1}^N u_{i,t}$ et $\bar{\varepsilon}_t = \frac{1}{N} \sum_{i=1}^N \varepsilon_{i,t}$. 
+$$ Avec : $\bar{y}_t = \frac{1}{N} \sum_{i=1}^N y_{i,t}$, $\bar{x}_t = \frac{1}{N} \sum_{i=1}^N x_{i,t}$, $\bar{u}_t = \frac{1}{N} \sum_{i=1}^N u_{i,t}$ et $\bar{\varepsilon}_t = \frac{1}{N} \sum_{i=1}^N \varepsilon_{i,t}$.
 
-Puisque $z_t$ est constant entre les individu pour une période $t$ donnée, on a $\bar{z}_t = \frac{1}{N} \sum_{i=1}^N z_{t} = \frac{1}{N} \times N \times  z_t = z_t$. En prenant la différence à la moyenne entre les individus, on purge donc du facteur commun inobservé $z_t$. 
+Puisque $z_t$ est constant entre les individu pour une période $t$ donnée, on a $\bar{z}_t = \frac{1}{N} \sum_{i=1}^N z_{t} = \frac{1}{N} \times N \times  z_t = z_t$. En prenant la différence à la moyenne entre les individus, on purge donc du facteur commun inobservé $z_t$.
 
-Il est évidemment possible de combiner les deux approches pour purger des facteurs invariants dans le temps et des facteurs communs entre les individus. 
+Il est évidemment possible de combiner les deux approches pour purger des facteurs invariants dans le temps et des facteurs communs entre les individus.
 
 ### Stationnarité
+
 #### Tests de racines unitaires
 
-Dans le cas de panel où la dimension $T$ est large (grand nombre de périodes temporelles), la stationnarité redevient un enjeu tout comme pour les séries temporelles. Les données de panel vont cependant présenter un certain nombre d'avantages comparé aux séries temporelles. 
+Dans le cas de panel où la dimension $T$ est large (grand nombre de périodes temporelles), la stationnarité redevient un enjeu tout comme pour les séries temporelles. Les données de panel vont cependant présenter un certain nombre d'avantages comparé aux séries temporelles.
 
-Le premier avantage est l'ajout de la dimension individuelle à la dimension temporelle qui permet d'augmenter la **puissance** des tests de racines unitaires sur de petits échantillon (d'avantages de degrés de liberté par rapport aux séries temporelles). Le problème de pettis échantillons en séries temporelles peut être combattu en augmentant la période d'études, mais cela suppose de prendre le risque d'avoir affaire à des changements de régimes ou des breaks structurels. 
+Le premier avantage est l'ajout de la dimension individuelle à la dimension temporelle qui permet d'augmenter la **puissance** des tests de racines unitaires sur de petits échantillon (d'avantages de degrés de liberté par rapport aux séries temporelles). Le problème de pettis échantillons en séries temporelles peut être combattu en augmentant la période d'études, mais cela suppose de prendre le risque d'avoir affaire à des changements de régimes ou des breaks structurels.
 
-Les données de panel permettent d'augmenter l'information en incluant l'information de différents individus sans pour autant forcément augmenter la dimension temporelle. On peut donc travailler plus facilement sur de plus petits échantillons temporels. 
+Les données de panel permettent d'augmenter l'information en incluant l'information de différents individus sans pour autant forcément augmenter la dimension temporelle. On peut donc travailler plus facilement sur de plus petits échantillons temporels.
 
-Un autre avantage est que dans le cadre de données de panel, les statistiques des tests de racines unitaires vont admettre pour loi asymptotique des lois normales (bien que restant conditionné au modèle utilisé) évitant l'utilisation de tables de lois particulières. 
+Un autre avantage est que dans le cadre de données de panel, les statistiques des tests de racines unitaires vont admettre pour loi asymptotique des lois normales (bien que restant conditionné au modèle utilisé) évitant l'utilisation de tables de lois particulières.
 
-Les données de panel permettent de prendre également en compte l'hétérogénéité dans la présence des racines unitaires. 
+Les données de panel permettent de prendre également en compte l'hétérogénéité dans la présence des racines unitaires.
 
 #### Régressions fallacieuses
 
-En séries temporelles, lorsque l'on régresse une variable non-stationaire sur un ensemble de variable non-stationaire non cointégrées, cela conduit à des régressions fallacieuses (coefficients qui paraissent hautement significatifs à tord) puisque l'estimateur MCO converge en probabilité vers une variable aléatoire et non plus une constante (et est biaisé). De plus, la distribution statistique de Student associée au tests de nullité du paramètre du modèle de régression est divergente avec la dimmension $T$ : elle ne converge pas lorsque $T$ augmente. Cela conduit à rejeter à tord la nullité du paramètre et donc à trouver un effet quand il ne devrait pas y en avoir. 
+En séries temporelles, lorsque l'on régresse une variable non-stationaire sur un ensemble de variable non-stationaire non cointégrées, cela conduit à des régressions fallacieuses (coefficients qui paraissent hautement significatifs à tord) puisque l'estimateur MCO converge en probabilité vers une variable aléatoire et non plus une constante (et est biaisé). De plus, la distribution statistique de Student associée au tests de nullité du paramètre du modèle de régression est divergente avec la dimmension $T$ : elle ne converge pas lorsque $T$ augmente. Cela conduit à rejeter à tord la nullité du paramètre et donc à trouver un effet quand il ne devrait pas y en avoir.
 
 En panel, le problème de régression fallacieuse est moins important qu'en séries temporelles. En panel, les estimateurs usuels convergent en probabilité vers la vraie valeur du paramètre même si l'on régresse des variables non-stationaires et non-cointégrées entre elles.
 
-Le problème reste cependant toujours d'actualité pour l'inférence. En présence de régression fallacieuse en panel, les statistiques de test usuelles ont des distributions divergentes tout comme en séries temporelles. 
+Le problème reste cependant toujours d'actualité pour l'inférence. En présence de régression fallacieuse en panel, les statistiques de test usuelles ont des distributions divergentes tout comme en séries temporelles.
 
 ## Types d'hétérogénéité pris en compte
 
 ### Aucune hétérogénéité
 
-Les données de panel permettent d'inclure différents niveaux d'hétérogénéité au sein du modèle. Le modèle dit **pooled** va être un modèle dans lequel il n'existe pas d'hétérogénéité entre les agents et entre les périodes temporelles. La relation est identique pour tous les agents et toutes les périodes de temps et il n'existe ni facteurs commun ni facteurs individuels. 
+Les données de panel permettent d'inclure différents niveaux d'hétérogénéité au sein du modèle. Le modèle dit **pooled** va être un modèle dans lequel il n'existe pas d'hétérogénéité entre les agents et entre les périodes temporelles. La relation est identique pour tous les agents et toutes les périodes de temps et il n'existe ni facteurs commun ni facteurs individuels.
 
 $$
 \begin{aligned}
   y_{i,t} = \alpha + \beta x_{i,t} + \varepsilon_{i,t}  
 \end{aligned}
-$$
-Il existe une relation linéaire entre $y$ et $x$ caractérisée par $\beta$. Lorsque $x_{i_t} = 0$, $y_{it} = \alpha$. 
-
+$$ Il existe une relation linéaire entre $y$ et $x$ caractérisée par $\beta$. Lorsque $x_{i_t} = 0$, $y_{it} = \alpha$.
 
 ```{r echo=FALSE}
 source(here::here("02-codes", "presentations", "05-panel", "code", "graph_model_pooled.R"))
@@ -195,96 +185,87 @@ source(here::here("02-codes", "presentations", "05-panel", "code", "graph_model_
 
 ### Hétérogénéité individuelle et/ou temporelle
 
-Comme nous avons pu le voir, les modèles de panel permettent de prendre en compte les caractéristiques propres aux individus qui ne varient pas dans le temps, ainsi que les facteurs communs qui affectent tous les individus de la même manière à une période donnée. 
+Comme nous avons pu le voir, les modèles de panel permettent de prendre en compte les caractéristiques propres aux individus qui ne varient pas dans le temps, ainsi que les facteurs communs qui affectent tous les individus de la même manière à une période donnée.
 
 $$
 \begin{aligned}
   y_{i,t} = \alpha_i + \beta x_{i,t} + \varepsilon_{i,t}   
 \end{aligned}
-$$
-Dans ce modèle, les effets invariants dans le temps mais propres à chaque individu sont représentés par le terme $\alpha_i$. Il s'agit tout simplement d'une différence systématique entre chaque individu. Cependant la relation entre la variable $x$ et la variable $y$ reste la même pour tous les individus : $\beta$. Chaque individu est caractérisé par une ordonnée à l'origine différente, maios la pente de la droite reste la même. 
+$$ Dans ce modèle, les effets invariants dans le temps mais propres à chaque individu sont représentés par le terme $\alpha_i$. Il s'agit tout simplement d'une différence systématique entre chaque individu. Cependant la relation entre la variable $x$ et la variable $y$ reste la même pour tous les individus : $\beta$. Chaque individu est caractérisé par une ordonnée à l'origine différente, maios la pente de la droite reste la même.
 
 ```{r graph FE, echo=FALSE}
 source(here::here("02-codes", "presentations", "05-panel", "code", "graph_model_FE_indiv.R"))
 ```
 
-Le principe est identique pour les facteurs communs qui varient dans le temps, mais sont identiques pour chaque individus. 
+Le principe est identique pour les facteurs communs qui varient dans le temps, mais sont identiques pour chaque individus.
 
 $$
 \begin{aligned}
-  y_{i,t} = \gamma_t + \beta x_{i,t} + \varepsilon_{i,t}   
+  y_{i,t} = \lambda_t + \beta x_{i,t} + \varepsilon_{i,t}   
 \end{aligned}
-$$
-Il faut voir $\gamma_t$ comme une ordonnée à l'origine spécifique pour chaque unité temporelle. Encore une fois, la force de la relation reste identique à chaque période de temps : $\beta$.
+$$ Il faut voir $\lambda_t$ comme une ordonnée à l'origine spécifique pour chaque unité temporelle. Encore une fois, la force de la relation reste identique à chaque période de temps : $\beta$.
 
-On peut évidemment inclure les facteurs invariants dans le temps et les facteurs commun au sein d'un même modèle : 
+On peut évidemment inclure les facteurs invariants dans le temps et les facteurs commun au sein d'un même modèle :
 
 $$
 \begin{aligned}
-  y_{i,t} = \alpha_i + \gamma_t + \beta x_{i,t} + \varepsilon_{i,t}   
+  y_{i,t} = \alpha_i + \lambda_t + \beta x_{i,t} + \varepsilon_{i,t}   
 \end{aligned}
-$$
-Les interprétations de $\alpha_i$ et $\gamma_t$ restent inchangées. 
+$$ Les interprétations de $\alpha_i$ et $\lambda_t$ restent inchangées.
 
 ### Hétérogénéité totale
 
-Finalement, il est possible d'avoir une hétérogénéité dans les constantes (individuelles et/ou temporelles) mais également il est possible que la relation entre $x$ et $y$ change entre les individus. La pente de la droite va dès lors dépendre de l'individu en question. 
+Finalement, il est possible d'avoir une hétérogénéité dans les constantes (individuelles et/ou temporelles) mais également il est possible que la relation entre $x$ et $y$ change entre les individus. La pente de la droite va dès lors dépendre de l'individu en question.
 
 $$
 \begin{aligned}
   y_{i,t} = \alpha_i  + \beta_i x_{i,t} + \varepsilon_{i,t}   
 \end{aligned}
-$$
-Dans ce modèle, il y a des effets invariants dans le temps et spécifiques à chaque individu ($\alpha_i$), mais la pente (la force) de la relation liant $x$ à $y$ diffère également entre les individus. Il n'y a plus une relation unique. Il y a une relation par individu. 
-
+$$ Dans ce modèle, il y a des effets invariants dans le temps et spécifiques à chaque individu ($\alpha_i$), mais la pente (la force) de la relation liant $x$ à $y$ diffère également entre les individus. Il n'y a plus une relation unique. Il y a une relation par individu.
 
 ```{r graph heterogeneous total, echo=FALSE}
 source(here::here("02-codes", "presentations", "05-panel", "code", "graph_model_heterogeneous.R"))
 ```
-La représentation graphique ci-dessus nous montre que globalement la relation entre $x$ est $y$ est positive pour tous les individus à l'exception de l'individu 4 pour lequel la relation est négative. Il pourrait s'agir d'un individu qui n'appartient pas réellement au groupe étudié, ou alors il s'agit d'un outlier, d'un individu exceptionnel. 
 
+La représentation graphique ci-dessus nous montre que globalement la relation entre $x$ est $y$ est positive pour tous les individus à l'exception de l'individu 4 pour lequel la relation est négative. Il pourrait s'agir d'un individu qui n'appartient pas réellement au groupe étudié, ou alors il s'agit d'un outlier, d'un individu exceptionnel.
 
 ## Biais d'hétérogénéité
 
-Si les modèles de panel sont capables de prendre en compte différents niveaux d'hétérogénéité, cela signifie que si cette hétérogénéité n'est pas correctement prise en compte, elle est susceptible de biaiser nos estimations et de les rendre sans intérêt. 
+Si les modèles de panel sont capables de prendre en compte différents niveaux d'hétérogénéité, cela signifie que si cette hétérogénéité n'est pas correctement prise en compte, elle est susceptible de biaiser nos estimations et de les rendre sans intérêt.
 
-Suppoons que le modèle de la population comporte un paramètre de pente identique pour tous les individus, mais que des effects invariants dans le temps impactent chaque individu de manière différente : 
+Suppoons que le modèle de la population comporte un paramètre de pente identique pour tous les individus, mais que des effects invariants dans le temps impactent chaque individu de manière différente :
 
 $$
 \begin{aligned}
   y_{i,t} = \alpha_i + \beta x_{i,t} + \varepsilon_{i,t} 
 \end{aligned}
-$$
-Supposons maintenant, que l'on utilise not $NT$ observations pour estimer le modèle pooled suivant : 
+$$ Supposons maintenant, que l'on utilise not $NT$ observations pour estimer le modèle pooled suivant :
 
 $$
 \begin{aligned}
   y_{i,t} = \alpha + \beta x_{i,t} + u_{i,t}   
 \end{aligned}
-$$
-Si les effets individuels $\alpha_i$ sont corrélés avec $x_{i,t}$, alors les omettre dans l'estimation va biaiser $\beta$. 
+$$ Si les effets individuels $\alpha_i$ sont corrélés avec $x_{i,t}$, alors les omettre dans l'estimation va biaiser $\beta$.
 
 ```{r graph heterogeneity bias, echo=FALSE}
 source(here::here("02-codes", "presentations", "05-panel", "code", "graph_heterogeneity_bias.R"))
 ```
 
-Le graphique ci-dessus montre que la relation entre les variables $x$ et $y$ est négative si l'on distingue correctement l'effet individuel de chaque individu. Ils sont gouvernés par la même relation, mais des effets individuels invariants dans le temps entraînent des différences systématiques entre les différents individus. Si ces effets individuels ne sont pas pris en compte (en faisant un modèle pooled par exemple), la relation estimée sera une relation fortement positive alors même que la vraie relation dans la population est négative (il s'agit ici d'un cas extrême). 
+Le graphique ci-dessus montre que la relation entre les variables $x$ et $y$ est négative si l'on distingue correctement l'effet individuel de chaque individu. Ils sont gouvernés par la même relation, mais des effets individuels invariants dans le temps entraînent des différences systématiques entre les différents individus. Si ces effets individuels ne sont pas pris en compte (en faisant un modèle pooled par exemple), la relation estimée sera une relation fortement positive alors même que la vraie relation dans la population est négative (il s'agit ici d'un cas extrême).
 
-Il faut donc faire attention à correctement modéliser l'hétérogénéité dans un modèle avec des données de panel. 
-
+Il faut donc faire attention à correctement modéliser l'hétérogénéité dans un modèle avec des données de panel.
 
 ## Estimateur Pooled OLS
 
-L'estimateur Pooled OLs (POLS) est un estimateur qui suppose qu'il n'y a pas d'hétérogénéité entre les différents individus et les différentes périodes du modèle. Le modèle à estimer est donc le modèle suivant : 
+L'estimateur Pooled OLs (POLS) est un estimateur qui suppose qu'il n'y a pas d'hétérogénéité entre les différents individus et les différentes périodes du modèle. Le modèle à estimer est donc le modèle suivant :
 
 $$
 \begin{aligned}
   y_{i,t} = \alpha + \beta^{'} x_{i,t} + \varepsilon_{i,t}  
 \end{aligned}
-$$
-L'estimation d'un modèle pooled revient à effectuer une régression par les MCO classiques, simplement augmenté avec la dimension temporelle. 
+$$ L'estimation d'un modèle pooled revient à effectuer une régression par les MCO classiques, simplement augmenté avec la dimension temporelle.
 
-Les estimateurs sont donnés par la formule suivante : 
+Les estimateurs sont donnés par la formule suivante :
 
 $$
 \begin{cases}
@@ -294,25 +275,26 @@ $$
 $$
 
 Avec : 
-- $\bar{x} = \frac{1}{NT}\sum_{i=1}^N \sum_{t=1}^T x_{i,t}$
+
+- $\bar{x} = \frac{1}{NT}\sum_{i=1}^N \sum_{t=1}^T x_{i,t}$ 
+
 - $\bar{y} = \frac{1}{NT}\sum_{i=1}^N \sum_{t=1}^T y_{i,t}$
 
-L'estimateur POLS est non-biaisé et consistant si $x_{i,t}$ est strictement exogène (non-corrélé de quelconque manière que ce soit avec le terme d'erreur) et si les constantes sont réellement homogènes. En cas d'hétérogénéité des constantes (et dans le cas où elles sont corrélées avec $x_{i,t}$), alors l'estimateur POL est biaisé. 
+L'estimateur POLS est non-biaisé et consistant si $x_{i,t}$ est strictement exogène (non-corrélé de quelconque manière que ce soit avec le terme d'erreur) et si les constantes sont réellement homogènes. En cas d'hétérogénéité des constantes (et dans le cas où elles sont corrélées avec $x_{i,t}$), alors l'estimateur POL est biaisé.
 
-Comme pour une estimation OLS classique, la présence d'hétéroscédasticité (variance nonc-constante des erreurs) ou d'auto-corrélation des erreurs n'affecte pas le biais de l'estimateur. Cela impact l'inférence en rendant la variance de l'estimateur non-minimale. Dans de tels cas des correction (White, Newey-West, etc...) peuvent être appliquées sur la matrice de variance-covariance. 
+Comme pour une estimation OLS classique, la présence d'hétéroscédasticité (variance nonc-constante des erreurs) ou d'auto-corrélation des erreurs n'affecte pas le biais de l'estimateur. Cela impact l'inférence en rendant la variance de l'estimateur non-minimale. Dans de tels cas des correction (White, Newey-West, etc...) peuvent être appliquées sur la matrice de variance-covariance.
 
 ## Estimateur LDSV / Effets Fixes
 
 ### Définition de l'estimateur
 
-Considérons maintenant le cas où le modèle dans la population est caractérisé par des différences individuelles invariantes dans le temps, mais où la relation reste la même entre les individus et les périodes temporelles : 
+Considérons maintenant le cas où le modèle dans la population est caractérisé par des différences individuelles invariantes dans le temps, mais où la relation reste la même entre les individus et les périodes temporelles :
 
 $$
 \begin{aligned}
   y_{i,t} = \alpha_i + \beta^{'} x_{i,t} + \varepsilon_{i,t}  
 \end{aligned}
-$$
-Nous supposons également que les effets individuels sont corrélés d'une quelconque manière que ce soit avec la variable explicative $x_{i,t}$ : 
+$$ Nous supposons également que les effets individuels sont corrélés d'une quelconque manière que ce soit avec la variable explicative $x_{i,t}$ :
 
 $$
 E(\alpha_i | x_{i,1}, \cdots, x_{i,T}) \neq 0
@@ -320,18 +302,17 @@ $$
 
 #### Estimateur LSDV
 
-Dans ce cas ne pas modéliser ces différences individuelles entraînera un biais dans l'estimateur. On ne peut donc pas utiliser l'estimateur Pooled, qui omet complètement ces effets individuels, ni l'estimateur à effets aléatoires qui considère ces effets individuels comme étant des variables aléatoires présentes dans le terme d'erreur. 
+Dans ce cas ne pas modéliser ces différences individuelles entraînera un biais dans l'estimateur. On ne peut donc pas utiliser l'estimateur Pooled, qui omet complètement ces effets individuels, ni l'estimateur à effets aléatoires qui considère ces effets individuels comme étant des variables aléatoires présentes dans le terme d'erreur.
 
-L'idée derrière l'estimateur à effets fixe revient à inclure une variable binaire par individu qui prend la valeur 1 quand il s'agit de l'individu concerné et la valeur 0 sinon. L'estimation est ensuite une estimation OLS classique. Cependant, inclure une dummy par individu peut être fastidieux et peu efficace. 
+L'idée derrière l'estimateur à effets fixe revient à inclure une variable binaire par individu qui prend la valeur 1 quand il s'agit de l'individu concerné et la valeur 0 sinon. L'estimation est ensuite une estimation OLS classique. Cependant, inclure une dummy par individu peut être fastidieux et peu efficace.
 
-Pour éviter cela, on peut transformer l'écriture du modèle précédent pour ne garder une écriture qui ne dépend que de la dimension individuelle. On obtient ainsi une équation par individu que l'on peut par la suite regrouper. 
+Pour éviter cela, on peut transformer l'écriture du modèle précédent pour ne garder une écriture qui ne dépend que de la dimension individuelle. On obtient ainsi une équation par individu que l'on peut par la suite regrouper.
 
 $$
 \begin{aligned}
   y_i = e\alpha_i + X_i\beta + \varepsilon_i \quad \forall \hspace{0.2cm} i = 1, ..., N  
 \end{aligned}
-$$
-Avec : 
+$$ Avec :
 
 $$
 \begin{aligned}
@@ -350,8 +331,7 @@ x_{1,i,2}  \\
 x_{1,i,T} 
 \end{array} \right)  
 \end{aligned}
-$$
-La minimisation de la somme des carrés des résidus de ce modèle donne les estimateurs LSDV suivant : 
+$$ La minimisation de la somme des carrés des résidus de ce modèle donne les estimateurs LSDV suivant :
 
 $$
 \begin{cases}
@@ -360,7 +340,7 @@ $$
 \end{cases}
 $$
 
-Avec : 
+Avec :
 
 $$
 \begin{aligned}
@@ -368,17 +348,17 @@ $$
 \end{aligned}
 $$
 
-L'estimateur Least Square Dummy Variable (LSDV) correspond à un OLS classique dans lequel on a inclu une variable dummy pour chaque individu. On obtient donc une ordonnée à l'origine par individu. On peut voir que la différence par rapport à l'estimateur POLS est que l'écart est estimé par rapport à la moyenne (temporelle) de chaque individu et non plus à une moyenne globale. 
+L'estimateur Least Square Dummy Variable (LSDV) correspond à un OLS classique dans lequel on a inclu une variable dummy pour chaque individu. On obtient donc une ordonnée à l'origine par individu. On peut voir que la différence par rapport à l'estimateur POLS est que l'écart est estimé par rapport à la moyenne (temporelle) de chaque individu et non plus à une moyenne globale.
 
-L'estimateur LSDV permet de récupérer l'information de la valeur de la constante pour chaque individu. Cependant, lorsque le nombre d'individu grandi, estimer l'ensemble des constante peut être computationnellement inefficient, voir inutile selon la question de recherche. 
+L'estimateur LSDV permet de récupérer l'information de la valeur de la constante pour chaque individu. Cependant, lorsque le nombre d'individu grandi, estimer l'ensemble des constante peut être computationnellement inefficient, voir inutile selon la question de recherche.
 
 #### Estimateur à Effets fixes / Within
 
-L'estimateur par Effets fixes va transformer le modèle initial pour supprimer les effets individuels avant d'estimer les coefficients de pente $\beta$. 
+L'estimateur par Effets fixes va transformer le modèle initial pour supprimer les effets individuels avant d'estimer les coefficients de pente $\beta$.
 
-L'idée derrière l'estimateur à effets fixes est d'estimer $\beta$ après avoir éliminer les effets individuels $\alpha_i$ en soustrayant à chaque valeur $x_{i,t}$ la moyenne (temporelle) de chaque individu $\bar{x}_{i}$. 
+L'idée derrière l'estimateur à effets fixes est d'estimer $\beta$ après avoir éliminer les effets individuels $\alpha_i$ en soustrayant à chaque valeur $x_{i,t}$ la moyenne (temporelle) de chaque individu $\bar{x}_{i}$.
 
-Le modèle devient donc: 
+Le modèle devient donc:
 
 $$
 \begin{aligned}
@@ -386,27 +366,25 @@ $$
 \end{aligned}
 $$
 
-Et on peut appliquer l'estimateur Pooled OLS sur ces nouvelles données. 
+Et on peut appliquer l'estimateur Pooled OLS sur ces nouvelles données.
 
-Au lieu de modifier les données puis d'estimer le modèle, on peut également modifier l'estimateur pour prendre en compte cette modification à effectuer. 
+Au lieu de modifier les données puis d'estimer le modèle, on peut également modifier l'estimateur pour prendre en compte cette modification à effectuer.
 
-Pour cela, on va considérer une matrice de taille $T \times T$ idempotent notée $Q$ telle que : 
+Pour cela, on va considérer une matrice de taille $T \times T$ idempotent notée $Q$ telle que :
 
 $$
 \begin{aligned}
   Q = I_T -  \frac{1}{T}ee^{'}  
 \end{aligned}
-$$
-Il s'agit d'une matrice de transition (appelée opérateur within) qui permet de mesurer les observations par rapport à leur moyennes individuelles (pour chaque individu on fait la moyenne de toutes ses périodes temporelles). Cette matrice est dite idempotente c'est à dire que $Q \times Q = Q$ et $Q^{'} = Q$. 
+$$ Il s'agit d'une matrice de transition (appelée opérateur within) qui permet de mesurer les observations par rapport à leur moyennes individuelles (pour chaque individu on fait la moyenne de toutes ses périodes temporelles). Cette matrice est dite idempotente c'est à dire que $Q \times Q = Q$ et $Q^{'} = Q$.
 
-On va prémultiplier chaque équation individuelle par cette matrice $Q$, ce qui donne l'équation suivante : 
+On va prémultiplier chaque équation individuelle par cette matrice $Q$, ce qui donne l'équation suivante :
 
 $$
 \begin{aligned}
   Qy_i = Qe\alpha_i + QX_i\beta + Q\varepsilon_i \quad \forall \hspace{0.2cm} i = 1, ..., N  
 \end{aligned}
-$$
-On peut montrer que cela revient à mesurer les variables comme des déviations par rapport à leur moyenne individuelle : 
+$$ On peut montrer que cela revient à mesurer les variables comme des déviations par rapport à leur moyenne individuelle :
 
 $$
 \begin{aligned}
@@ -444,7 +422,7 @@ $$
 \end{aligned}
 $$
 
-Appliquer la matrice $Q$ au vecteur $e$ qui est constant (ou appliquer la matrice $Q$ à une variable invariante dans le temps) revient au vecteur nul puisque : 
+Appliquer la matrice $Q$ au vecteur $e$ qui est constant (ou appliquer la matrice $Q$ à une variable invariante dans le temps) revient au vecteur nul puisque :
 
 $$
 \begin{aligned}
@@ -456,10 +434,9 @@ $$
 \end{aligned}
 $$
 
+Les variables/effets invariants dans le temps sont donc supprimés (puisqu'on leur retire leur moyenne qui est égale à leur valeur).
 
-Les variables/effets invariants dans le temps sont donc supprimés (puisqu'on leur retire leur moyenne qui est égale à leur valeur). 
-
-L'équation devient donc : 
+L'équation devient donc :
 
 $$
 \begin{aligned}
@@ -468,7 +445,7 @@ $$
 \end{aligned}
 $$
 
-A partir de cette transformation on peut donc définir l'estimateur Whithin/Effet fixe (FE) comme l'estimateur OLS classique avec l'ajout de la matrice $Q$ : 
+A partir de cette transformation on peut donc définir l'estimateur Whithin/Effet fixe (FE) comme l'estimateur OLS classique avec l'ajout de la matrice $Q$ :
 
 $$
 \begin{aligned}
@@ -476,64 +453,56 @@ $$
 \end{aligned}
 $$
 
-Ou encore : 
+Ou encore :
 
 $$
 \begin{aligned}
   \hat{\beta}_{\text{FE}} = \left[ \sum_{i=1}^N X_i^{' }Q X_i \right]^{-1} \left[ \sum_{i=1}^N X_i^{' }QY_{i}\right]  
 \end{aligned}
-$$
-La variance de l'estimateur à effet fixe est également similaire à la variance OLS classique : 
+$$ La variance de l'estimateur à effet fixe est également similaire à la variance OLS classique :
 
 $$
 \begin{aligned}
   V \left( \hat{\beta}_{\text{FE}} \right) = \sigma_{\varepsilon}^2 \left[ \sum_{i=1}^N X_i^{' }Q X_i \right]^{-1}   
 \end{aligned}
-$$
-Il est important de noter que les méthodes LSDV ou FE donnent les mêmes estimations des paramètres de pente $\beta$ : 
+$$ Il est important de noter que les méthodes LSDV ou FE donnent les mêmes estimations des paramètres de pente $\beta$ :
 
 $$
 \begin{aligned}
   \hat{\beta}_{\text{LSDV}} = \hat{\beta}_{\text{FE}} = \hat{\beta}_{\text{Within}} 
 \end{aligned}
-$$
-L'estimateur $\hat{\beta}_{\text{LSDV}}$ permettra d'obtenir des estimations pour les effets individuels invariants dans le temps $\alpha_i$ qu'il suffira d'interpréter comme une variable binaire classique en référence à un individu de référence. L'estimateur FE (Within) ne donnera que l'estimation des paramètres de pente $\beta$. 
+$$ L'estimateur $\hat{\beta}_{\text{LSDV}}$ permettra d'obtenir des estimations pour les effets individuels invariants dans le temps $\alpha_i$ qu'il suffira d'interpréter comme une variable binaire classique en référence à un individu de référence. L'estimateur FE (Within) ne donnera que l'estimation des paramètres de pente $\beta$.
 
+#### Estimateur Two Ways Fixed Effect
 
-#### Estimateur Two Ways Fixed Effect 
-
-On peut généraliser le modèle à effets fixes pour inclure également effets temporels spécifiques qui ne varient pas entre les individus. On considère ainsi le modèle suivant : 
+On peut généraliser le modèle à effets fixes pour inclure également effets temporels spécifiques qui ne varient pas entre les individus. On considère ainsi le modèle suivant :
 
 $$
 \begin{aligned}
-  y_{i,t} = \alpha_i + \gamma_t + \beta x_{i,t} + \varepsilon_{i,t}   
+  y_{i,t} = \alpha_i + \lambda_t + \beta x_{i,t} + \varepsilon_{i,t}   
 \end{aligned}
-$$
-On peut introduire une variable binaire pour chaque individu et une variable binaire pour chaque période temporelle : $(N \times T)$ variables binaires, ou bien on peut comme pour l'estimateur FE, procéder à une transformation des variables telles que :
+$$ On peut introduire une variable binaire pour chaque individu et une variable binaire pour chaque période temporelle : $(N \times T)$ variables binaires, ou bien on peut comme pour l'estimateur FE, procéder à une transformation des variables telles que :
 
 $$
 \begin{aligned}
   \tilde{y} &= (y_{i,t} - \bar{y}_i - \bar{y}_t + \bar{y}) \\[2ex]
   \tilde{x} &= (x_{i,t} - \bar{x}_i - \bar{x}_t + \bar{x})
 \end{aligned}
-$$
-On va retrancher à chaque variable sa moyenne individuelle, sa moyenne temporelle et ajouter la moyenne globale individuelle et temporelle. Il ne reste plus qu'à estimer le modèle à partir de l'estimateur Pooled OLS. 
+$$ On va retrancher à chaque variable sa moyenne individuelle, sa moyenne temporelle et ajouter la moyenne globale individuelle et temporelle. Il ne reste plus qu'à estimer le modèle à partir de l'estimateur Pooled OLS.
 
 **Il est très important de noter que lorsque l'on utiliser un modèle à effets fixes, qu'il soit one way ou two ways, il n'est pas possible d'estimer les coefficients relatifs à des variables invariantes dans la dimension de l'effet fixe. Ces effets invariants se retrouveront dans les coefficients des variables binaires.**
 
-
 ### Hypothèses et propriétés
 
-Pour que les estimateurs LSDV/FE aient les bonnes propriétés, certaines hypothèses doivent être respectée. 
+Pour que les estimateurs LSDV/FE aient les bonnes propriétés, certaines hypothèses doivent être respectée.
 
-L'hypothèse d'exogénéité est toujours présente. Les variables explicatives ne doivent être corrélées d'aucune manière que ce soit avec le terme d'erreur : 
+L'hypothèse d'exogénéité est toujours présente. Les variables explicatives ne doivent être corrélées d'aucune manière que ce soit avec le terme d'erreur :
 
 $$
 \begin{aligned}
   E(u_{i,t} | x_{i,t}) = 0  
 \end{aligned}
-$$
-Si cette hypothèse est respectée, alors les estimateurs sont sans biais. Egalement, l'hétérogénéité doit être correctement spécifiée. Si le vrai modèle comporte des effets fixes individuels et temporels, omettre l'un des deux dans l'estimation donnera lieu à des coefficients biaisés et inconsistants. 
+$$ Si cette hypothèse est respectée, alors les estimateurs sont sans biais. Egalement, l'hétérogénéité doit être correctement spécifiée. Si le vrai modèle comporte des effets fixes individuels et temporels, omettre l'un des deux dans l'estimation donnera lieu à des coefficients biaisés et inconsistants.
 
 Tout comme un modèle OLS classique, on va placer des hypothèses sur le terme d'erreur. Outre sa supposée normalité, les erreurs du modèle doivent être de moyenne nulle, de variance constante à travers le temps, ne doivent pas être auto-corrélées dans le temps et ne doivent pas être corrélées entre les individus (l'erreur d'un individu spécifique ne doit pas être corrélée avec l'erreur d'un autre individu). ce jeu d'hypothèse est noté de la manière suivante :
 
@@ -547,24 +516,19 @@ $$
     \end{cases} \\[2ex]
     &E (\varepsilon_{i,t}\varepsilon_{j,s}) = 0 \quad \forall j \neq i \quad \forall (t, s)
 \end{aligned}
-$$
-Ainsi, les erreurs : 
-- Ne doivent pas souffrir d'auto-corrélation
-- Doivent être homoskedastique
-- Ne Doivent pas souffrir corrélation inter-individuelle ou spatiale
+$$ Ainsi, les erreurs : - Ne doivent pas souffrir d'auto-corrélation - Doivent être homoskedastique - Ne Doivent pas souffrir corrélation inter-individuelle ou spatiale
 
-Si ces hypothèses sont respectées alors la variance des estimateurs LSDV et FE est minimale. 
+Si ces hypothèses sont respectées alors la variance des estimateurs LSDV et FE est minimale.
 
-
-Attention, le $R^2$ n'est pas interprétable/correct lorsqu'il est calculé à partir de l'estimateur FE/Within, mais l'est avec l'estimateur LSDV. 
+Attention, le $R^2$ n'est pas interprétable/correct lorsqu'il est calculé à partir de l'estimateur FE/Within, mais l'est avec l'estimateur LSDV.
 
 ## Estimateur Between
 
-Les estimateurs à effets fixes permettent d'exploiter la variabilité des données qu sein de chaque groupe d'individus. Mais on peut être intéressés à ne regarder que la variation entre les différents groupes. C'est l'objectif de l'estimateur **Between**. 
+Les estimateurs à effets fixes permettent d'exploiter la variabilité des données qu sein de chaque groupe d'individus. Mais on peut être intéressés à ne regarder que la variation entre les différents groupes. C'est l'objectif de l'estimateur **Between**.
 
 Cet estimateur va transformer les variables de telle sorte à retirer toute la variation au sein d'un individu. Cela conduit à n'estimer qu'une simple régression en coupe transversale.
 
-Si l'on reprend le modèle : 
+Si l'on reprend le modèle :
 
 $$
 \begin{aligned}
@@ -572,14 +536,13 @@ $$
 \end{aligned}
 $$
 
-On définit l'opérateur Between comme suit : 
+On définit l'opérateur Between comme suit :
 
 $$
 \begin{aligned}
   B = e_T \times \left( e_T^{'}e_T \right) \times e_T^{'}  
 \end{aligned}
-$$
-Et on prémultiplie les équation individuelles par l'opérateur Between : 
+$$ Et on prémultiplie les équation individuelles par l'opérateur Between :
 
 $$
 \begin{aligned}
@@ -587,33 +550,32 @@ $$
 \end{aligned}
 $$
 
-Cette transformation revient à calculer la moyenne individuelle de chaque individu (pour chaque individu faire la moyenne des différentes périodes de temps). 
+Cette transformation revient à calculer la moyenne individuelle de chaque individu (pour chaque individu faire la moyenne des différentes périodes de temps).
 
-On obtient : 
+On obtient :
 
 $$
 \begin{aligned}
   \bar{y}_i = \alpha + \beta^{'} \bar{x}_i  + \bar{\varepsilon}_i
 \end{aligned}
-$$
-On peut le voir en prenant $y_i$ comme exemple : 
+$$ On peut le voir en prenant $y_i$ comme exemple :
 
 $$
 \begin{aligned}
   By_i &= \left[ e_T \times \left( e_T^{'}e_T \right) \times e_T^{'} \right] y_i  \\[2ex]
-  By_i &= \left[ e_T \times \left( \frac{1}{T} \right) \times e_T^{'} \right] y_i \\[2ex]
-  B y_i &= \left( \frac{1}{T} e_T e_T' \right) y_i \\[2ex]
-B y_i &= e_T \left( \frac{1}{T} e_T' y_i \right) \\[2ex]
-B y_i &= e_T \left[ \frac{1}{T} \begin{pmatrix} 1 & 1 & \dots & 1 \end{pmatrix} \begin{pmatrix} y_{i,1} \\ y_{i,2} \\ \vdots \\ y_{i,T} \end{pmatrix} \right] \\[2ex]
-B y_i &= e_T \left( \frac{1}{T} \sum_{t=1}^T y_{i,t} \right) \\[2ex]
-B y_i &= e_T \bar{y}_i \\[2ex]
-B y_i &= \begin{pmatrix} 1 \\ 1 \\ \vdots \\ 1 \end{pmatrix}  \bar{y}_i  \\[2ex]
-B y_i &= \begin{pmatrix} \bar{y}_i \\ \bar{y}_i \\ \vdots \\ \bar{y}_i \end{pmatrix} \\[2ex]
-B y_i &= \bar{y}_i 
+  \Leftrightarrow By_i &= \left[ e_T \times \left( \frac{1}{T} \right) \times e_T^{'} \right] y_i \\[2ex]
+  \Leftrightarrow B y_i &= \left( \frac{1}{T} e_T e_T' \right) y_i \\[2ex]
+\Leftrightarrow B y_i &= e_T \left( \frac{1}{T} e_T' y_i \right) \\[2ex]
+\Leftrightarrow B y_i &= e_T \left[ \frac{1}{T} \begin{pmatrix} 1 & 1 & \dots & 1 \end{pmatrix} \begin{pmatrix} y_{i,1} \\ y_{i,2} \\ \vdots \\ y_{i,T} \end{pmatrix} \right] \\[2ex]
+\Leftrightarrow B y_i &= e_T \left( \frac{1}{T} \sum_{t=1}^T y_{i,t} \right) \\[2ex]
+\Leftrightarrow B y_i &= e_T \bar{y}_i \\[2ex]
+\Leftrightarrow B y_i &= \begin{pmatrix} 1 \\ 1 \\ \vdots \\ 1 \end{pmatrix}  \bar{y}_i  \\[2ex]
+\Leftrightarrow B y_i &= \begin{pmatrix} \bar{y}_i \\ \bar{y}_i \\ \vdots \\ \bar{y}_i \end{pmatrix} \\[2ex]
+\Leftrightarrow B y_i &= \bar{y}_i 
 \end{aligned}
 $$
 
-L'estimateur between est le suivant : 
+L'estimateur between est le suivant :
 
 $$
 \begin{aligned}
@@ -621,10 +583,252 @@ $$
 \end{aligned}
 $$
 
-Cet estimateur utilise seulement les données en coupe transversale. La variation temporelle intra-individuelle disparaît. On perd donc des observations et de la puissance statistique puisque l'on garde seulement $N$ points d'observation. 
+Cet estimateur utilise seulement les données en coupe transversale. La variation temporelle intra-individuelle disparaît. On perd donc des observations et de la puissance statistique puisque l'on garde seulement $N$ points d'observation.
 
-Sous les hypothèses classiques, cet estimateur est consistant et non-biaisé. 
+Sous les hypothèses classiques, cet estimateur est consistant et non-biaisé.
 
+## Estimateur à Effets Aléatoires
+
+### Définition et hypothèses des effets aléatoires
+
+Nous supposons maintenant que les effets individuels et temporels ne sont corrélés d'aucune manière que ce soit avec la variable explicative $x_{i,t}$ :
+
+$$
+\begin{aligned}
+  &E(\alpha_i | x_{i,1}, \cdots, x_{i,T}) = 0 \\[2ex]
+  &E(\lambda_t | x_{i,1}, \cdots, x_{i,T}) = 0  
+\end{aligned}
+$$
+
+On considère donc que $\alpha_i$ est une variable aléatoire. Dans ce cas, le fait de considérer les effets inobservés comme une spécification aléatoire est un cas particulier d'un modèle à composante d'erreur dans lequel les erreurs sont supposées constituées de 3 composantes : les effets individuels et temporels et un terme d'erreur idiosyncratique $v_{i,t}$ qui comprend tous les effets non pris en compte affectant un individu $i$ à la période $t$.
+
+$$
+\begin{aligned}
+  y_{i,t} &= \beta^{'}x_{i,t} + \varepsilon_{i,t} \quad\forall i \hspace{0.2cm} \forall t \\[2ex]
+  \varepsilon_{i,t} &= \alpha_i + \lambda_t + v_{i,t}
+\end{aligned}
+$$
+
+On peut dans ce cas décomposer la variance conditionnelle de $y_{i,t}$ comme étant la somme de 3 composantes :
+
+$$
+\begin{aligned}
+  V(y_{i,t} | x_{i,t}) = \sigma^2_y = \sigma^2_\alpha + \sigma^2_\lambda + \sigma^2_v  
+\end{aligned}
+$$ On pose les hypothèses suivantes sur le terme d'erreur $\varepsilon_{i,t}$ :
+
+$$
+\begin{aligned}
+&\alpha_i + \lambda_t + v_{i,t} \sim \text{i.i.d} \quad \forall i \hspace{0.2cm} \forall t \\[2ex]
+&E(\alpha_i) = E(\lambda_t) = E(v_{it}) = 0 \\[2ex]
+&E(\alpha_i \alpha_j) = 
+\begin{cases} 
+\sigma_\alpha^2 & \text{si } i = j \\ 
+0 & \text{si } i \neq j 
+\end{cases} \\[2ex]
+&E(\lambda_t \lambda_s) = 
+\begin{cases} 
+\sigma_\lambda^2 & \text{si } t = s \\ 
+0 & \text{si } t \neq s 
+\end{cases} \\[2ex]
+&E(v_{it} v_{js}) = 
+\begin{cases} 
+\sigma_v^2 & \text{si } i = j \text{ et } t = s \\ 
+0 & \text{sinon}
+\end{cases} \\[2ex]
+&E(\alpha_i \lambda_t) = E(\alpha_i v_{js}) = E(\lambda_t v_{is}) = 0 \\[2ex]
+&E(\alpha_i x^{'}_{i,t}) = E(\alpha_i x^{'}_{i,t}) = E(\lambda_t x^{'}_{i,t}) = 0
+\end{aligned}
+$$
+
+On suppose donc que les erreurs sont de moyennes nulles (en moyenne on ne fait pas d'erreur systématique de prévision). On suppose également que la variance des différents termes de l'erreur est constante pour chaque terme (hypothèse d'homoscédasticité individuelle et temporelle). On suppose qu'il n'existe pas d'auto-corrélation aussi bien temporelle qu'individuelle : les erreurs ne sont pas corrélées dans le temps au sein d'un individu et ne sont pas corrélées à une même période entre différents individus. On suppose également que les différents termes de l'erreur ne sont pas corrélés entre eux : les effets individuels n'ont pas de liens avec les effets temporels ou les chocs idiosyncratiques. Ces hypothèses permettent d'obtenir les propriétés désirables pour la variance des estimateurs.
+
+La dernière hypothèse est l'hypothèse d'exogénéité. On suppose que les différents termes de l'erreur ne sont pas corrélés avec les variables explicatives. Cela permet d'obtenir des estimateurs sans biais. Cette hypothèse est d'autant plus forte dans le cadre des effets aléatoires puisque le terme d'erreur est constitué de davantage de composantes. Ainsi, aussi bien les effets individuel que temporels ne doivent âs être corrélés avec les variables explicatives sous peine de biaiser l'estimation.
+
+On peut montrer que sous ces hypothèses, lorsque les effets inobservés individuels ou temporels sont traités comme des variables aléatoires, **l'estimateur LSDV n'est plus l'estimateur BLUE**. Il reste toujours sans-biais et consistant, mais il n'est plus l'estimateur de variance minimale. En effet, utiliser l'estimateur LSDV alors que les effets inobservés sont des variables aléatoires conduit à introduire de la corrélation sérielle (auto-corrélation temporelle) au sein des erreurs.
+
+Lorsque les effets inobservés sont traités comme des variables aléatoires, **l'estimateur BLUE devient alors l'estimateur des moindres carrés généralisés (Generalized Least Square (GLS))**.
+
+### Rappel : Estimateur GLS pour une équation
+
+Dans le cas d'un modèle à une équation (données de coupes transversales) :
+
+$$
+\begin{aligned}
+  &Y = X \beta + \varepsilon \\[2ex]
+  &V(\varepsilon) = E[\varepsilon \varepsilon^{'}] = \Omega \neq \sigma_\varepsilon^2 I_T
+\end{aligned}
+$$
+
+L'estimateur GLS consiste à pondérer les observations par la matrice de variance-covariance $\Omega$ :
+
+$$
+\begin{aligned}
+  &\hat{\beta}_{\text{GLS}} = \left( X^{' }\Omega^{-1}X \right)^{-1} \left( X^{' }\Omega^{-1}X \right) \\[2ex]
+  &V \left( \hat{\beta}_{\text{GLS}} \right) = \left( X^{' }\Omega^{-1}X \right)^{-1}
+\end{aligned}
+$$
+
+Ce qui revient au même que d'utiliser les OLS sur le modèle transformé suivant :
+
+$$
+\begin{aligned}
+  \tilde{Y} &= \tilde{X}\beta + \tilde{\varepsilon} \\[2ex]
+  \tilde{Y} &= \Omega^{-1/2}Y \\[2ex]
+  \tilde{X} &= \Omega^{-1/2}X \\[2ex]
+\end{aligned}
+$$
+
+Dans le cas de données de panel, il faut savoir : - Quelle est la transformation GLS de la matrice $\Omega^{-1/2}$ - l'estimateur Feasible GLS lorsque $\Omega$ est inconnue
+
+### Estimateur GLS dans le cas de données de panel
+
+Considérons le modèle écrit pour chaque individu :
+
+$$
+\begin{aligned}
+  Y_i = \tilde{X}_i \gamma + \varepsilon_i \quad \forall i= 1, \cdots, N 
+\end{aligned}
+$$ Avec :
+
+$$
+\begin{aligned}
+  \varepsilon_i &= \alpha_i e + v_i \\[2ex]
+  \tilde{X}_i &= (e, X_i) \\[2ex]
+  \gamma^{'} &= (\mu, \beta^{'}) \\[2ex]
+  V &= E[\varepsilon_i \varepsilon_i^{'}] \quad \text{connue}
+\end{aligned}
+$$
+
+Dans ce modèle, on suppose qu'il n'y a pas d'effets temporels communs à tous les individus ($\lambda_t = 0$ mais on peut géénraliser pour inclure les effets temporels). On suppose également que les effets individuels inobservables sont caractérisés par une moyenne non-nulle que l'on prend en compte via l'ajout d'une constante $\mu$.
+
+Lorsque la matrice de variance covariance $V$ est connue, et que l'on connait donc les composantes individuelles et idiosyncratiques de la variance : $\sigma^2_\alpha$ et $\sigma^2_v$, l'estimateur GLS du vecteur de paramètres $\gamma$ est :
+
+$$
+\begin{aligned}
+  \hat{\gamma}_{\text{GLS}} = \left[ \sum_{i=1}^N \tilde{X}_i^{' }V^{-1} \tilde{X}_i \right]^{-1} \left[ \sum_{i=1}^N \tilde{X}_i^{' }V^{-1} \tilde{Y}_i \right]  
+\end{aligned}
+$$
+
+Sous les hypothèses données précédemment cet estimateur est BLUE.
+
+On peut écrire la matrice $V^{-1}$ comme :
+
+$$
+\begin{aligned}
+  &V^{-1} = \frac{1}{\sigma_v^2} \left[ Q + \Psi \frac{1}{T}ee^{' } \right] \\[2ex]
+  &Q = \left( I_T - \frac{ee^{'}}{T} \right) \\[2ex]
+  &\Psi = \left( \frac{\sigma^2_v}{\sigma_v^2 + T \sigma_{\alpha}^2} \right)
+\end{aligned}
+$$
+
+A partir de là, on peut réécrire l'estimateur GLS comme une moyenne pondérée de l'estimateur Within et de l'estimateur Between :
+
+$$
+\begin{aligned}
+\hat{\beta}_{\text{GLS}} = \left[ \frac{1}{T} \sum_{i=1}^N X_i^{' }QX_i + \Psi \sum_{i=1}^N \left( \bar{X}_i - \bar{X} \right) \left( \bar{X}_i - \bar{X} \right)^{' } \right]^{-1} \left[ \frac{1}{T} \sum_{i=1}^N X_i^{' }QY_i + \Psi \sum_{i=1}^N \left( \bar{X}_i - \bar{X} \right) \left( \bar{Y}_i - \bar{Y} \right) \right]
+\end{aligned}
+$$
+
+Ce qui revient à écrire : $$
+\begin{aligned}
+  &\hat{\beta}_{\text{GLS}} = \Delta \hat{\beta}_{\text{Between}} + \left( I_k - \Delta \right) \hat{\beta}_{\text{Within}} \\[2ex]
+  &\Delta = \Psi T \left[ \sum_{i=1}^N X_i^{' }QX_i + \Psi T \sum_{i=1}^N \left( \bar{X}_i - \bar{X} \right) \left( \bar{X}_i - \bar{X} \right)^{' } \right]^{-1} \left[ \sum_{i=1}^N \left( \bar{X}_i - \bar{X} \right) \left( \bar{X}_i - \bar{X} \right)^{' } \right]
+\end{aligned}
+$$
+
+-   Lorsque $\Psi \rightarrow 1$, l'estimateur GLS converge vers l'estimateur Pooled.
+-   Lorsque $\Psi \rightarrow 0$ ou $T \rightarrow \infty$, l'estimateur GLS converge vers l'estimateur Within/LSDV/FE.
+-   Lorsque $0 < \Psi < 1$, la structure des effets aléatoires constitue une solution intermédiaire entre le modèle sans effets individuels et le modèle à effets fixes individuels.
+
+La constante $\Psi$ mesure le poids donné à la variation inter-groupe. Cette dimension est complètement ignorée par l'estimateur LSDV. Il ne prend en compte que la variation au sein d'un même groupe.
+
+On peut montrer que la variance de l'estimateur GLS est :
+
+$$
+\begin{aligned}
+  V(\hat{\beta}_{\text{GLS}}) = \sigma^2_v \left[ \sum_{i=1}^N X_i^{' }QX_i + \Psi T \sum_{i=1}^N \left( \bar{X}_i - \bar{X} \right) \left( \bar{X}_i - \bar{X} \right)^{' } \right]^{-1}  
+\end{aligned}
+$$
+
+Lorsque le paramètre $\Psi > 0$, la variance de l'estimateur LGS est toujours inférieure à celle de l'estimateur Within :
+
+$$
+\begin{aligned}
+  V(\hat{\beta}_{\text{GLS}}) < V(\hat{\beta}_{\text{Within}})  
+\end{aligned}
+$$ Cette différence tend à se réduire à mesure que $T \rightarrow \infty$ puisque pour des panels de dimension infinie, l'estimateur GLS tend à devenir l'estimateur Within. Cela s'explique par le fait que dans un tel cas, on a un nombre infini d'observations pour chaque $i$. Dans ce cas, on peut considérer chaque $\alpha_i$ comme une variable aléatoire qui a été tirée une bonne fois pour toute et ainsi chaque $\alpha_i$ peut prétendre être comme un paramètre fixe.
+
+### Simplification de l'estimation GLS
+
+On peut simplifier l'estimation GLS en introduisant une matrice de transformation P telle que :
+
+$$
+\begin{aligned}
+  &P = \left[ I_T - \left( 1 - \Psi^{1/2} \right)  \frac{1}{T} ee^{' } \right] \\[2ex]
+  \Rightarrow &V^{-1} = \frac{1}{\sigma^2_v}P^{'}P
+\end{aligned}
+$$
+
+On prémultiplie ensuite le modèle par cette matrice P :
+
+$$
+\begin{aligned}
+  PY_i  = P \tilde{X}_i \beta + Pv_i  
+\end{aligned}
+$$ Cette transformation équivaut à préalablement transformer les données en leur retirant la fraction $\theta = (1 - \Psi^{1/2})$ de leur moyenne individuelle :
+
+$$
+\begin{aligned}
+  \left( Y_{i,t} - \theta \bar{Y}_i \right) = \bar{\omega} + \left( X_{i,t} - \theta \bar{X}_i \right) \beta + \left( \varepsilon_{i,t} - \theta \bar{\varepsilon_i} \right)  
+\end{aligned}
+$$
+
+L'estimateur GLS est obtenu en appliquant l'estimateur OLS sur ce modèle transformé. Cette méthodologie s'appelle "Partial Group Mean deviation" ou "quasi-demeaning".
+
+### Estimateur FGLS
+
+La méthodologie GLS fonctionne lorsque l'on connait la matrice de variance covariance et donc les composantes individuelles et idiosyncratiques de la variance : $\sigma^2_{\alpha}$ et $\sigma^2_{\varepsilon}$. Lorsqu'on ne les connait pas, il faut recourir à une estimation GLS en deux étapes (Feasible GLS).
+
+1)  On estime les composantes de la variance en utilisant des estimateurs consistants
+2)  On substitue les estimations de ces composantes dans la formule :
+
+$$
+\begin{aligned}
+  \hat{\gamma}_{\text{GLS}} = \left[ \sum_{i=1}^N \tilde{X}_i^{' } \widehat{V}^{-1} \tilde{X}_i \right]^{-1} \left[ \sum_{i=1}^N \tilde{X}_i^{' } \widehat{V}^{-1} \tilde{Y}_i \right]  
+\end{aligned}
+$$ Ou bien dans le modèle modifié suivant :
+
+$$
+\begin{aligned}
+  &\left( y_{i,t} - \theta \bar{Y}_i \right) = \bar{\omega} + \left( x_{i,t} - \theta \bar{X}_i \right) \beta + \left( \varepsilon_{i,t} - \theta \bar{\varepsilon_i} \right)  \\[2ex]
+  & \theta = \left( 1 - \Psi^{1/2} \right)
+\end{aligned}
+$$
+
+Pour cela il faut un estimateur consistant de $\theta$. On va alors :
+
+1)  Estimer le modèle en dimension Within (estimateur Within) pour obtenir $\hat{\sigma}^2_v$
+
+2)  Estimer le modèle en dimension Between (estimateur Between) pour obtenir $\hat{\sigma}^2_\alpha + \left( \frac{1}{T} \right) \hat{\sigma}^2_v$
+
+3)  Calculer l'estimateur $\hat{\Psi}$ tel que :
+
+$$
+\begin{aligned}
+  \hat{\Psi} = \left( \frac{\hat{\sigma}^2_v}{\hat{\sigma}_v^2 + T \hat{\sigma}_{\alpha}^2} \right) = \left[ \frac{\text{RSS}^{\text{Within}} / (N(T-1)-K)}{T \times \text{RSS}^{\text{Between}} / (N - (K+1))} \right] 
+\end{aligned}
+$$ 
+
+4) Calculer l'estimateur $\hat{\theta} = \left( 1 - \hat{\Psi}^{1/2} \right)$
+
+5)  Obtenir l'estimateur FGLS en utilisant les MCO sur le modèle :
+
+$$
+\begin{aligned}
+  \left( y_{i,t} - \hat{\theta} \bar{Y}_i \right) = \bar{\omega} + \left( x_{i,t} - \hat{\theta} \bar{X}_i \right) \beta + \left( \varepsilon_{i,t} - \hat{\theta} \bar{\varepsilon_i} \right)  
+\end{aligned}
+$$
 
 # Code
 
@@ -642,27 +846,3 @@ Charger les librairies et tous les objets de setup. Comme rien n'est chargé pou
 # Exécute le script setup.R pour charger tous les éléments importants
 source(here::here("02-codes", "utils", "setup.R"))
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
