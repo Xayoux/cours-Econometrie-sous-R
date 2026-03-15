@@ -2400,6 +2400,13 @@ window.Quarto = {
   <li><a href="#etape-3-tester-lhomogénéité-des-constantes" id="toc-etape-3-tester-lhomogénéité-des-constantes" class="nav-link" data-scroll-target="#etape-3-tester-lhomogénéité-des-constantes">Etape 3 : Tester l’homogénéité des constantes</a></li>
   </ul></li>
   <li><a href="#test-dhaussman-effets-fixes-ou-aléatoires" id="toc-test-dhaussman-effets-fixes-ou-aléatoires" class="nav-link" data-scroll-target="#test-dhaussman-effets-fixes-ou-aléatoires">Test d’Haussman : Effets fixes ou aléatoires ?</a></li>
+  <li><a href="#hétérogénéité-des-pentes" id="toc-hétérogénéité-des-pentes" class="nav-link" data-scroll-target="#hétérogénéité-des-pentes">Hétérogénéité des pentes</a></li>
+  <li><a href="#estimateur-mean-group" id="toc-estimateur-mean-group" class="nav-link" data-scroll-target="#estimateur-mean-group">Estimateur Mean Group</a></li>
+  <li><a href="#tester-lhétérogénéité-des-coefficients-de-pente" id="toc-tester-lhétérogénéité-des-coefficients-de-pente" class="nav-link" data-scroll-target="#tester-lhétérogénéité-des-coefficients-de-pente">Tester l’hétérogénéité des coefficients de pente</a>
+  <ul>
+  <li><a href="#test-de-haussman" id="toc-test-de-haussman" class="nav-link" data-scroll-target="#test-de-haussman">Test de Haussman</a></li>
+  <li><a href="#delta-test" id="toc-delta-test" class="nav-link" data-scroll-target="#delta-test">Delta Test</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#code" id="toc-code" class="nav-link" data-scroll-target="#code">Code</a>
   <ul>
@@ -3266,7 +3273,7 @@ x_{1,i,T}
 \]</span></p>
 <p>La règle de décision est la suivante :</p>
 <ul>
-<li><p>Si <span class="math inline">\(|F_2| \geq \mathcal{F} \left([N-1]K, NT-N[K+1]\right)\)</span>, alors on rejette l’hypothèse nulle d’homogénéité des coefficients de pente. On sait donc qu’il y a de l’hétérogénéité dans notre modèle et qu’au moins une partie de cette hétérogénéité s’explique par des relations différentes entre les individus (coefficients de pente différents). Comme il est très rare d’avoir des coefficients de pentes différents par individus mais des coefficients de constante égaux, alors on suppose dans ce cas qu’il y a une hétérogénéité totale aussi bien des constantes que des pentes. <strong>Il faut donc estimer un modèle par individu ou utiliser un estimateur prenant en compte l’hétérogénéité des pentes : PMG</strong>.</p></li>
+<li><p>Si <span class="math inline">\(|F_2| \geq \mathcal{F} \left([N-1]K, NT-N[K+1]\right)\)</span>, alors on rejette l’hypothèse nulle d’homogénéité des coefficients de pente. On sait donc qu’il y a de l’hétérogénéité dans notre modèle et qu’au moins une partie de cette hétérogénéité s’explique par des relations différentes entre les individus (coefficients de pente différents). Comme il est très rare d’avoir des coefficients de pentes différents par individus mais des coefficients de constante égaux, alors on suppose dans ce cas qu’il y a une hétérogénéité totale aussi bien des constantes que des pentes. <strong>Il faut donc estimer un modèle par individu ou utiliser un estimateur prenant en compte l’hétérogénéité des pentes : Estimatyeur Mean Group</strong>.</p></li>
 <li><p>Si <span class="math inline">\(|F_2| &lt; \mathcal{F} \left([N-1]K, NT-N[K+1]\right)\)</span>, alors on ne peut pas rejeter l’hypothèse nulle d’homogénéité des coefficients pente. On sait donc grâce au test 1 qu’il semble y avoir de l’hétérogénéité dans notre modèle. Le test 2 nous informe que cette hétérogénéité ne s’explique pas par des coefficients de pente différents. On va donc devoir tester si cette hétérogénéité s’explique par des coefficients de constantes qui diffèrent selon les individus. <strong>Il faut donc passer à l’étape 3 de la procédure</strong>.</p></li>
 </ul>
 </section>
@@ -3371,6 +3378,104 @@ x_{1,i,T}
 <li><p>Si <span class="math inline">\(|W| \geq \chi^2(K)\)</span> : alors on rejette l’hypothèse nulle de non corrélation entre les effets individuels et les variables explicatives. Dans ce cas, il ne faut pas utiliser l’estimateur GLS des effets aléatoires puisqu’il sera biaisé. Il faut donc utiliser un modèle permettant de modéliser les effets individuels comme des effets fixes : <strong>estimateur LSDV</strong>.</p></li>
 <li><p>Si <span class="math inline">\(|W| &lt; \chi^2(K)\)</span> : alors on ne peut rejeter l’hypothèse nulle de non corrélation entre les effets individuels et les variables explicatives. Dans ce cas, il faut utiliser l’estimateur GLS des effets aléatoires puisqu’il sera non-biaisé et aura une variance plus faible que les autres estimateurs à effets fixes. <strong>Il faut donc utiliser l’estimateur GLS des effets aléatoires</strong>.</p></li>
 </ul>
+</section>
+<section id="hétérogénéité-des-pentes" class="level2">
+<h2 class="anchored" data-anchor-id="hétérogénéité-des-pentes">Hétérogénéité des pentes</h2>
+<p>Supposons un modèle général de la forme :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  y_{i,t} = \beta^{&#39;}_{i,t} X_{i,t} + \varepsilon_{i,t}  
+\end{aligned}
+\]</span></p>
+<p>Ce modèle capture des différences de relations entre les individus et entre les périodes temporelles. Bien qu’il semble assez réaliste, il manque d’utilité et de pouvoir explicatif puisque le nombre de paramètres à estimer excède le nombre d’observations disponibles. Des formulation plus réalistes sont :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  &amp;y_{i,t} = \beta^{&#39;}_{i} x_{i,t} + \varepsilon_{i,t}  \\[2ex]
+  &amp;y_{i,t} = \beta^{&#39;}_{t} x_{i,t} + \varepsilon_{i,t}
+\end{aligned}
+\]</span></p>
+<p>Dans ces modèles, seules une dimension va faire varier le coefficient de pente et donc la force de la relation. De la même manière que ne pour les effets fixes, ne pas prendre en compte l’hétérogénéité des pentes va biaiser les estimateurs et limiter la validité de l’analyse empirique.</p>
+<p>Considérons le modèle dynamique suivant en supposant qu’il est estimé à partir d’un estimateur pooled ou à effets fixe :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  &amp;y_{i,t} = \lambda_i y_{i,t-1} +  \beta_{i} x_{i,t} + \varepsilon_{i,t}  \\[2ex]  
+  &amp; \lambda_i = \lambda + \eta_{1,i} \\[2ex]
+  &amp; \beta_i = \beta + \eta_{2,i}
+\end{aligned}
+\]</span></p>
+<p>Les paramètres de pente dispose d’une partie constante entre les individus (qui va être capturée par l’estimateur à effets fixes) et d’une partie aléatoire qui va varier entre les individus (qui ne va pas être prise en compte par l’estimateur à effets fixes et va donc se retrouver dans le terme d’erreur).</p>
+<p>L’estimation par effets fixes va donner le modèle suivant :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  &amp;y_{i,t} = \alpha_i \lambda y_{i,t-1} +  \beta x_{i,t} + \mu_{i,t}  \\[2ex]    
+  &amp;\mu_{i,t} = \eta_{1,i} y_{i,t-1} + \eta_{2,i} x_{i,t} + \varepsilon_{i,t}
+\end{aligned}
+\]</span></p>
+<p>Les parties individuelles des coefficients de pente vont se retrouver dans le terme d’erreur. Or ces parties individuelles sont par essence corrélées avec les variables explicatives. Les coefficients ne sont donc plus consistants à cause de l’endogénéité.</p>
+<p>Pesaran et Smith (1995) ont montré que même si <span class="math inline">\(\lambda_i = \lambda\)</span> (coefficient de pente homogène pour la variable dépendante retardée), alors une hétérogénéité dans le coefficient de pente de la variable explicative <span class="math inline">\(x\)</span> va amener <span class="math inline">\(\lambda\)</span> à tendre vers 1 et <span class="math inline">\(\beta\)</span> à tendre vers 0.</p>
+<p>Ils ont également montré que lorsque des retards de la variable explicative sont inclus dans le modèle et que l’hétérogénéité des pentes n’est pas prise en compte :</p>
+<ul>
+<li><p><span class="math inline">\(\beta_1\)</span> et le coefficient associé au retard de la variable explicaitive <span class="math inline">\(\beta_2\)</span> vont tendre vers des valeurs égales mais de signe opposé.</p></li>
+<li><p><span class="math inline">\(\lambda\)</span> va tendre vers 1.</p></li>
+</ul>
+</section>
+<section id="estimateur-mean-group" class="level2">
+<h2 class="anchored" data-anchor-id="estimateur-mean-group">Estimateur Mean Group</h2>
+<p>Différents estimateurs existent pour prendre en compte l’hétérogénéité des coefficients de pente. Pesaran et Smith (1995) proposent l’estimateur Mean-Group (MG). Cet estimateur est “simplement” une moyenne des régression OLS individuelles. Pour pouvoir l’utiliser correctement, il faut :</p>
+<ul>
+<li><p>Que toutes les variables explicatives soient strictement exogènes</p></li>
+<li><p>Que les dimensions individuelles et temporelles comportent suffisament d’observations pour pouvoir faire des régressions individuelles puis obtenir une moyenne de ces estimations.</p></li>
+</ul>
+<p>Cet estimateur peut s’appliquer peu importe la nature de l’hétérogénéité des coefficients de pente (aléatoire ou fixe).</p>
+<p>L’estimateur MG se définit comme :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  &amp;\hat{\beta}_{\text{MG}} = \frac{1}{N} \sum_{i=1}^N \hat{\beta}_i^{\text{OLS}} \\[2ex]
+  &amp;\hat{\beta}_i^{\text{OLS}} = \left( x_i^{&#39;}x_i \right)^{-1} x_i^{&#39;}y_i
+\end{aligned}
+\]</span></p>
+<p>La variance de l’estimateur MG est donnée par :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  V\left( \hat{\beta}^{\text{MG}} \right) = \frac{1}{N(N-1)} \sum_{i=1}^N \left( \hat{\beta}_{i}^{\text{OLS}} - \hat{\beta}^{\text{MG}} \right) \left( \hat{\beta}_{i}^{\text{OLS}} - \hat{\beta}^{\text{MG}} \right)^{&#39; }  
+\end{aligned}
+\]</span></p>
+<p>On peut également contraindre certains coefficients à être fixes (ne pas changer selon les individus) avec l’estimateur Pooled Mean group qui va contraindre un certain nombre de coefficient à être considéré comme fixes (Pooled).</p>
+</section>
+<section id="tester-lhétérogénéité-des-coefficients-de-pente" class="level2">
+<h2 class="anchored" data-anchor-id="tester-lhétérogénéité-des-coefficients-de-pente">Tester l’hétérogénéité des coefficients de pente</h2>
+<p>Pour tester l’hétérogénéité des coefficients de pente, on peut utiliser la procédure de Hsiao, qui par élimination nous permet de déduire que les coefficients de pente sont hétérogènes. Cependant cette procédure ne permet pas de déterminer les groupes de variables dont les coefficients de pente sont hétérogènes. Dans cette procédure l’ensemble des coefficients sont hétérogènes ou homogènes.</p>
+<section id="test-de-haussman" class="level3">
+<h3 class="anchored" data-anchor-id="test-de-haussman">Test de Haussman</h3>
+<p>On peut utiliser le test de Haussman pour comparer l’estimateur Mean Group qui sera toujours consistant avec l’estimateur Pooled Mean group qui ne sera consistant que sous l’hypothèse nulle d’homogénéité des coefficients de pente.</p>
+<p>On peut tester l’hypothèse nulle d’homogénéité des coefficients de pente de toutes les variables ou bien seulement l’homogénéité des coefficients d’un sous-ensemble de variables :</p>
+<p><span class="math display">\[
+\begin{cases}
+  &amp;H0 : \beta_1 = \cdots = \beta_N \quad \forall i \in [1,N] \\[2ex]
+  &amp;H1 : \exists \hspace{0.2cm} \beta_i \neq \beta_j \quad   i \neq j
+\end{cases}
+\]</span></p>
+<p><span class="math display">\[
+\begin{cases}
+  &amp;H0 : \beta_{1,k} = \cdots = \beta_{N,k} \quad \forall i \in [1,N] \\[2ex]
+  &amp;H1 : \exists \hspace{0.2cm} \beta_{i,k} \neq \beta_{j,k} \quad i \neq j
+\end{cases}
+\]</span></p>
+<p>Avec <span class="math inline">\(k\)</span> un un sous-ensemble de variables. Les autres variables sont considérées comme ayant des coefficients hétérogènes.</p>
+<p>Le problème de ce test réside dans son hypothèse d’erreurs homoskédastiques (variance constante et non-autocorrélation). De plus ce test performe assez mal à moins que <span class="math inline">\(T&gt;N\)</span> ce qui est assez rare.</p>
+</section>
+<section id="delta-test" class="level3">
+<h3 class="anchored" data-anchor-id="delta-test">Delta Test</h3>
+<p>Pesaran et Yamagata (2008) ont proposé un test d’hétérogénéité des coefficients de pente dans le cas où <span class="math inline">\(T\)</span> et <span class="math inline">\(N\)</span> sont grands et où <span class="math inline">\(N &gt; T\)</span>. Ce test produit une statistique de test sous l’hypothèse nulle qui va suivre une loi standard. L’idée de ce test est de comparer la distance entre les coefficients obtenus par un estimateur à effet fixes (coefficients de pente constants) et les coefficients obtenus par des régressions individuelles. Cette différence entre les coefficients va être pondérée par les erreurs standard de chaque individu afin de relâcher l’hypothèse d’homosckédasticité des erreurs.</p>
+<p>On va tester :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  &amp;H0 : \beta_{2,i} = \beta_2 \quad \forall i \\[2ex]
+  &amp;H1 : \exists \hspace{0.2cm} \beta_{2,i} \neq \beta_2
+\end{aligned}
+\]</span></p>
+<p><span class="math inline">\(\beta_{2,i}\)</span> correspond au sous-ensemble de variables dont on souhaite tester l’homogénéité des coefficients de pente. Les autres variables sont considérés comme ayant des coefficients de pente hétérogènes. Le test a été étendu par Blomquist et Westerlund (2013) pour donner une statistique de teste robuste à l’hétéroskédasticité (HAC robust).</p>
+</section>
 </section>
 </section>
 <section id="code" class="level1">
