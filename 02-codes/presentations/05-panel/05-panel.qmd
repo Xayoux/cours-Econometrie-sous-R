@@ -1420,7 +1420,9 @@ $$
 \begin{aligned}
   \hat{\beta}_{\text{CCEMG}} = \frac{1}{N} \sum_{i=1}^N \hat{\beta}_{i, \text{CCE}}  
 \end{aligned}
-$$ Sous les conditions générales d'exogénéité des régresseurs, cet estimateur est asymptotiquement non biaisé pour $\beta$.
+$$ 
+
+Sous les conditions générales d'exogénéité des régresseurs, cet estimateur est asymptotiquement non biaisé pour $\beta$.
 
 $$
 \begin{aligned}
@@ -1482,6 +1484,14 @@ Le modèle de base serait donc :
 $$ 
 \begin{aligned}   \text{lrpmg}_{i,t} = \alpha + \beta_1 \text{lgaspcar} + \beta_2 \text{lcarpcap} + \beta_3 \text{lincomep} + \varepsilon_{i,t} \end{aligned} 
 $$
+On va enregistrer cette spécification dans un objet formula afin de ne pas avoir à toujours la répéter : 
+
+```{r}
+static_spec <- lrpmg ~ lgaspcar + lcarpcap + lincomep
+class(static_spec) # Afficher le nom de la classe d'objet : formula
+```
+
+
 
 ```{r}
 # Importer les données Males du package plm
@@ -1569,7 +1579,9 @@ df_panel |>
   print()
 ```
 
-## Procédure de Hsiao
+## Tester l'hétérogénéité du model
+
+### Visualisation graphique
 
 La stationnarité n'étant pas un problème ici (pas assez de données temporelles), la première chose à faire est de déterminer s'il existe de l'hétérogénéité dans nos données. On peut commencer par une analyse graphique en représentant la moyenne et l'écart-type individuel/temporel de nos données à l'aide de graphiques à barre d'erreur.
 
@@ -1626,7 +1638,7 @@ p_indiv <-
     title = "Hétérogénéité individuelle",
     subtitle = "Moyenne et IC (95%) par pays",
     x = "Pays",
-    y = "Log(Consommation d'essence moyenne par voiture)"
+    y = "lgaspcar"
   )
 
 # Créer le graphique à barre d'erreur pour les années
@@ -1643,7 +1655,7 @@ p_temp <-
     title = "Hétérogénéité temporelle",
     subtitle = "Moyenne et IC (95%) par année",
     x = "Année",
-    y = "Log(Consommation d'essence moyenne par voiture) [lgaspcar]"
+    y = "lgaspcar"
   )
 
 # Associer les graphiques l'un à coté de l'autre (nécessite le package patchwork pour fonctionner)
@@ -1656,12 +1668,15 @@ Concernant les années, on remarque une tendance décroissante avec les années.
 
 Ici, nous n'avons observé qu'une seule variable. En pratique, il faudrait observer toutes les variables pour se rendre bien compte de l'hétérogénéité présente dans chaque variable et donc dans celle potentiellement présente dans l'estimation panel. 
 
+
+### Procédure de Hsiao
+
 Pour s'assurer de la forme que prend l'hétérogénéité dans nos données, on va dans un premier temps effectuer la procédure de Hsiao grâce à la fonction `poobly::hsiao()` qui va effectuer les trois étapes de la procédure de manière automatique. Cette fonction (comme les fonctions du package `plm` peut prendre comme jeu de donnée un objet `pdata.frame` ou un normal `data.frame`. Dans ce dernier cas, il faudrait spécifier dans l'argument `index` les noms des variables contenant les indices individuels et temporels dans cet ordre). 
 
 ```{r}
 # Procédure de Hsiao en utilisant un objet pdata.frame
 poobly::hsiao(
-  formula = lrpmg ~ lgaspcar + lcarpcap + lincomep,
+  formula = static_spec,
   data = df_panel
 )
 ```
@@ -1669,28 +1684,465 @@ poobly::hsiao(
 ```{r}
 # Procédure de Hsiao en utilisant un objet data.frame
 poobly::hsiao(
-  formula = lrpmg ~ lgaspcar + lcarpcap + lincomep,
+  formula = static_spec,
   data = df,
   index = c("country", "year")
 )
 ```
 
-La premièr étape consiste à tester s'il existe de l'hétérogénéité dans le modèle. On rejette l'hypothèse nulle à un seuil de 5% (p.value < 0.001). Il semble donc qu'il existe de l'hétérogénéité au sein de notre modèle. Il nous faut maintenant en découvrir la forme. 
+La première étape consiste à tester s'il existe de l'hétérogénéité dans le modèle. On rejette l'hypothèse nulle à un seuil de 5% (p.value < 0.001). Il semble donc qu'il existe de l'hétérogénéité au sein de notre modèle. Il nous faut maintenant en découvrir la forme. 
 
 On passe donc à l'étape 2 qui teste l'homogénéité des coefficients de pente tout en autorisant des effets individuels. On rejette l'hypothèse d'homogénéité des coefficients de pente (p.value < 0.001). L'hypothèse nulle étant rejetée, on conclu qu'il semble exister une hétérogénéité globale au sein de notre modèle. **Dans ce cas, on ne passe pas à l'étape 3**. 
 
-Il faut noter que cette fonction ne teste que pour la présence d'effets individuels et pas d'effets temporels. 
+La procédure de Hsiao (notamment via l'utilisation de la fonction `poobly::hsiao()` ne test que pour la présence d'effets individuels (elle ne test pas la présence d'effet temporel). De plus, elle ne permet pas de prendre en compte la corrélation individuelle entre les individu. Or Cette corrélation individuelle peut être à même d'influer sur le résultat des tests en biaisant les coefficients. 
 
+
+### Tests d'hétérogénéité avec plm
+#### Pooled VS hétérogénéité complète
+Le package `plm` comporte trois fonctions : `plm::pooltest()`, `plm::plmtest()` et `plm::pFtest()` qui permettent de tester l'hétérogénéité dans un model de panel. 
+
+On va dans un premier temps utiliser le fonction `plm::pooltest()` afin de comparer un modèle Pooled (sans hétérogénéité) dans l'hypothèse nulle avec un modèle complètement hétérogène selon les individus dans l'hypothèse alternative. Pour tester cette spécification, on va passer comme argument à la fonction `plm::pooltest()`, un modèle Pooled (avec la fonction `plm::plm()`) et un modèle où tous les coefficients vont différer pour chaque individu (avec la fonction `plm::pvcm()`). 
+
+On va donc tester s'il existe dans note modèle une hétérogénéité des constantes et des coefficients de pente dans la dimension individuelle (les constantes et les coefficients de pente diffèrent pour chaque individu). 
 
 ```{r}
-xtbhst::xtbhst(
-  formula = lrpmg ~ lgaspcar + lcarpcap + lincomep,
-  data = df,
-  id = "country",
-  time = "year",
-  seed = 123
+# Estimer un modèle Pooled
+model_pooled <- plm::plm(
+  static_spec, # Spécification du modèle
+  data = df_panel, # Données du modèle
+  model = "pooling" # Indiquer que l'on veut estimer un modèle Pooled
+)
+
+# Estimer un modèle à coefficients variables pour chaque individu
+# Cela revient à estimer une régression en série temporelle par individu
+indiv_variable_coef_model <- plm::pvcm(
+  static_spec, # Spécification du modèle
+  data = df_panel, # Données du modèle
+  model = "within", # Indiquer que les coefficients variables sont fixes
+  effect = "individual" # Indiquer que l'on veut les coefficients variables par individu
+)
+
+# Effectuer le test de Poolability en comparant les deux modèles via un F-test
+pooltest(
+  model_pooled, # Modèle pooled
+  indiv_variable_coef_model # Modèle à coefficients variables
 )
 ```
+
+La p.value étant inférieure au seuil de 1%, on rejette l'hypothèse nulle d'homogénéité individuelle dans nos coefficients. Il semble donc que l'on ait une hétérogénéité individuelle dans nos coefficients (bien que l'on ne sache pas la forme prise par cette hétérogénéité).
+
+On peut tester l'hétérogénéité temporelle : donc tester si les constantes et les coefficients de pentes varient selon les années : 
+
+```{r}
+# Estimer un modèle Pooled
+model_pooled <- plm::plm(
+  static_spec, # Spécification du modèle
+  data = df_panel, # Données du modèle
+  model = "pooling" # Indiquer que l'on veut estimer un modèle Pooled
+)
+
+# Estimer un modèle à coefficients variables pour chaque année
+# Cela revient à estimer une régression en coupe transversale par année
+time_variable_coef_model <- plm::pvcm(
+  static_spec, # Spécification du modèle
+  data = df_panel, # Données du modèle
+  model = "within", # Indiquer que les coefficients variables sont fixes
+  effect = "time" # Indiquer que l'on veut les coefficients variables par année
+)
+
+# Effectuer le test de Poolability en comparant les deux modèles via un F-test
+pooltest(
+  model_pooled, # Modèle pooled
+  time_variable_coef_model # Modèle à coefficients variables
+)
+```
+
+On ne peut pas rejeter l'hypothèse nulle d'homogénéité temporelle des coefficients. Il semble donc que nos constantes et coefficients de pente ne varient pas selon les années. La relation serait donc stable dans le temps et il n'y aurait pas d'effet fixe temporel (à s'assurer).
+
+#### Tester la présence d'effets fixes
+
+Les tests de poolability nous indiquent la présence probable d'une hétérogénéité individuelle et peu probable d'une hétérogénéité temporelle. On va maintenant tester plus précisément la présence d'effets fixes individuels et/ou temporels. Pour cela on peut utiliser la fonction `plm::plmtest()` qui va tester la présence d'effets fixes dans les résidus d'un modèle pooled via un test LM. On peut également utiliser la fonction `plm::pFtest()` qui va comparer un modèle pooled et un modèle à effets fixes via un F-test. 
+
+Pour la fonction `plm::plmtest()` différentes sppécifications de test existent (à spécifier dans le paramètre `type`) : 
+
+- "honda" (defaut) pour Honda (1985),
+
+- "bp" pour Breusch et Pagan (1980),
+
+- "kw" pour King et Wu (1997)
+
+- "ghm" pour Gourieroux et al. (1982) : ne s'utilise que pour les tests à deux effets fixes (temporels et individuels)
+
+On va dans un pemier temps tester la présence d'effets fixes individuels (on va utiliser la méthode "bp" pour les exemples) : 
+
+```{r}
+# Estimer le modèle pooled
+pooled_model <- 
+  plm::plm(
+    static_spec, # Spécification du modèle
+    data = df_panel, # Données du panel
+    model = "pooling" # Indiquer que l'on estime un modèle pooled
+  )
+
+# Tester la présence d'effets fixes individuels dans les résidus du modèle pooled
+plm::plmtest(
+  pooled_model, # Modèle pooled
+  effect = "individual", # Indiquer que l'on teste pour la présence d'effets fixes individuels
+  type = "bp" # Indiquer le test que l'on utilise
+)
+```
+
+On rejette l'hypothèse nulle de non-présence d'effets fixes individuels. Il semblerait donc qu'il existe des spécificités individuelles entre les pays de notre panel (culture de consommation différente, attrait pour différents types de voitures, présence pour le gasoil ou l'essence etc...). 
+
+On peut maintenant tester pour la présence d'effets fixes temporels : 
+
+```{r}
+# Tester la présence d'effets fixes temporels dans les résidus du modèle pooled
+plm::plmtest(
+  pooled_model, # Modèle pooled
+  effect = "time", # Indiquer que l'on teste pour la présence d'effets fixes temporels
+  type = "bp" # Indiquer le test que l'on utilise
+)
+```
+Ici on ne peut pas rejeter l'hypothèse nulle de non-présence d'effets fixes temporels au seuil de 5%. Mais on peut rejeter l'hypothèse nulle au seuil de 10%. La présence de facteurs commun temporels (qui affectent tous les individus à une période de temps donnée comme une crise par exemple) n'est pas sûre. 
+
+On peut également si on le souhaite tester la présence conjointe d'effets fixes individuels et temporels : 
+
+```{r}
+# Tester la présence d'effets fixes temporels dans les résidus du modèle pooled
+plm::plmtest(
+  pooled_model, # Modèle pooled
+  effect = "twoways", # Indiquer que l'on teste pour la présence d'effets fixes individuels et temporels
+  type = "bp" # Indiquer le test que l'on utilise
+)
+```
+
+Comme attendu on rejette l'hypothèse nulle de non-présence d'effets fixes. Il s'agit ici d'un test joint. C'est à dire que l'on teste simultanément pour la présence d'effets fixes individuels et temporels. Il suffit donc qu'il existe au moins l'un des deux pour que l'on rejette l'hypothèse nulle. On ne sait donc pas quel type d'effet fixe il y a précisément dans le modèle. 
+
+A la place (ou en complément) d'utiliser un test LM, on peut utiliser un F-test pour comparer le modèle pooled (sous l'hypothèse nulle) avec un modèle à effet fixe (individuel, temporel ou les deux) avec la fonction `plm::pFtest()` : 
+
+```{r}
+# Estimer un modèle Pooled
+model_pooled <- plm::plm(
+  static_spec, # Spécification du modèle
+  data = df_panel, # Données du modèle
+  model = "pooling" # Indiquer que l'on veut estimer un modèle Pooled
+)
+
+# Estimer un modèle à effets fixes individuels et temporels
+FE_TW_model <- 
+  plm::plm(
+    static_spec, # Spécification du modèle
+    data = df_panel, # Données du panel
+    model = "within", # Indiquer que l'on estime un modèle à effets fixes
+    effect = "twoways" # Indiquer que le modèle est à effets fixes individuels et temporels
+  )
+
+# Comparer le modèle pooled avec le modèle à effets fixes individuels et temporels
+plm::pFtest(
+  FE_TW_model, # Modèle à effets fixes
+  model_pooled # Modèle pooled
+)
+```
+Le F-test rejette également l'homogénéité des constantes. 
+
+Il semble donc qu'il existe des effets fixes individuels et peut être temporels dans note panel. Dans le doute, inclure les effets fixes temporels n'est pas forcément une mauvaise chose. Si ces effets fixes existent bel et bien leur non-inclusion entraînerait un biais dans nos estimateurs. En revanche si ces effets fixes n'existent pas, alors leur inclusion entraînerait seulement une baisse des degrés de liberté et donc aune augmentation de la variance des estimateurs (ce qui est généralement moins grave même si cela peut empêche de trouver des effets significatifs). 
+
+#### Effets fixes VS effets aléatoires
+
+La présence d'effets individuels et temporel semble être une information assez robustes peu importe le test utilisé. Il faut maintenant déterminer si ces effets seraient mieux modélisés à partir d'un estimateur à effets fixes ou à effets aléatoires (on cherche donc à savoir si ces effets sont corrélés avec les variables explicatives). On va pour cela effectuer un test de Haussman afin de comparer l'estimateur à effets fixes avec l'estimateur à effets aléatoires. On utilise pour cela la fonction `plm::phtest()`. L'hypothèse nulle est la non-corrélation entre les effets individuels et temporels et les variables explicatives (utilisation de l'estimateur à effets aléatoire). L'hypothèse nulle est la présence de corrélation entre les effets individuels et temporels et les variables explicatives (utilisation d'un estimateur à effets fixes). 
+
+```{r}
+# Estimer un modèle à effets fixes individuels et temporels
+FE_TW_model <- 
+  plm::plm(
+    static_spec, # Spécification du modèle
+    data = df_panel, # Données du panel
+    model = "within", # Indiquer que l'on estime un modèle à effets fixes
+    effect = "twoways" # Indiquer que le modèle est à effets fixes individuels et temporels
+  )
+
+# Estimer un modèle à effets aléatoires individuels et temporels
+RE_TW_model <- 
+  plm::plm(
+    static_spec, # Spécification du modèle
+    data = df_panel, # Données du panel
+    model = "random", # Indiquer que l'on estime un modèle à effets aléatoire
+    effect = "twoways" # Indiquer que le modèle est à effets fixes individuels et temporels
+  )
+
+# Test de Haussman (l'ordre dans lequel on met les modèles n'importe pas)
+plm::phtest(
+  FE_TW_model,
+  RE_TW_model
+)
+```
+
+On rejette l'hypothèse nulle de non corrélation entre les effets individuels et temporels et les variables explicatives. L'estimateur par effets aléatoires n'est donc pas consistant. Il faut donc utiliser un modèle à effets fixe pour modéliser ces effets communs. 
+
+
+#### Tester l'homogénéité des coefficients de pente
+
+Avec les résultats de la présence d'effets fixes en tête, on peut affiner le test de poolability vu précédemment. En effet on peut maintenant tester si en intégrant des effets fixes (donc une certaine hétérogénéité), il vaut mieux utiliser un modèle avec des coefficients de pente variables par individu ou non (on a déjà rejeté l'hétérogénéité temporelle donc on ne va pas tester si les coefficients de pente diffèrent par années). L'hypothèse nulle consiste en un modèle à effets fixes. l'hypothèse alternative consiste en un modèle avec des effets fixes et des coefficients de pente différents par individus : 
+
+```{r}
+# Estimer le modèle à effets fixes individuels et temporels
+FE_TW_model <- 
+  plm::plm(
+    static_spec, # Spécification du modèle
+    data = df_panel, # Données du panel
+    model = "within", # Indiquer que l'on estime un modèle à effets fixes
+    effect = "twoways" # Indiquer wue le modèle est à effets fixes individuels et temporels
+  )
+
+# Estimer un modèle à coefficients variables pour chaque individu
+# Cela revient à estimer une régression en série temporelle par individu
+indiv_variable_coef_model <- plm::pvcm(
+  static_spec, # Spécification du modèle
+  data = df_panel, # Données du modèle
+  model = "within", # Indiquer que les coefficients variables sont fixes
+  effect = "individual" # Indiquer que l'on veut les coefficients variables par année
+)
+
+# Effectuer le test de Poolability en comparant les deux modèles via un F-test
+pooltest(
+  FE_TW_model, # Modèle pooled
+  indiv_variable_coef_model # Modèle à coefficients variables
+)
+```
+
+On rejette l'hypothèse nulle d'homogénéité des coefficients de pente sachant que l'on a des effets fixes individuels et temporels. Il semble donc que l'on ait un panel comportant des effets communs entre les individus et les années et que la relation entre le prix de l'essence et le reste des variable diffère selon les individus mais reste stable au fil des ans.
+
+On peut compléter ce test de poolability par le test Delta de Pesaran. Ce test permet de corriger pour une possible hétérosckédasticité (et de prendre en compte si on le souhaite une corrélation inter-individuelle : voir infra). On teste l'hypothèse nulle d'homogénéité des coefficients de pente dans la dimension individuelle contre l'hypothèse alternative de coefficients hétérogènes. Pour ce test, on utilise la fonction `xtbhst::xtbhst()` qui permet de faire le test Delta et le test Delta ajusté. **Attention, cette fonction nécessite un panel cylindré. Il faut que toutes les observations soient disponibles pour tous les individus et toutes les années**. 
+
+```{r}
+# Faire le test Delta et le test Delta ajusté
+xtbhst::xtbhst(
+  formula = static_spec, # Spécification du modèle
+  data = df, # Données à utiliser
+  id = "country", # Index individuel
+  time = "year", # Index temporel
+  seed = 123 # Seed pour obtenir des résultats reproductibles
+)
+```
+
+Ce test utilise une procédure de Bootstrap pour calculer la statistique de test. ici le nombre de réplication de la procédure de Bootstrap est de 999 (valeur par défaut qui peut être modifiée avec le paramètre `reps`). La statistique Delta est de 9.3908 et la p.value associée est inférieure à 0.001. Il en va de même pour la statistique Delta ajustée. On peut donc rejeter l'hypothèse nulle d'homogénéité des coefficients de pente. **Il semble donc qu'il faille utiliser une méthodologie pour prendre en compte une hétérogénéité individuelle complète**. 
+
+## Corrélation inter-individuelle
+
+La corrélation inter-individuelle est souvent présente dans les données de panel macroéconomiques et financières. En effet, les individus sont souvent interconnectés entre eux et peuvent partager des caractéristiques communes. Ne pas prendre en compte cette corrélation inter-individuelle (surtout quand elle est fortement présente) peut amener nos coefficients estimés à être biaisés. De même, les tests de spécification d'hétérogénéité que l'on a effectués ne prennent pas en compte la possible présence de corrélation inter-individuelle. 
+
+Il faut donc tester la présence de corrélation inter-individuelle puis corriger le test d'hétérogénéité si nécessaire. 
+
+### Tester la présence de corrélation inter-individuelle
+
+La fonction `plm::pcdtest()` permet d'effectuer différents tests de corrélation inter-individuelle. L'hypothèse nulle de ces tests est l'absence de corrélation inter-individuelle suffisamment forte tandis que l'hypothèse alternative indique la présence de corrélation inter-individuelle suffisamment forte. 
+
+Les tests disponibles sont : 
+
+- Le test $LM$ de Breusch-Pagan (utilisable avec le paramètre `test = "lm"`) qui est valide lorsque $T \rightarrow \infty$ et $n$ fixe. Ce test est donc valide lorsque la dimension temporelle est grande tandis que la dimension individuelle n'est pas si grande. 
+
+- Le test `SCLM` qui est une version augmentée du test $LM$ (utilisable avec le paramètre `test = "sclm"`) qui est valide lorsque $T \rightarrow \infty$ puis que $N \rightarrow \infty$. Il faut donc une grande dimension temporelle suivie par une grande dimension individuelle. 
+
+- Le test $BCSCLM$ qui est une version du test $SCLM$ qui intègre une correction de biais (utilisable avec le paramètre `test = "bcsclm"`). 
+
+- Le test $CD$ de Pesaran (utilisable avec le paramère `test = "cd"`)
+
+```{r}
+# Tester la présence de corrélation inter-individuelle
+plm::pcdtest(
+  lrpmg ~ lgaspcar + lcarpcap + lincomep, # Spécification du modèle
+  data = df_panel, # Données à utiliser. SI ce n'est pas un pdata.frame il faut indiquer les index
+  test = "cd" # Le type de test à utiliser. Ici on fait le test CD
+)
+```
+
+Les dimensions individuelles et temporelles étant assez faible (inférieures à 30), on utilise le test CD. Le résultat de ce test indique une p.value inférieure à 0.01. On rejette donc l'hypothèse nulle d'absence de corrélation inter-individuelle. Il semblerait donc qu'il existe une corrélation entre les différents pays de notre panel. Cela n'est pas une surprise. En effet, notre panel ne comporte que des pays développés avec des systèmes économiques relativement similaires. Il n'est pas étonnant de voir une corrélation entre eux. 
+
+Par défaut la fonction `plm::pcdtest()` va utiliser les résidus des $N$ régressions en série temporelles (un régression par individu) pour tester la dépendance inter-individuelle. Si la dimension temporelle n'est pas assez grande ou si l'on suppose un type de modèle particulier de manière robuste (effet fixe etc...) on peut spécifier le type de modèle à utiliser de la même manière qu'on le ferait avec la fonction `plm::plm()` (voir infra) ou bien utiliser la fonction `plm::pcdtest()` sur l'objet du modèle.  
+
+```{r}
+# Estimer le test CD sur un modèle à effets fixes individuels et temporels
+plm::pcdtest(
+  lrpmg ~ lgaspcar + lcarpcap + lincomep, 
+  data = df_panel, 
+  test = "cd", 
+  model = "within", # Indiquer que l'on utiliser un modèle within (Effets fixes)
+  effect = "twoways" # Indiquer que l'on veut des effets fixes individuels et temporels
+)
+```
+
+Ainsi, si l'on suppose que notre modèle est un modèle à effets fixes individuels et temporels, alors on remarque que l'on rejette toujours l'hypothèse nulle de dépendance inter-individuelle mais de manière moins prononcée puisque l'on passe "juste" le seuil de 5%. 
+
+
+### Tester l'hétérogénéité corrigé de la CSD
+
+Il semble donc qu'il existe de la dépendance inter-individuelle dans notre panel. On va donc ré-estimer le test Delta en essayant de prendre en compte cette hétérogénéité. Pour cela on va utiliser le paramètre `csa` pour prendre en intégrer les moyennes cross-sectionnelles dans le modèle (modélisation CCE). On va utiliser un nombre de retard égal à $P = T^{1/3} = 2.7 \approx 3$. 
+
+```{r}
+# Faire le test Delta et le test Delta ajusté
+xtbhst::xtbhst(
+  formula = lrpmg ~ lgaspcar + lcarpcap + lincomep, # Spécification du modèle
+  data = df, # Données à utiliser
+  id = "country", # Index individuel
+  time = "year", # Index temporel
+  seed = 123, # Seed pour obtenir des résultats reproductibles,
+  csa = ~ lgaspcar + lcarpcap + lincomep, # Variables pour lesquelles on suppose une corrélation interindividuelle et pour lesquelles on intègre les moyennes cross-sectionnelles
+  csa_lags = 3
+)
+```
+
+En ajoutant les moyennes cross-sectionnelles de nos variables, on remarque que nos statistiques de test diminuent mais leur p.value reste toujours largement inférieure à 1%. 
+
+En conclusion, notre panel présente de la corrélation inter-individuelle qu'il convient de prendre en compte. De plus, il semble y avoir une forte hétérogénéité individuelle avec la présence d'effets fixes individuels mais également une hétérogénéité dans les relations entre les variables. L'hétérogénité temporelle est moindre et semble se modéliser uniquement par la présence d'effets fixes temporels (dont la présence n'est pas certaine). Il semblerait donc qu'il faille utiliser un modèle à effets hétérogènes couplé avec une prise en compte des effets commun individuels : estimateur CCEMG. 
+
+## Estimer la relation via l'estimateur CCEMG
+
+On va utiliser l'estimateur CCEMG via la fonction `plm::pmg()` pour obtenir à la fois des coefficients moyens mais également des coefficients individuels de nos relations d'intérêt. Cet estimateur prend en compte les effets communs en intégrant les moyennes cross-sectionnelles (une moyenne par année) (similaire à ce que font les effets temporels mais ici l'impact de ces facteurs commun peut différer selon les individus). Il intègre également une constante par individu pour prendre en compte les spécificités individuelles. 
+
+```{r}
+# Estimer le modèle CCEMG
+CCEMG_model <- 
+  plm::pmg(
+    formula = static_spec, # Spécification du modèle
+    data = df_panel,
+    model = "cmg"
+  )
+
+summary(CCEMG_model)
+```
+
+L'estimation CCEMG nous indique que lorsque la consommation moyenne d'essence par voiture (lgaspcar) augmente de 1%, le prix réel de l'essence diminue en moyenne de 0.82% ce qui est étrange puisque l'on s'attendrait à ce que d'avantage de consommation fasse augmenter les prix. Le nombre de voiture dans le pays a également un effet moyen qui est négatif et de 0.57% sur le prix de l'essence. Encore une fois il s'agit d'un résultat étonnant. Le revenu du pays n'a pas d'impact significatif en moyenne sur le prix de l'essence. 
+
+Ces résultats sont les résultats moyens pour tous les pays. l'estimation CCEMG permet d'obtenir les résultats par pays issus des régressions en séries temporelles individuelles. 
+
+```{r}
+CCEMG_model$indcoef
+```
+
+On remarque que le Danemark, la Grèce et l’Irlande sont les seuls pays pour lesquels la consommation d'essence moyenne des voiture a un impact positif sur le prix de l'essence. Cet effet est très faible pour la Grèce (0.14%) mais bien plus fort pour les deux autres pays (0.93% et 1.23%). 
+
+Si on remarque l'impact des facteurs communs, on peut voir qu'ils sont bien différents selon les pays. Il semble donc que le choix de modéliser ces facteurs communs via un modèle CCEMG soit plus intéressante que par l'estimation via effets fixes. 
+
+## Autres estimateurs
+
+Voici simplement une démonstration d'estimation avec les autres estimateurs vu dans le cours. 
+
+### Modèle Pooled
+
+```{r}
+plm::plm(
+    formula = static_spec,
+    data = df_panel,
+    model = "pooling"
+  ) |> 
+  summary()
+```
+
+Les signes sont les mêmes, mais les résultats sont bien plus significatif. L'effet du revenu du pays devient significatif et bien plus élevé. 
+
+### Modèle FE individuel
+
+```{r}
+plm::plm(
+    formula = static_spec,
+    data = df_panel,
+    effect = "individual",
+    model = "within"
+  ) |> 
+  summary()
+```
+
+Intégrer des effets fixes individuels fait largement diminuer l'effet des coefficients et le revenu du pays n'est significatif qu'au seuil de 10%. 
+
+### Modèle FE temporel
+
+```{r}
+plm::plm(
+    formula = static_spec,
+    data = df_panel,
+    effect = "time",
+    model = "within"
+  ) |> 
+  summary()
+```
+
+Intégrer uniquement des effets commun dont l’impact est le même pour tous les pays (effets fixes temporels) ne changement pas vraiment par rapport à l'estimation du modèle Pooled.  
+
+### Modèle FE twoways (FE temporels et individuels)
+
+```{r}
+plm::plm(
+    formula = static_spec,
+    data = df_panel,
+    effect = "twoways",
+    model = "within"
+  ) |> 
+  summary()
+```
+
+```{r}
+plm::plm(
+  formula = static_spec,
+  data = df_panel,
+  effect = "twoways",
+  model = "within"
+) |> 
+  fixef(effect = "individual")
+```
+
+
+### Modèle RE twoways
+
+```{r}
+plm::plm(
+    formula = static_spec,
+    data = df_panel,
+    effect = "twoways",
+    model = "random"
+  ) |> 
+  summary()
+```
+
+L'estimation par effets aléatoires nous permet de décomposer la variance imputable aux dimensions individuelles et temporelles de la variance imputable uniquement aux chocs spécifiques des différents individus. La majorité de cette variance s'explique (74%) par les effets individuels tandis que 25% de la variance est imputable aux chocs idiosyncratiques. La dimenssion temporelle ne compte presque pour rien dans la variance. 
+
+### Modèle PCCE (pooled CCE)
+
+```{r}
+plm::pcce(
+  formula = static_spec,
+  data = df_panel,
+  model = "p"
+) |> 
+  summary()
+```
+
+### Modèle PMG
+
+```{r}
+plm::pmg(
+  formula = static_spec,
+  data = df_panel,
+  model = "mg"
+) |> 
+  summary()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
