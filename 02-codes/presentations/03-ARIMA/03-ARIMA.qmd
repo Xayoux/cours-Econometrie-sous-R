@@ -688,7 +688,7 @@ $$
 Une fois le modèle estimé, on récupère donc la série des résidus et on calcule la statistique de test :
 
 $$
-LB(K) = T(T+2) \sum_{k=1}^K \frac{\hat{\rho}_{\hat{\varepsilon}k}^2}{T-K} \sim \chi^2(K-p-q)
+LB(K) = T(T+2) \sum_{k=1}^K \frac{\hat{\rho}_{\hat{\varepsilon}k}^2}{T-k} \sim \chi^2(K-p-q)
 $$
 
 Avec $\hat{\rho}_{\hat{\varepsilon}k}$ le coefficient d'auto-corrélation des résidus à l'ordre $k$.
