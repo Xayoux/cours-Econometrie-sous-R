@@ -1,0 +1,423 @@
+---
+title: "06-GARCH-VaR"
+author: "Romain CAPLIEZ"
+format:
+  html:
+    embed-resources: true
+    code-overflow: wrap
+    toc: true
+    toc-location: left
+    toc-depth: 5
+    toc-expand: 2
+    include-in-header:
+      text: |
+        <style>
+          p {
+            text-align: justify
+          }
+        </style>
+  pdf:
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \usepackage{amsmath}
+        \usepackage{amsfonts}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines=true, breaksymbol=, commandchars=\\\{\}}
+        \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true, breaksymbol=,commandchars=\\\{\}}
+editor: visual
+---
+
+```{r}
+#| eval: false
+#| include: false
+# A UTILISER POUR RENDER EN HTML ET PDF
+quarto::quarto_render(
+    here::here(
+        "02-codes", 
+        "presentations",
+        "06-GARCH-VaR", 
+        "06-GARCH-VaR.qmd"
+    ), 
+    output_format = "all"
+)
+```
+
+# Cours 
+
+## Objectifs de la modélisation (G)ARCH
+
+Les séries financières sont caractérisées par 5 faits stylisés : 
+
+- Autocorrélation élevée des rendements au carré. 
+
+- Rendements non gaussiens : 
+
+  - Distribution asymétrie avec une skewness négative
+  
+  - Excès de kurtosis indiquant des queues de distribution plus épaisses que celles de la loi normale. Il y a plus grande probabilité pour que des valeurs extrêmes se produisent par rapport à la loi normale. 
+  
+- Cluster de volatilité : les fortes (faibles) variations de rendements sont généralement suivies par de fortes (faibles) variations de rendements. Cela remets en cause l'hypothèse d'homoscédasticité des modèles économétriques. 
+
+- Effets de leviers. IL y a une asymétrie entre l'effet des valeurs passées négatives et l'effet des valeurs passées positives sur la volatilité des cours ou des rendements. Les baisses de cours tendent à engendrer une volatilité supérieure à celle induite par une hausse des cours de même ampleur. 
+
+- Les rendements présentent de nombreux phénomènes de saisonnalité (effets weekend, effets janvier...). 
+
+
+Les modélisation ARMA étant des modélisation linéaires et stationnaires ne permettent pas de prendre en compte : 
+
+- L'autocorrélation du carré des rendements
+
+- Les cluster de volatilité
+
+- Les queues de distribution épaisses
+
+La modélisation (G)ARCH vise à prendre en compte les variances conditionnelles dépendant du temps. Cette modélisation permet de prendre en compte l'hétéroscédasticité que l'on observe présente dans les modélisations ARMA.
+
+## Modèlisation ARCH
+
+Le principe général de la modélisation ARCH (Autoregressive Conditional Heteroscedastic) proposée par Engle (1982) consiste à supposer que la variance dépend de l'ensemble informationnel dont on dispose. Ainsi cette variance ne va plus être constante, mais va évoluer dans le temps lorsque l'ensemble informationnel va évoluer. La variance va réagir et dépendre de l'évolution de son ensemble informationnel (de son passé ou d'autres variables). 
+
+Dans la modélisation $ARCH(q)$, le carré des perturbations (le carré des résidus, donc leur variance) va suivre un processus autorégressif d'ordre $q$. La variance des résidus va dépendre de ses valeurs passées. Les modèles ARCH sont donc des modèles autorégressifs conditionnellement hétéroscédastiques. La variance inconditionnelle de ces modèle va être constante, mais leur variance conditionnelle va dépendre d'un ensemble de variable et de paramètres : 
+
+$$
+\begin{aligned}
+  &V \left( X_{t+1} \right) = c \\[2ex]
+  &V \left( X_{t+1} | \mathcal{F}_t \right) = f \left( X_1, X_2, \cdots, X_t; \theta \right)  
+\end{aligned}
+$$
+
+On dira donc qu'une série $X_t$ suit un processus $ARCH(1)$ si : 
+
+$$
+\begin{aligned}
+  X_t &= z_t \sqrt{ht} \\[2ex]
+  h_t &= \alpha_0 + \alpha_1 X_{t-1}^2
+\end{aligned}
+$$
+
+Où : 
+
+- $z_t$ est un bruit blanc fort
+
+- $h_t$ est la variance conditionnelle de $X_t$. Il s'agit d'un processus qui conditionnellement à l'ensemble d'information des valeurs passées de $X_t$ est déterministe et positif. 
+
+Cette modélisation permet de décrire l'évolution de la variance conditionnelle de la série $X_t$. 
+
+## Modélisation ARMA-ARCH
+
+La modélisation ARCH permet de décrire l'évolution de la variance conditionnelle d'une série. On peut associer cette modélisation avec une autre modélisation qui va décrire l'évolution de la moyenne conditionnelle de la série. Ainsi, on peut définir que la moyenne conditionnelle d'une série $Y_t$ va dépendre de ses valeurs passées et de chocs aléatoires, tandis que sa variance conditionnelle va dépendre des valeurs passées de la variance des résidus. 
+
+On peut ainsi décrire une série $Y_t$ par une modélisation $ARMA(p_1,q_1)\text{-}ARCH(q_2)$ dans laquelle, une équation va être dédiée à la modélisation de l'espérance conditionnelle (la valeur que prendre en moyenne la série $Y_t$ conditionnellement l'ensemble d'information disponible). Une deuxième équation va être dédiée à la caractérisation de la variance conditionnelle des résidus (la valeur de la variance sachant l'ensemble d'information disponible) qui va dépendre des valeurs passées de la variance des résidus. 
+
+L'idée est que la modélisation ARMA va modéliser (correctement on l'espère) la valeur que prendre en moyenne la série $Y_t$. Cependant cette modélisation ne permet pas de prendre en compte une variance qui ne serait pas constante (Cluster de volatilité). Cette variance non-constante va donc se retrouver dans les résidus (tout ce qui n'est pas modélisé se retrouve dans les résidus). On va donc explicitement intégrer une modélisation de ces résidus qui va explicitement définir que la variance conditionnelle dépend des valeurs passées de la variance des résidus. 
+
+$$
+\begin{aligned}
+&Y_t = \mu + \sum_{i=1}^{p_1} \phi_i Y_{t-i} + \sum_{j = 1}^{q_1} \theta_j \varepsilon_{t-j} + \varepsilon_t \\[2ex]
+&\varepsilon_t = z_t \sqrt{h_t} \\[2ex]
+&h_t = \alpha_0 + \sum_{k=1}^{q_2} \alpha_k \varepsilon_{t-k}^2
+\end{aligned}
+$$
+
+Ici la première équation représente la modélisation ARMA de la moyenne conditionnelle. Puisqu'il existe des cluster de volatilité, on va donc intégrer via l'équation 2 que les résidus de la modélisation ARMA contiennent une partie bruit blanc (aléatoire et non autocorrélée : $z_t$) et une partie qui correspond à l'influence de la variance conditionnelle de la série qui n'a pas pu être modélisée par le modèle ARMA : $\sqrt{h_t}$. La troisième équation indique la forme que prend cette variance conditionnelle. Ici elle est supposée dépendre des $q_2$ valeurs passées de la variance des résidus. 
+
+$h_t$ étant une variance, elle doit nécessairement être positive. Ainsi il est nécessaire que : ,
+
+- $\alpha_0 > 0$
+
+- $\alpha_k \geq 0, \hspace{0.2cm} k=1,\cdots , q_2$
+
+
+Il faut noter que la modélisation de l'espérance conditionnelle peut se faire par tout modèle permettant de modéliser cette moyenne conditionnelle. Il n'est pas nécessaire que ce soit un modèle ARMA. L'avantage de la modélisation ARMA est quelle ne nécessite que de l'information sur la série en elle-même et pas sur d'autres séries. 
+
+L'un des grands enjeux de cette modélisation ARCH est de correctement prendre en compte toute la dynamique de la variance conditionnelle de la série et donc de choisir un nombre de retards $q_2$ adapté. 
+
+## Modélisation ARCH-GARCH
+
+Il est important de correctement modéliser toute la dynamique de la variance conditionnelle. Or pour ce faire, on peut être amené à imposer une valeur du nombre de retards $q_2$ élevée, ce qui peut poser des problèmes d'estimation. Pour contrer ce problème, Bollerslev (1986) introduit le processus GARCH(p,q) (Generalized ARCH). Ce processus va intégrer directement la dynamique de la variance conditionnelle dans sa modélisation. Ainsi la variance conditionnelle va dépendre de la variance des résidus mais également de ses propres valeurs passées. Intégrer les valeurs passées de la variance conditionnelle permet de réduire le nombre de retards $q_2$ nécessaires à la bonne prise en compte de la dynamique de la série. 
+
+On définit le modèle $ARMA(p_1,q_1)\text{-}GARCH(p_2,q_2)$ de la façon suivante : 
+
+$$
+\begin{aligned}
+&Y_t = \mu + \sum_{i=1}^{p_1} \phi_i Y_{t-i} + \sum_{j = 1}^{q_1} \theta_j \varepsilon_{t-j} + \epsilon_t \\[2ex]
+&\varepsilon_t = z_t \sqrt{h_t} \\[2ex]
+&h_t = \alpha_0 + \sum_{k=1}^{q_2} \alpha_k \varepsilon_{t-k}^2  + \sum_{l=1}^{p_2} \beta_l h_{t-l}
+\end{aligned}
+$$
+
+L'équation de la moyenne et la définition des résidus ne change pas. C'est la définition de la dynamique de la variance conditionnelle qui change. On garde toujours que la variance conditionnelle $h_t$ dépend des $q_2$ valeurs passées de la variance des résidus, mais on va rajouter que la variance conditionnelle va également dépendre de ses $p_2$ valeurs passées. La variance conditionnelle va intégrer un processus autorégressif. 
+
+La variance étant toujours nécessairement positive, les conditions suivantes doivent être respectées pour garantir cette positivité : 
+
+- $\alpha_0 > 0$
+
+- $\alpha_k \geq 0, \hspace{0.2cm} k=1,\cdots , q_2$
+
+- $\beta_l \geq 0, \hspace{0.2cm} l=1,\cdots , p_2$
+
+
+Cette variance conditionnelle sera asymptotiquement stationnaire au second ordre si : 
+
+$$
+\begin{aligned}
+  \sum_{k=1}^{q_2} \alpha_k + \sum_{l=1}^{p_2} \beta_l \leq 1  
+\end{aligned}
+$$
+
+## Modélisation ARCH-IGARCH
+
+Engle et Bollerslev (1987) introduisent la modélisation IGARCH (Integrated GARCH) afin de prendre en compte la présence d'une racine unitaire dans la variance conditionelle. Dans ce cas, un choc sur la variance conditionnelle aura des effets persistants dans le temps. Il n'y a pas de retour à la moyenne suite à un choc sur la variance conditionnelle. 
+
+On définit le modèle $ARMA(p_1,q_1)\text{-}IGARCH(p_2,q_2)$ de la façon suivante : 
+
+$$
+\begin{aligned}
+&Y_t = \mu + \sum_{i=1}^{p_1} \phi_i Y_{t-i} + \sum_{j = 1}^{q_1} \theta_j \varepsilon_{t-j} + \epsilon_t \\[2ex]
+&\varepsilon_t = z_t \sqrt{h_t} \\[2ex]
+&h_t = \alpha_0 + \sum_{k=1}^{q_2} \alpha_k \varepsilon_{t-k}^2  + \sum_{l=1}^{p_2} \beta_l h_{t-l}
+\end{aligned}
+$$
+
+Avec : 
+
+- $\alpha_0 > 0$
+
+- $\alpha_k \geq 0, \hspace{0.2cm} k=1,\cdots , q_2$
+
+- $\beta_l \geq 0, \hspace{0.2cm} l=1,\cdots , p_2$
+
+- $\sum_{k=1}^{q_2} \alpha_k + \sum_{l=1}^{p_2} \beta_l = 1$  
+
+La dernière condition indique qu'un choc aura un effet permanent sur la variance conditionnelle. Il n'y aura pas de retour à la moyenne. 
+
+## Modélisation ARMA-GARCH asymétriques
+
+Dans la modélisation d'un processus GARCH, la réponse de la volatilité future aux variations de prix (ou de la variable $Y_t$) va dépendre uniquement de l'ampleur de ces variations et non pas de leur signe. Or, il est connu que les séries financières sont caractérisées par des effets de leviers et de réponse asymétrique aux chocs. Ainsi, il est commun que la volatilité des variations de prix soit plus fortement impactée par des chocs négatifs que positifs. 
+
+Les processus GARCH asymétriques vont étendre les processus GARCH pour intégrer de l'asymétrie (non-linéarité) dans la réponse de la volatilité. 
+
+### Modélisation ARMA-EGARCH
+
+Nelson (1991) introduit la modélisation de processus EGARCH (Exponential GARCH). Cette modélisation va lever les contraintes de positivité que l'on retrouve dans les processus GARCH grâce à l'utilisation de la fonction exponentielle. Le processus EGARCH va introduire à la fois un effet de signe (asymétrie) et un effet d'amplitude : 
+
+- Effet de signe (Asymétrie) : La présence d'asymétrie indique que seul un choc positif ou négatif sur les rendements (série $Y_t$) va faire augmenter la volatilité conditionnelle. Dans le cas le plus classique, un choc négatif sur les rendements va faire augmenter la variance conditionnelle, tandis qu'un choc positif va la faire diminuer. On parlera d'asymétrie lorsqu'un choc positif ou négatif ont le même effet sur les rendements et seul la magnitude (la variance) du choc va compter. 
+
+- Effet d'amplitude : La volatilité conditionnelle va dépendre de l'écart entre le choc de rendements observé et la moyenne supposée des chocs. Plus cet écart sera élevé, plus la variance conditionnelle sera impactée. 
+
+
+On définit le modèle $ARMA(p_1,q_1)\text{-}EGARCH(p_2,q_2)$ de la façon suivante : 
+
+$$
+\begin{aligned}
+&Y_t = \mu + \sum_{i=1}^{p_1} \phi_i Y_{t-i} + \sum_{j = 1}^{q_1} \theta_j \varepsilon_{t-j} + \epsilon_t \\[2ex]
+&\varepsilon_t = z_t \sqrt{h_t} \\[2ex]
+&log(h_t) = \alpha_0 + \sum_{k=1}^{q_2} \alpha_k z_{t-k} + \sum_{m=1}^{q_2} b_m \left(  \left| z_{t-m} \right|  - E \left[  \left| z_{t-m} \right| \right]\right)  + \sum_{l=1}^{p_2} \beta_l log(h_{t-l})
+\end{aligned}
+$$
+
+Ici, on ne modélise plus la variance conditionnelle par rapport à la variance des chocs sur les rendements (sur la série $Y_t$). On modélise la volatilité conditionnelle par rapport aux chocs sur les rendements directement : $z_t$. Il s'agit de la partie des rendements qui n'est pas prévue par la modélisation de la moyenne conditionnelle. 
+
+Les paramètres $\alpha_k$ vont représenter les effets de signe. Dans le cas le plus simple où $q_2=1$, si $\alpha_1 = 0$, alors il n'y a pas d'asymétrie dans la réponse de la volatilité conditionnelle à un choc sur les rendements à la période passée. La volatilité conditionnelle va répondre de la même manière selon si le choc est positif ou négatif. Dans le cas où $\alpha_1 < 0$, alors on a un effet d'asymétrie négatif : effet de levier. La volatilité conditionnelle va augmenter suite à un choc négatif sur les rendements et diminuer suite à un choc positif. Dans le cas où $\alpha_i > 0$ alors on a une asymétrie positive. Un choc positif sur les rendements aura un effet positif sur la volatilité conditionnelle. Un choc négatif aura un effet négatif. 
+
+Les paramètres $b_m$ représentent les effets d'amplitude. Plus le choc sur les rendements va être grand (plus la valeur absolue du choc va s'éloigner de la valeur moyenne des chocs), plus l'impact sur la volatilité conditionnelle va être importe (si $b_1>0$). Ces paramètres sont similaires aux paramètres $\alpha_k$ de la modélisation GARCH. Ces paramètres indiquaient la réponse de la volatilité conditionnelle suite à une augmentation de la variance des chocs passés sur les rendements. Dans le processus EGARCH, on ne regarde pas la volatilité des chocs de rendements passés, mais à quel point ces chocs sont éloignés de leur moyenne, mais le principe est très similaire (puisque la variance indique à quel point on s'éloigne de la moyenne). 
+
+La valeur de $E \left[  \left| z_{t-m} \right| \right]$ va dépendre de la loi supposée de $z_t$ (voir infra). 
+
+Ce modèle présente l'avantage de ne pas avoir de contraintes de positivité sur ses coefficients. 
+
+### Modélisation ARMA-GJR-GARCH
+
+
+Glosten et al (1993) proposent la modélisation GJR-GARCH qui va introduire une variable binnaire afin de différencier explicitement l'immpact d'un choc négatif ou positif sur la volatilité conditionnelle. 
+
+
+On définit le modèle $ARMA(p_1,q_1)\text{-}IGARCH(p_2,q_2)$ de la façon suivante : 
+
+$$
+\begin{aligned}
+&Y_t = \mu + \sum_{i=1}^{p_1} \phi_i Y_{t-i} + \sum_{j = 1}^{q_1} \theta_j \varepsilon_{t-j} + \epsilon_t \\[2ex]
+&\varepsilon_t = z_t \sqrt{h_t} \\[2ex]
+&h_t = \alpha_0 + \sum_{i=1}^{q_2} \left( \alpha_i \varepsilon_{t-i}^2 + \gamma_i \mathbb{I}_{\varepsilon_{t-i}< 0} \varepsilon_{t-i}^2 \right) + \sum_{i=1}^{p_2} \beta_i h_{t-i} \\[2ex]
+&\mathbb{I}_{\varepsilon_{t-i}<0} = 
+\begin{cases}
+1 \hspace{0.2cm} \text{si} \hspace{0.2cm} \varepsilon_{t-i} < 0 \\[2ex]
+0 \hspace{0.2cm} \text{si} \hspace{0.2cm} \varepsilon_{t-i} \geq 0
+\end{cases}
+\end{aligned}
+$$
+
+La modélisation GJR-GARCH introduit une variable binaire qui va prendre la valeur 1 si le choc sur les rendements passé est négatif et 0 s'il est nul ou positif. Cela permet d'introduire un effet différencié selon le signe du choc de rendements. Ainsi, dans le cas simple où $q_2 =1$, si le choc sur les rendements passé est négatif, alors l'augmentation de la volatilité des rendements de 1, entraînera une augmentation de la volatilité conditionnelle de $\alpha_1$. En revanche, si le choc sur les rendements passé est négatif, alors l'augmentation de la volatilité des rendements de 1, entraînera une augmentation de la volatilité conditionnelle de $\alpha_1 + \gamma_1$. Si ces deux coefficients sont positifs alors un choc de rendements négatif aura un impact plus important qu'un choc de rendements positif.   
+
+On retrouve les contraintes de positivité dans cette spécification puisque l'on modélise de nouveaux la variance conditionnelle. 
+
+## Tester la présence d'effets ARCH
+
+Utiliser une modélisation de type ARCH ne se justifie que si la série $Y_t$ est caractérisée par la présence d'effets ARCH. Pour tester la présence de ces effets ARCH, on peut utiliser les tests d'autocorrélation classique sur les rendements au carré ou bien utiliser le test ARCH-LM. 
+
+### Test de Ljung-Box sur les rendements au carré
+
+Ce test vise à déterminer si les rendements au carré (donc leur variance si la moyenne est égale à 0) sont autocorrélés, donc s'ils dépendent de leur valeur passée. 
+
+A partir de la série des rendements $Y_t$, on va créer la série des rendements au carré $Y_t^2$.  
+
+On teste l’hypothèse nulle qu'il n'y a pas d'autocorrélation à l'ordre $K$ entre nos rendements au carré (la variance des rendements ne dépend pas de ses valeurs passées). 
+
+$$
+\begin{cases}
+H_0 : \rho_1 = \cdots = \rho_{K} \\[2ex]
+H_1 : \exists \hspace{0.2cm} \rho_k \neq 0
+\end{cases} 
+$$
+
+La statistique de test est donnée par : 
+
+$$
+\begin{aligned}
+  LB(K) = T(T+2) \sum_{k=1}^K \frac{\hat{\rho}_{k}^2}{T-k} \sim \chi^2(K)  
+\end{aligned}
+$$
+
+où $\hat{\rho}_k$ désigne l'autocorrélation empirique des rendements au carré : 
+
+$$
+\begin{aligned}
+\hat{\rho}_k = \frac{\sum_{t=k+1}^T \left( X_t^2 - \bar{X}^2 \right) \left( X_{t-k}^2 - \bar{X}^2 \right) / \left( T-k \right)}{\sum_{t=k+1}^T \left( X_t^2 - \bar{X}^2 \right)^2 / T}  
+\end{aligned}
+$$
+
+La règle de décision est la suivante : 
+
+- Si $LB(K) \geq \chi^2(K)$, alors on rejette l'hypothèse nulle de non-autocorrélation des rendements au carré. Nos rendements au carré (la variance des rendements) dépendent de leur valeur passé au moins jusqu'à l'ordre $K$. Il y a donc possiblement de la présence d'effets ARCH dans nos rendements qu'il va falloir modéliser explicitement. 
+
+- Si $LB(K) <\chi^2(K)$, alors on ne peut pas rejeter l'hypothèse nulle de non-autocorrélation des rendements au carré. Il semblerait que nos rendements au carré (la variance des rendements) ne dépendent pas de leur valeur passé au moins jusqu'à l'ordre $K$. Il n'y a vraisemblablement pas d'effets ARCh dans nos rendements. Une modélisation de l'espérance conditionnelle est donc suffisante. 
+
+### Test ARCH-LM
+
+Le test ARCH vise à déterminer si une série suit un processus Autorégressif Conditionnellement Hétéroscédastique (ARCH) ou non. Ce test est un test LM qui se base sur l'estimation d'une régression auxiliaire. La première étape consiste à modéliser l'espérance conditionnelle de notre série des rendements (par une modélisation ARMA par exemple). On récupère ensuite la série des résidus $\hat{\varepsilon}_t$.
+
+On estime la régression suivante :
+
+$$
+\hat{\varepsilon}_t^2 = \alpha_0 + \sum_{i=1}^l \alpha_i \hat{\varepsilon}_{t-i}^2
+$$
+
+On calcule ensuite le coefficient de détermination $R^2$ de cette régression.
+
+On teste l'hypothèse nulle d'absence d'hétéroscédasticité conditionnelle :
+
+$$
+\begin{cases}  
+H_0 : \alpha_i = 0 \hspace{0.3cm} \forall \hspace{0.2cm} i = 1, \cdots, l \\[2ex]
+H_1 : \exists \hspace{0.2cm} \alpha_i \neq 0
+\end{cases}
+$$
+
+On calcule la statistique :
+
+$$
+LM = TR^2 \sim \chi^2(l)
+$$
+
+La règle de décision est la suivante :
+
+-   Si $LM \geq \chi^2(l)$ (ou $p.value \leq 0.05$), on rejette $H_0$. Les résidus n'ont pas une variance conditionnelle constante et sont donc conditionnellement hétéroscédastiques. Il est nécessaire de modéliser la variance conditionnelle de la série. 
+
+-   Si $LM < \chi^2(2p)$ (ou $p.value >0.05$), on ne peut pas rejeter $H_0$. Les résidus ont une variance conditionnelle constante et sont donc conditionnellement homoscédastiques. La modélisation de l'espérance conditionnelle est suffisante. 
+
+## Estimation des Modèles type ARCH
+
+Les modèles de type ARCH sont estimés par le principe du Pseudo Maximum de Vraisemblance (QLME). Ce principe consiste à appliquer la méthode du Maximum de Vraisemblance (MLE) en supposant que les résidus suivent une certaine, même si dans la réalité cette hypothèse n'est pas vérifiée. 
+
+L'estimateur MLE n'a pas de fondement si l'on fait une erreur sur la distribution postulée. L'idée générale de l'estimateur QMLE consiste à démontrer que l'estimateur du Maximum de Vraisemblance obtenu peut être convergent, même en cas d'erreur sur la loi postulée, si la vraie loi des résidus appartient à la même classe de loi que celle postulée. 
+
+Classiquement, on va postuler que les résidus suivent une loi normale. Cette loi est très simple et facile à implémenter. Mais on peut appliquer le principe du GMLE à d'autres lois pour ainsi prendre en compte des caractéristiques que ne peut prendre en compte la loi normale comme par exemple :  
+
+- **Loi de Student** pour modéliser des queues de distribution plus épaisses
+
+- **Loi de Student dysimétrique standardisée (skewed-Student)** pour modéliser des distribution asymétriques avec des queues de distribution plus épaisses.
+
+- **Loi GED (Generalized Error Distribution)** pour modéliser des queues de distributions plus épaisses. 
+
+
+## Validation du modèle ARCH sélectionné
+
+La première étape lors d'une modélisation ARCH à tester la présence d'effets ARCH dans notre série au carré ou bien dans les résidus au carré. Pour cela il faut modéliser correctement l'espérance conditionnelle de la série $Y_t$ (Voir procédure dans le chapitre 03-ARIMA). On applique ensuite le test ARCH-LM sur les résidus au carré de cette modélisation. 
+
+En cas de présence d'effets ARCH, on commence par estimer simple processus ARCH(1) (ou GARCH(1,1)) en supposant que les résidus suivent une loi normale. L'idée est de tester si la modélisation la plus simple permet de prendre en compte toutes les caractéristiques de la série. 
+
+Pour tester la validité de ce modèle, on commence d'abord par vérifier si les contraintes de positivité sont vérifiées dans notre modèle estimé. Si ce n'est pas le cas, il faut changer de modélisation. 
+
+On teste ensuite s'il existe encore de l'autocorrélation au sein de nos résidus standardisés $\hat{z}_t = \frac{X_t}{\sqrt{h_t}}$. Si tel est le cas, c'est que notre modélisation de la moyenne conditionnelle n'est pas satisfaisante. 
+
+On continue par tester s'il existe encore des effets ARCH dans les résidus standardisés en appliquant le test ARCH sur ces résidus. S'il existe encore des effets ARCH, il faut réestimer le modèle en augmentant l'ordre $p_2$ et/ou $q_2$. Dans ce cas on repart à la première étape de validation. 
+
+Il faut ensuite tester s'il existe de l'asymétrie dans la réponse de la variance conditionnelle suite à des chocs positifs ou négatifs. Pour cela on applique les tests d'asymétrie de Engle et Ng (1993). Il s'agit de 3 tests (biais de signe négatif, biais de signe positif, test joint de biais de signe) dont l'hypothèse nulle est l'absence de biais dans les résidus standardisés. Si on trouve la présence d'asymétrie grâce à l'un de ces tests, cela signifie que l'on ne prend pas en compte toutes les caractéristiques de la série. Il faut donc réestimer un modèle prenant en compte ces asymétries (ou augmenter les ordres du modèle si on estime déjà un modèle à asymétrie). 
+
+Enfin, si jamais il apparaît que la série (et donc les résidus standardisés) présente des signe de non-normalité, alors on peut estimer le modèle en prenant une autre loi supposée suivie par les résidus. 
+
+Cela peut donner un certain nombre de modèles à tester. On peut comparer les différents modèles grâce aux critères d'informations pour choisir celui qui va le mieux représenter les données tout en gardant une certaine parcimonie dans le nombre de paramètres estimés. 
+
+
+## Value at Risk et modèles GARCH
+
+### Définition de la Value at Risk (VaR)
+
+La Value at Risk est une mesure du risque introduite par Jorion (2007) qui correspond au montant des pertes qui ne devraient pas être dépassées pour un niveau de confiance donné sur un horizon temporel donné. Elle correspond à une perte potentielle ou maximale qui ne devrait être atteinte qu'avec une probabilité donnée sur un horizon donné. 
+
+La distribution statistique de la VaR va reposer sur 3 éléments : 
+
+- La distribution des profits et des pertes (P&L) du portefeuille ou de l'actif.
+
+- Le niveau de confiance $1-\alpha$. Généralement on prend $\alpha=1\%$. 
+
+- L'horizon du risque. On considérera ici $t=1$. 
+
+La VaR définie pour un taux de couverture $\alpha \%$ correspond au quantile d'ordre $\alpha$ de la distribution des profits et des pertes associée à la détention d'un actif ou d'un portefeuille d'actif sur une période donnée. 
+
+Pour résumer, la VaR n'est qu'un quantile particulier de la distribution des profits et des pertes. 
+
+```{r graph heterogeneity bias, echo=FALSE}
+source(here::here("02-codes", "presentations", "06-GARCh-VaR", "codes", "graph-VaR.R"))
+```
+
+Si l'on note $R_t$ les rendements sur un horizon donné, on note leur fonction de densité : 
+
+$$
+\begin{aligned}
+  F_{R_t}(X) = Pr(R_t \leq X)  
+\end{aligned}
+$$
+
+Pour un taux de couverture $\alpha \%$, la VaR correspond à l'opposée du fractile d'ordre $\alpha$ de la distribution des rendements. On prend l'opposé car par convention on indique la VaR de manière positive. 
+
+$$
+\begin{aligned}
+  VaR_t (\alpha) = - F_{R_t}^{-1} (\alpha)  
+\end{aligned}
+$$
+
+Par définition, la probabilité d'observer une perte supérieure à la VaR sur l'horizon de détention est égale au taux de couverture : 
+
+$$
+\begin{aligned}
+  Pr[R_t < -VaR_t (\alpha)] = \alpha  
+\end{aligned}
+$$
+
+
+Cette définition de la VaR nous donne une VaR marginale (non-conditionnelle). Cette Value at Risk est constante. Cela suppose donc que le risque et la volatilité sont constants dans le temps. Or ce n'est pas forcément le cas. On peut donc calculer une mesure de risque conditionnelle à un ensemble d'information afin que cette mesure s'ajuste à l'ensemble d'information. 
+
+Cette mesure est appelée VaR conditionnelle. Pour un taux de couverture $\alpha$, la VaR conditionnelle à un ensemble d'information $I_t$, notée $VaR_t(\alpha|I_t) = F_{R_t}(\alpha |I_t)$, correspond à l'opposé du fractile d'ordre $\alpha$ de la distribution conditionnelle des rendements. 
+
+$$
+\begin{aligned}
+  VaR_t (\alpha |I_t) = - F_{R_t}^{-1} (\alpha |I_t)    
+\end{aligned}
+$$
+
+Où $F_{R_t}^{-1} (\alpha |I_t)$ correspond à la fonction de répartition conditionnelle de la fonction de densité conditionnelle $f_{R_t}^{-1} (\alpha |I_t) $
+
+On peut supposer que la densité conditionnelle varie elle aussi dans le temps, mais généralement on va la supposer constante (le processus générateur des donnée reste constant dans le temps). 
+
+
