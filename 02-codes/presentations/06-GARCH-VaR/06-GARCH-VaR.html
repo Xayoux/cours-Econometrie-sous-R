@@ -2339,6 +2339,7 @@ window.Quarto = {
   <li><a href="#value-at-risk-et-modèles-garch" id="toc-value-at-risk-et-modèles-garch" class="nav-link" data-scroll-target="#value-at-risk-et-modèles-garch">Value at Risk et modèles GARCH</a>
   <ul>
   <li><a href="#définition-de-la-value-at-risk-var" id="toc-définition-de-la-value-at-risk-var" class="nav-link" data-scroll-target="#définition-de-la-value-at-risk-var">Définition de la Value at Risk (VaR)</a></li>
+  <li><a href="#estimation-de-la-var" id="toc-estimation-de-la-var" class="nav-link" data-scroll-target="#estimation-de-la-var">Estimation de la VaR</a></li>
   </ul></li>
   </ul></li>
   </ul>
@@ -2661,6 +2662,47 @@ LM = TR^2 \sim \chi^2(l)
 \]</span></p>
 <p>Où <span class="math inline">\(F_{R_t}^{-1} (\alpha |I_t)\)</span> correspond à la fonction de répartition conditionnelle de la fonction de densité conditionnelle $f_{R_t}^{-1} (|I_t) $</p>
 <p>On peut supposer que la densité conditionnelle varie elle aussi dans le temps, mais généralement on va la supposer constante (le processus générateur des donnée reste constant dans le temps).</p>
+</section>
+<section id="estimation-de-la-var" class="level3">
+<h3 class="anchored" data-anchor-id="estimation-de-la-var">Estimation de la VaR</h3>
+<p>Si l’espérance conditionnelle des rendements est nulle (<span class="math inline">\(\mu_{t+1|t} = 0\)</span>), alors le calcul de la VaR ne nécessite qu’un estimateur de la variance des rendements. A partir de là, si la volatilité des rendements est constante dans le temps : <span class="math inline">\(\sigma_{t+1|t} = \sigma\)</span>, alors il suffit d’estimer l’écart-type des rendements puis de trouver le <span class="math inline">\(\alpha\)</span> quantile de la loi que sont supposées suivre les rendements.</p>
+<p>Si la volatilité n’est pas constante, on peut calculer l’écart-type des rendements sur une fenêtre glissante, c’est à dire calculer l’écart-type sur les <span class="math inline">\(x\)</span> premiers jours, puis décaler la fenêtre de 1 jour, calculer l’écart-type etc… Cela permet d’avoir une mesure de la volatilité qui dépend du temps. Dans ce cas, il faut trouver la <span class="math inline">\(\alpha\)</span> quantile de la loi supposée suivie par les rendements pour chaque période de temps.</p>
+<p>Une autre solution consiste à estimer des modèles calculant la volatilité conditionnelle de la série puis à trouver le <span class="math inline">\(\alpha\)</span> quantile associé à la loi de distribution que sont supposés suivre les rendements</p>
+<p>Supposons que les rendements suivent un processus AR(1)-GARCH(1,1) :</p>
+<p><span class="math display">\[
+\begin{aligned}
+R_t &amp;= \rho R_{t+1} + \varepsilon_t \\[2ex]
+\varepsilon_t &amp;= z_t \sqrt{h_t} \\[2ex]
+h_t &amp;= \alpha_0 + \alpha_1 \varepsilon_{t-1}^2 + \beta h_{t-1}  
+\end{aligned}
+\]</span></p>
+<p>Dans ce cas, on sait que l’espérence et la variance conditionnelle en <span class="math inline">\(t+1\)</span> s’écrit :</p>
+<p><span class="math display">\[
+\begin{aligned}
+E \left[ R_{t+1} |I_t \right] &amp;= \rho R_t \\[2ex]
+V \left[ R_{t+1}|I_t \right] &amp;= V \left[ \varepsilon_{t+1} |I_t \right] = \alpha_0 + \alpha_1 \varepsilon_{t-1}^2 + \beta h_t  
+\end{aligned}
+\]</span></p>
+<p>Si on ajoute l’hypothèse que les résidus standardisés suivent une loi normale centrée réduite : <span class="math inline">\(z_t |I_t \sim \mathcal{N}(0,1)\)</span>, alors on peut prévoir la VaR à l’horizon d’un jour avec la formule suivante :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  VaR_{t+1|t} (1-\alpha) &amp;= -E \left[ R_{t+1} |I_t \right] - \sqrt{V \left[ R_{t+1}|I_t \right]} \times \Theta^{-1} (\alpha) \\[2ex]
+  VaR_{t+1|t} (1-\alpha) &amp;= -\rho R_t - \sqrt{\alpha_0 + \alpha_1 \varepsilon_{t-1}^2 + \beta h_t} \times \Theta^{-1} (\alpha)
+\end{aligned}
+\]</span></p>
+<p>Avec <span class="math inline">\(\Theta^{-1} (\alpha)\)</span> la fonction de répartition de la loi normale pour le quantile <span class="math inline">\(\alpha\)</span>.</p>
+<p>De manière plus générale on peut calculer la VaR avec la formule suivante :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  VaR_{t+1|t} (1-\alpha) &amp;= - \mu_t + z_\alpha \sqrt{h_t}  
+\end{aligned}
+\]</span></p>
+<p>Où :</p>
+<ul>
+<li><p><span class="math inline">\(\mu_t\)</span> est la moyenne conditionnelle des rendements à la période <span class="math inline">\(t\)</span></p></li>
+<li><p><span class="math inline">\(h_t\)</span> est la volatilité conditionnelle des rendements à la période <span class="math inline">\(t\)</span></p></li>
+<li><p><span class="math inline">\(z_\alpha\)</span> est le <span class="math inline">\(\alpha\)</span>-quantile (négatif) de la loi de probabilité supposée suivie par les résidus.</p></li>
+</ul>
 </section>
 </section>
 </section>

@@ -420,4 +420,73 @@ Où $F_{R_t}^{-1} (\alpha |I_t)$ correspond à la fonction de répartition condi
 
 On peut supposer que la densité conditionnelle varie elle aussi dans le temps, mais généralement on va la supposer constante (le processus générateur des donnée reste constant dans le temps). 
 
+### Estimation de la VaR
+
+Si l'espérance conditionnelle des rendements est nulle ($\mu_{t+1|t} = 0$), alors le calcul de la VaR ne nécessite qu'un estimateur de la variance des rendements. A partir de là, si la volatilité des rendements est constante dans le temps : $\sigma_{t+1|t} = \sigma$, alors il suffit d'estimer l'écart-type des rendements puis de trouver le $\alpha$ quantile de la loi que sont supposées suivre les rendements. 
+
+Si la volatilité n'est pas constante, on peut calculer l'écart-type des rendements sur une fenêtre glissante, c'est à dire calculer l'écart-type sur les $x$ premiers jours, puis décaler la fenêtre de 1 jour, calculer l'écart-type etc... Cela permet d'avoir une mesure de la volatilité qui dépend du temps. Dans ce cas, il faut trouver la $\alpha$ quantile de la loi supposée suivie par les rendements pour chaque période de temps. 
+
+Une autre solution consiste à estimer des modèles calculant la volatilité conditionnelle de la série puis à trouver le $\alpha$ quantile associé à la loi de distribution que sont supposés suivre les rendements
+
+Supposons que les rendements suivent un processus AR(1)-GARCH(1,1) : 
+
+$$
+\begin{aligned}
+R_t &= \rho R_{t+1} + \varepsilon_t \\[2ex]
+\varepsilon_t &= z_t \sqrt{h_t} \\[2ex]
+h_t &= \alpha_0 + \alpha_1 \varepsilon_{t-1}^2 + \beta h_{t-1}  
+\end{aligned}
+$$
+
+Dans ce cas, on sait que l'espérence et la variance conditionnelle en $t+1$ s'écrit : 
+
+$$
+\begin{aligned}
+E \left[ R_{t+1} |I_t \right] &= \rho R_t \\[2ex]
+V \left[ R_{t+1}|I_t \right] &= V \left[ \varepsilon_{t+1} |I_t \right] = \alpha_0 + \alpha_1 \varepsilon_{t-1}^2 + \beta h_t  
+\end{aligned}
+$$
+
+Si on ajoute l'hypothèse que les résidus standardisés suivent une loi normale centrée réduite : $z_t |I_t \sim \mathcal{N}(0,1)$, alors on peut prévoir la VaR à l'horizon d'un jour avec la formule suivante :
+
+$$
+\begin{aligned}
+  VaR_{t+1|t} (1-\alpha) &= -E \left[ R_{t+1} |I_t \right] - \sqrt{V \left[ R_{t+1}|I_t \right]} \times \Theta^{-1} (\alpha) \\[2ex]
+  VaR_{t+1|t} (1-\alpha) &= -\rho R_t - \sqrt{\alpha_0 + \alpha_1 \varepsilon_{t-1}^2 + \beta h_t} \times \Theta^{-1} (\alpha)
+\end{aligned}
+$$
+
+Avec $\Theta^{-1} (\alpha)$ la fonction de répartition de la loi normale pour le quantile $\alpha$. 
+
+De manière plus générale on peut calculer la VaR avec la formule suivante : 
+
+$$
+\begin{aligned}
+  VaR_{t+1|t} (1-\alpha) &= - \mu_t + z_\alpha \sqrt{h_t}  
+\end{aligned}
+$$
+
+Où : 
+
+- $\mu_t$ est la moyenne conditionnelle des rendements à la période $t$
+
+- $h_t$ est la volatilité conditionnelle des rendements à la période $t$
+
+- $z_\alpha$ est le $\alpha$-quantile (négatif) de la loi de probabilité supposée suivie par les résidus. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
