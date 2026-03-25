@@ -34,6 +34,7 @@ install.packages("rsvg")
 install.packages("xtbhst")
 install.packages("poobly")
 install.packages("patchwork")
+install.packages("rugarch")
 
 devtools::install_github("https://github.com/Xayoux/dobby.git")
 

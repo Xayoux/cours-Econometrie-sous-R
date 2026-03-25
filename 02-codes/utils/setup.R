@@ -42,6 +42,9 @@ library(plm)
 library(xtbhst)
 library(poobly)
 
+# Package pour les GARCH
+library(rugarch)
+
 # PAckage maison pour le test ADF
 library(dobby)
 

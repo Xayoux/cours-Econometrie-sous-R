@@ -925,6 +925,777 @@ Le MRB s'interprète comme un pourcentage d'écart à la valeur moyenne des appr
 On va comparer les différents MRB entre eux et choisir la méthode qui a le MRB le plus faible en valeur absolue. Cette méthode sera celle qui sera la moins éloignée de la moyenne des VaR obtenue par l'ensemble des approches. 
 
 
+# Code
+
+```{r}
+#| message: false
+#| warning: false
+# Exécute le script setup.R pour charger tous les éléments importants
+source(here::here("02-codes", "utils", "setup.R"))
+```
+
+## Données
+
+Nous allons continuer l'analyse des rendements du S&P 500 commencée dans le chapitre *03-ARIMA*. Nous allons donc importer les données des cours boursier du S&P500 depuis la base de données Yahoo Finance puis calculer les rendements associés. 
+
+
+```{r}
+# Importer les données du S&P500
+sp_500 <- 
+  pdfetch::pdfetch_YAHOO(
+    "^gspc", # Code de la série que l'on souhaite importer
+    fields = "adjclose", # Variable que l'on souhaite importer
+    from = as.Date("2007-01-03"), # Date de départ
+    to = as.Date("2026-01-10") # Date de fin
+  )
+
+# Calculer les rendements de la série
+# Faire la log différence des données + retirer les valeurs manquantes
+rend_sp_500 <- 
+  na.omit((log(sp_500) - log(lag(sp_500))) * 100)
+```
+
+
+```{r}
+# Représenter la série des rendements
+rend_sp_500 |> 
+  plot()
+```
+
+On rappelle que ces rendements sont stationnaires, présentent de la forte autocorrélation et ne suivent pas une lois normale : 
+
+```{r}
+# N'exécuter que si le package dobby est installé
+if (rlang::is_installed("dobby")) {
+  # Test ADF automatique
+  dobby::adf_test_auto(
+    rend_sp_500, 
+    "S&P500", 
+    lags = 20, 
+    return_res = FALSE
+  ) 
+}
+```
+
+```{r}
+# Exécuter uniquement si le package dobby est installé
+if (is_installed("dobby")){
+  # Test de Ljung-Box
+  dobby::check_univariate_autocorr(
+    rend_sp_500, # Série à tester
+    "S&P500", # Nom à donner à la série
+    test_type = "Ljung-Box", # Nom du test d'auto-corrélation
+    return_output = FALSE # Faut-il retourner un tableau de résultats
+  )
+}
+```
+
+
+```{r}
+# Excuter uniquement si le package dobby est installé
+if (rlang::is_installed("dobby")) {
+  # tester la présence de skewness et de surplus de kurtosis
+  dobby::check_univariate_normality(
+    as.numeric(rend_sp_500), # Série : doit être un vecteur numérique   et pas une série temporelle
+    "S&P500", # Nom à donner à la série
+    return_output = FALSE # Faut-il retourner un tableau de résultats   ?
+  ) 
+}
+```
+
+
+Nous avions trouvé que la meilleure modélisation ARIMA pour modéliser l'espérance conditionnelle de nos rendements était un $ARMA(4,5)$. Nous allons donc garder cette modélisation pour l'espérance conditionnelle. 
+
+```{r}
+arma_4_5 <- 
+  forecast::Arima(
+    rend_sp_500, # Série à modéliser
+    order = c(4, 0, 5), # Ordres p, d, d (AR, I, MA) à utiliser
+    include.mean = TRUE # Inclure une constante ou pas
+  )
+```
+
+
+## Test des effets ARCH
+
+Une fois la modélisation de la moyenne conditionnelle trouvée, il faut tester la présence d'effet ARCH afin de voir si les rendements sont caractérisés par une volatilité non-constante et dont la valeur dépend de son passé. 
+
+On peut pour cela utiliser le test de Ljung-Box sur les résidus au carré du modèle ARMA (ou bien sur les rendements au carré) 
+
+```{r}
+# Calculer les résidus au carré du modèle ARMA
+residus_2_arma_4_5 <- arma_4_5$residuals**2
+
+# Tester la présence d'autocorrélation sur les résidus au carré
+LSTS::Box.Ljung.Test(residus_2_arma_4_5, lag = 40)
+```
+
+```{r}
+# Tester l'autocorrélation sur les rendements au carré
+LSTS::Box.Ljung.Test(rend_sp_500**2, lag = 40)
+```
+
+Le test de Ljung-Box indique que les rendements (résidus) au carré sont caractérisés par la présence d'une autocorrélation forte de leur volatilité. La volatilité des rendements dépend de ses valeurs passées. 
+
+```{r}
+# ARCH test
+fDMA::archtest(as.numeric(arma_4_5$residuals**2), lag = 20)
+```
+
+L'utilisation du test ARCH sur les résidus au carré indique également que les rendements semblent caractérisés par une volatilité conditionnelle non-constante. Une telle caractéristique est commune sur les marchés financiers et ne peut être prise en compte par une simple spécification ARMA qui modélise que l'espérance conditionnelle. Il faut adopter une spécification permettant de modéliser une volatilité conditionnelle non-constante. 
+
+## Estimation d'un modèle ARMA(4,5)-ARCH(1)
+
+### Estimation du modèle
+
+Pour essayer de prendre en compte cette volatilité conditionnelle non-constante, nous allons spécifier un modèle ARMA(4,5) pour modéliser l'espérance conditionnelle et un modèle ARCH(1) pour modéliser la volatilité conditionnelle des rendements. 
+
+Les modélisation (G)ARCH se font grâce au package `rugarch`. Contrairement aux modèles de régressions linéaires ou ARMA vu précédemment où la spécification et l'estimation s'effectuent au sein d'une seule fonction, le package `rugarch` sépare les deux étapes. Ainsi, on va spécifier l'équation de la moyenne conditionnelle et de la variance conditionnelle avec la fonction `rugarch::urgarchspec()`, puis on va estimer le modèle avec la fonction `rugarch::urgarchfit()`. 
+
+La fonction `rugarch::ugarchspec()` va prendre comme argument `variance.model` une liste contenant les spécifications de l'équation de la variance conditionnelle (type de modèle, régresseurs exogènes etc...) ; l'argument `mean.model` va servir à spécifier la modélisation de l'espérance conditionnelle ; l'argument `distribution.model` va servir à définir la distribution de probabilité que sont supposés suivre les résidus. 
+
+Ici nous allons estimé un modèle ARCH(1) pour la volatilité conditionnelle, un modèle ARMA(4,5) pour la moyenne conditionnelle et nous utiliser la loi normale pour la distribution des résidus. 
+
+```{r}
+# Spécifier le modèle ARMA(4,5)-ARCH(1)
+arch1_spec <- 
+  rugarch::ugarchspec(
+    # Spécification de la variance conditionnelle
+    variance.model = 
+      list(
+        model = "sGARCH", # Utiliser un modèle GARCH
+        garchOrder = c(1,0), # Ordres du GARCH(q,p) : p = 0 donc modèle ARCH
+        variance.targeting = FALSE # Définir si on veut utiliser la variance non conditionnelle empirique comme cible ou non
+      ),
+    # Spécification de la moyenne conditionnelle
+    mean.model = 
+      list(
+        armaOrder = c(4,5), # Ordres (p,q) du modèle ARMA
+        include.mean = TRUE # Inclure une constante
+      ),
+    distribution.model = "norm" # Distribution normale des résidus
+  )
+```
+
+Une fois que l'on a spécifié le modèle, il faut l'estimer grâce à la fonction `rugarch::ugarchfit()` qui va prendre comme arguments la spécification ainsi que les données. 
+
+```{r}
+# Estimer le modèle
+arch1_fit <- rugarch::ugarchfit(
+  arch1_spec, # Spécification du modèle
+  rend_sp_500 # Données à utiliser
+)
+
+# Visualiser le résultat
+arch1_fit
+```
+
+Les résultats sont organisés de la façon suivante : 
+
+- **Conditional Variance Dynamics** : spécification du modèle 
+
+- **Optimal Parameters** : Paramètres de la moyenne et de la variance conditionnelle ainsi que leur erreur standard. les paramètres `mu`, `ar...` et `ma...` indique les paramètres de la modélisation ARMA de la moyenne conditionnelle. Le paramètre `omega` indique la constante dans l'équation de la variance conditionnelle. Il s'agit de la volatilité moyenne de la série. Le paramètre `alpha1` indique le paramètre ARCH. 
+
+- **Robust Standard Errors** : Paramètres et erreurs standards. Les erreurs standard sont corrigées pour tenir compte de l'autocorrélation et de l'hétéroscédasticité. La valeur des paramètres restent inchangés. 
+
+- **Information Criteria** : Critères d'information du modèle. 
+
+- **Weighted Ljung-Box Test on Standardized Residuals** : Test de Ljung-Box sur les résidus standardisés pour vérifier la présence ou non d'autocorrélation dans les rendements. Sert à vérifier si le modèle ARMA prend bien en compte toute l'autocorrélation. 
+
+- **Weighted Ljung-Box Test on Standardized Squared Residuals** : Test de Ljung-Box sur les résidus standardisés au carré. Sert à vérifier si le modèle type GARCH prend bien en compte toute l'autocorrélation de la volatilité conditionnelle. 
+
+- **Nyblom stability test** : Test de stabilité dans le temps des coefficients. Sert à vérifier qu'il n'y a pas de de break structurels. 
+
+- **Sign Bias Test** : Tester s'il existe dans l'asymétrie dans la réponse de la volatilité à un choc de rendements. 
+
+
+La première chose à vérifier sont les conditions de positivité du modèle. Il faut que les paramètres `Omega` et `alpha1` soient supérieurs ou égaux à 0 ce qui est le cas ici (0.81 et 0.58 respectivement). On vérifier ensuite que le paramètre ARCH est significatif (sinon aucun intérêt de le prendre en compte). La t-stat associée est de 16.49 et la p.value est de 0. On rejette donc l'hypothèse nulle. Le coefficient est bien significativement différent de 0, et ce même si l'on prend des erreurs standard robustes. 
+
+On peut voir que le test de Ljung-Box sur les résidus standardisés rejettent l'hypothèse nulle de non-autocorrélation. Il semblerait que le modèle ARMA(4,5) ne soit pas suffisant pour prendre en compte toute l'autocorrélation des rendements malgré l'analyse initiale. Dans ce cas, il serait rigoureux de changer de modèle pour la moyenne conditionnelle (ce que l'on ne va pas faire ici). 
+
+Le test de Ljung-Box sur les résidus standardisés au carré rejette l'hypothèse nulle. Tous les effets ARCH, surtout de long-terme n'ont pas été pris en compte. Il faudrait changer de type de modèle ARCH ou augmenter les ordres. La conclusion du test ARCH est similaire. 
+
+Les test de biais indiquent pour deux d'entre eux qu'il semble exister une asymétrie dans la réponse de la volatilité conditionnelle à un choc sur elle même ou sur les rendements. Il faudrait donc changer de modèle pour utiliser une spécification qui permet de prendre en compte ces effets asymétriques. 
+
+On sait également que nos rendements ne suivent pas une loi normale. Ils sont caractérisés par une kurtosis plus élevée et une asymétrie négative. Il serait donc opportun de changer la distribution que sont supposés suivre les résidus. Les différentes possibilités implémentées par le package `rugarch` sont : 
+
+- **norm** : pour une distribution normale
+
+- **snorm** : pour une distribution normale asymétrique
+
+- **std** : pour une distribution de Student
+
+- **sstd** : pour une distribution asymétrique de Student
+
+- **ged** : pour une distribution généralisée des erreurs (kurtosis plus élevée et distribution plus flexible)
+
+- **sged** : pour une distribution généralisée des erreurs asymétrique
+
+- **nig** : pour une distribution normale inverse (normal inverse gaussian distribution)
+
+- **ghyp** : pour une distribution généralisée hyperbolique
+
+- **jsu** : pour une distribution Su de Johnson
+
+Nous allons rester relativement simple et utiliser une distribution de Student asymétrique pour prendre en compte des queues de distribution plus épaisse et l'asymétrie de nos rendements. 
+
+### Divers résultats
+
+On peut calculer la persistance du modèle (la somme des coefficients GARCH) grâce à la fonction `rugarch::persistence()`. 
+
+```{r}
+# Calculer la persistance du modèle
+rugarch::persistence(arch1_fit)
+```
+
+Le résultat est bien égal au coefficient `alpha1` puisqu'il s'agit du seul paramètre GARCH. 
+
+On peut également calculer la demi-vie, c'est à dire le temps qu'il faut pour que la moitié d'un choc soit absorbée (revienne vers sa moyenne) avec la fonction `rugarch::halflife()`
+
+```{r}
+# Calculer la demi-vie
+rugarch::halflife(arch1_fit)
+```
+
+La persistance de ce modèle étant faible, un choc met 1,27 jours pour être à moitié absorbé. 
+
+On peut calcuelr la variance non-conditionnelle estimée par le modèle et la comparer avec la vraie variance non-conditionnelle de nos rendements
+
+```{r}
+# Volatilité non conditionnelle des rendements
+sd(as.numeric(rend_sp_500))
+
+# Volatilité non conditionnelle estimée du modèle
+sqrt(uncvariance(arch1_fit))#volatilité non conditionnelle estimée de notre modèle
+```
+
+On peut voir que la volatilité estimée et la vraie volatilité sont très proche. En mettant le paramètre `variance.targeting = TRUE`, on pourrait forcer le modèle à estimer des paramètres permettant d'avoir une variance non conditionnelle estimée égale à la variance non conditionnelle des rendements.
+
+En utilisant la fonction `plot()` on peut obtenir un certain nombre de graphiques de diagnostique pour notre modèle. 
+
+```{r, eval=FALSE}
+plot(arch1_fit, which = "all")
+```
+
+On peut y retrouver des graphiques de la VaR à 1%, de la volatilité conditionnelle, de la loi suivie par les résidus, des graphiques d'autocorrélation etc... En changeant la valeur du paramètre `which` par un chiffre, on peut choisir de ne visualiser qu'un seul graphique. 
+
+```{r}
+plot(arch1_fit, which = 9)
+```
+
+On peut voir sur ce graphique que les quantiles empiriques de nos résidus standardisés s'éloignent fortement des quantiles théoriques de la loi normale. Cela est attendue puisque l'on sait que nos résidus ne suivent pas une loi normale. 
+
+La fonction `rugarch::sigma()` permet d'obtenir l'estimation de la variance conditionnelle du modèle et donc de la volatilité conditionnelle de nos rendements. 
+
+```{r}
+# Obtenir la volatilityé conditionnelle estimée des rendements
+rugarch::sigma(arch1_fit) |> 
+  # Transformer en objet de séries temporelles
+  as.zoo() |> 
+  # Représenter graphiquement
+  plot(
+    main="Volatilité du S&P500 pour ARMA(4,5)-ARCH(1) avec z~N(0,1)", 
+     xlab = "", 
+     ylab = "Volatilité"
+  )
+
+```
+
+Comme attendu, la volatilité estimée est bien plus forte en période de crise. Cette volatilité semble bien autocorrélée en cluster de volatilité. 
+
+```{r}
+rugarch::residuals(arch1_fit, standardize = TRUE) |> 
+  as.zoo() |> 
+  plot(
+    main = "Résidus standardisés du modèle ARMA(4,5)-ARCH(1) z~N(0,1)",
+     xlab = "",
+     ylab = "résidus standardisés"
+  )
+```
+
+Il semble que l'on ait toujours graphiquement des cluster de volatilité, ce qui est confirmé par les tests de Ljung-Box et ARCH. Notre modèle ne permet pas de prendre en compte toute l'autocorrélation de la volatilité.
+
+
+## Estimation d'un modèle ARMA(4,5)-GARCH(1,1) sstd
+
+On va dans un premier temps passer à une spécification GARCH(1,1) afin de prendre en compte d'avantage d'autocorrélation de la volatilité. On va également utiliser un ciblage de variance pour forcer la variance non-conditionnelle estimer à être égale à celle observée dans les rendements (le but est de coller au plus près des rendements). On va également utiliser une distribution de Student asymétrique afin de prendre en compte des queues de distribution plus épaisses et une possible asymétrie dans nos rendements.  
+
+
+```{r}
+# Spécifier le modèle ARMA(4,5)-ARCH(1)
+garch11_spec <- 
+  rugarch::ugarchspec(
+    # Spécification de la variance conditionnelle
+    variance.model = 
+      list(
+        model = "sGARCH", # Utiliser un modèle GARCH
+        garchOrder = c(1,1), # Ordres du GARCH(q,p)
+        variance.targeting = TRUE # Définir si on veut utiliser la variance non conditionnelle empirique comme cible ou non
+      ),
+    # Spécification de la moyenne conditionnelle
+    mean.model = 
+      list(
+        armaOrder = c(4,5), # Ordres (p,q) du modèle ARMA
+        include.mean = TRUE # Inclure une constante
+      ),
+    distribution.model = "sstd" # Distribution de Student asymétrique des résidus
+  )
+```
+
+Une fois que l'on a spécifié le modèle, il faut l'estimer grâce à la fonction `rugarch::ugarchfit()` qui va prendre comme arguments la spécification ainsi que les données. 
+
+```{r}
+# Estimer le modèle
+garch11_fit <- rugarch::ugarchfit(
+  garch11_spec, # Spécification du modèle
+  rend_sp_500 # Données à utiliser
+)
+
+# Visualiser le résultat
+garch11_fit
+```
+
+On peut voir que de nouveaux coefficients sont apparus. Le paramètre `beta1` est le paramètre généralisé du modèle GARCH. Le paramètre `skew` représente le coefficient d'asymétrie de la distribution sstd estimée. Le paramètre `shape` correspond au paramètre de la loi sstd estimée. On peut voir que le paramètre `Omega` qui est la constante présente dans l'équation de la variance conditionnelle n'a plus d'erreur standard. Cela est du à l'utilisation de `variance.targeting = TRUE` qui va imposer une valeur sur cette constante qui va dépendre de la persistance du modèle et de la variance inconditionnelle des rendements. Ce n'est donc pas une estimation. 
+
+On peut vérifier que la variance non-conditionnelle estimée est très proche de la vraie variance non-conditionnelle : 
+
+```{r}
+# Volatilité non conditionnelle des rendements
+sd(as.numeric(rend_sp_500))
+
+# Volatilité non conditionnelle estimée du modèle
+sqrt(uncvariance(garch11_fit))
+```
+
+On vérifier les contraintes de positivités. Les coefficients `omega`, `alpha1` et `beta1` sont supérieurs à 0. Ces coefficients sont significativement différent de 0 et la somme de `alpha1` et `beta1` est inférieure à 1 donc le modèle est stationnaire :
+
+```{r}
+# Persistence du modèle : alpha1 + beta1
+rugarch::persistence(garch11_fit)
+```
+
+La persistance du modèle est bien plus élevée que pour le modèle ARCH puisque l'on rajoute une dépendance à la variance conditionnelle passée dans l'équation de la variance conditionnelle. 
+
+```{r}
+# Calculer la demi-vie
+rugarch::halflife(garch11_fit)
+```
+
+On peut voir que la demi-vie est bien plus élevée. IL faut désormais 64 jours pour qu'un choc soit à moitié absorbée et commence à revenir vers sa moyenne. 
+
+On peut voir également, que l'on prend légèrement plus en compte l'autocorrélation des résidus à l'ordre 1 mais quelle existe toujours surtout dans les ordres supérieurs. En revanche passer à un modèle GARCH semble avoir supprimé l'autocorrélation des rendements au carré. Il semblerait que ce modèle permet de bien prendre en compte tous les effets ARCH de nos rendements.
+
+```{r}
+# Représenter les résidus standardisés
+rugarch::residuals(garch11_fit, standardize = TRUE) |> 
+  as.zoo() |> 
+  plot(
+    main = "Résidus standardisés du modèle ARMA(4,5)-GARCH(1,1) z~sstd",
+     xlab = "",
+     ylab = "résidus standardisés"
+  )
+```
+
+On voit bien de manière graphique qu'il ne semble plus y avoir réellement de cluster de volatilité au sein de nos résidus standardisés. 
+
+De manière attendue, on retrouve toujours des signes d'asymétrie dans la réponse de la volatilité puisque ce modèle ne permet pas de prendre en compte ce genre d'effets. 
+
+```{r}
+plot(garch11_fit, which = 9)
+```
+
+On peut voir graphiquement, que les quantiles empiriques de npos résidus standardisés s'éloignent bien moins des quantiles théoriques de la loi sstd qu'ils ne s'éloignaient des quantiles théoriques de la loi normale. CEla semble indiquer que l'on prend mieux en compte la kurtosis et la skewness de nos rendements. Mais on peut voir que ce résultat n'est pas parfait. 
+
+## Estimation d'un modèle ARMA(4,5)-GJR-GARCH(1,1)
+
+On, va maintenant estimer un modèle GJR-GARCH afin d'essayer de prendre en compte les effets d'asymétrie que l'on a pu remarquer dans nos spécification précédentes. Pour cela on va indiquer `model = "gjrGARCH`. 
+
+
+```{r}
+# Spécifier le modèle ARMA(4,5)-ARCH(1)
+gjr_garch11_spec <- 
+  rugarch::ugarchspec(
+    # Spécification de la variance conditionnelle
+    variance.model = 
+      list(
+        model = "gjrGARCH", # Utiliser un modèle GJR-GARCH
+        garchOrder = c(1,1), # Ordres du GARCH(q,p)
+        variance.targeting = TRUE # Définir si on veut utiliser la variance non conditionnelle empirique comme cible ou non
+      ),
+    # Spécification de la moyenne conditionnelle
+    mean.model = 
+      list(
+        armaOrder = c(4,5), # Ordres (p,q) du modèle ARMA
+        include.mean = TRUE # Inclure une constante
+      ),
+    distribution.model = "sstd" # Distribution de Student asymétrique des résidus
+  )
+```
+
+Une fois que l'on a spécifié le modèle, il faut l'estimer grâce à la fonction `rugarch::ugarchfit()` qui va prendre comme arguments la spécification ainsi que les données. 
+
+```{r}
+# Estimer le modèle
+gjr_garch11_fit <- rugarch::ugarchfit(
+  gjr_garch11_spec, # Spécification du modèle
+  rend_sp_500 # Données à utiliser
+)
+
+# Visualiser le résultat
+gjr_garch11_fit
+```
+
+Le coefficient `gamma1` représente le coefficient d'asymétrie du modèle. On sait que la variable associée au coefficient `gamma1` est une variable binaire qui va prendre la valeur 1 lorsque le choc de volatilité est négatif. Ainsi la réponse de la volatilité conditionnelle lorsque le choc de volatilité est positif est donné par le coefficient `alpha1`. La réponse de la volatilité conditionnelle lorsque le choc de volatilité est négatif est donné par la somme `alpha1 + gamma1`. Ici on peut voir que `alpha1` n'est pas statistiquement différent de 0. Cela indique que selon cette spécification la volatilité conditionnelle ne réagit pas à un choc de volatilité positif positif. Elle réagit simplement à un choc de volatilité négatif à hauteur de $0.26$. 
+
+Les contraintes de positivité du modèle sont respectées. On peut voir qu'avec cette spécification l'autocorrélation des rendements et des rendements au carré semble avoir été prise en compte dans sa globalité (au moins jusqu’à l'ordre 20). En revanche, On retrouve toujours des effets de signes asymétriques. Certes, aucun effets asymétrique négatif n'est détecté (ce modèle ne prend que l'asymétrie négative au vue des coefficients estimés). Mais, il semblerait selon les tests qu'il y a d'autres asymétries à prendre en compte. 
+
+## Estimation d'un modèle ARMA(4,5)-EGARCH(1,1) sstd
+
+Pour essayer de mieux prendre en compte l'asymétrie, on va estimer un modèle EGARCH(1,1). 
+
+```{r}
+# Spécifier le modèle ARMA(4,5)-ARCH(1)
+egarch11_spec <- 
+  rugarch::ugarchspec(
+    # Spécification de la variance conditionnelle
+    variance.model = 
+      list(
+        model = "eGARCH", # Utiliser un modèle GJR-GARCH
+        garchOrder = c(1,1), # Ordres du GARCH(q,p)
+        variance.targeting = TRUE # Définir si on veut utiliser la variance non conditionnelle empirique comme cible ou non
+      ),
+    # Spécification de la moyenne conditionnelle
+    mean.model = 
+      list(
+        armaOrder = c(4,5), # Ordres (p,q) du modèle ARMA
+        include.mean = TRUE # Inclure une constante
+      ),
+    distribution.model = "sstd" # Distribution de Student asymétrique des résidus
+  )
+```
+
+Une fois que l'on a spécifié le modèle, il faut l'estimer grâce à la fonction `rugarch::ugarchfit()` qui va prendre comme arguments la spécification ainsi que les données. 
+
+```{r}
+# Estimer le modèle
+egarch11_fit <- rugarch::ugarchfit(
+  egarch11_spec, # Spécification du modèle
+  rend_sp_500 # Données à utiliser
+)
+
+# Visualiser le résultat
+egarch11_fit
+```
+
+Dans le modèle EGARCH, il faut interpréter le paramètre `alpha1` comme l'effet de signe. Ici `alpha1` est significativement différent de 0 et est négatif (il n'y a pas de contraintes de positivité dans la spécification EGARCH). Cela signifie qu'un choc négatif de rendements va faire augmenter la volatilité conditionnelle tandis qu'un choc positif de rendements va faire diminuer la volatilité conditionnelle. Ce qui est bien l'effet de levier attendu. Le paramètre `gamma1` représente l'effet de taille. Plus le choc de rendement est éloigné de la moyenne attendue, plus l'effet sur la volatilité sera important. 
+
+Tout comme pour le modèle GJR-GARCH, toute l'autocorrélation des rendements et rendements au carré semble avoir été prise en compte, mais on n'a pas réussi à prendre en compte tous les effets de signe. Pour être rigoureux, il faudrait probablement estimer un autre type de modélisation ou bien augmenter les ordres. 
+
+## Sélection du modèle
+
+Les modèles ARCH(1) et GARCH(1,1) ne sont pas retenus pour modéliser la volatilité conditionnelle des rendements puisque l'on n'arrive à modéliser toute l'autocorrélation ainsi que les effets de signes. Les modèles GJR-GARCH et EGARCH font mieux sur tous les points mais ne sont pas parfait sur les effets de signe. On hésite donc entre ces deux modèles asymétriques. POur les comparer on peut regarder leurs critères d'information. On peut obetnir les critères d'information de nos modèles avec la fonction `rugarch::infocriteria()`.
+
+```{r}
+# Créer une tible contenant les critères d'information de chaque modèle
+table_criterion <- 
+  tibble(
+    criterion = row.names(rugarch::infocriteria(arch1_fit)),
+    ARCH_1 = as.numeric(rugarch::infocriteria(arch1_fit)),
+    GARCH_11 = as.numeric(rugarch::infocriteria(garch11_fit)),
+    GJR_GARCH_11 = as.numeric(rugarch::infocriteria(gjr_garch11_fit)),
+    EGARCH_11 = as.numeric(rugarch::infocriteria(egarch11_fit))
+  ) |> 
+  print()
+```
+
+```{r}
+# Obtenir le modèle qui minimise chaque critère d'information
+table_criterion |> 
+  # Pivoter la table pour obtenir tous les modèles dans une seule colonne
+  pivot_longer(
+    cols = !criterion,
+    names_to = "model",
+    values_to = "value"
+  ) |> 
+  # Trouver la ligne de la colonne value qui minimise chaque critère d'information
+  slice_min(
+    by = criterion,
+    value
+  )
+```
+
+Les 4 critères d'information indiquent que le modèle EGARCH(1,1) est celui qui reproduit le mieux les données sous contrainte de parcimonie. On utilisera donc ce modèle pour le calcul de la Value at Risk. 
+
+## Value at Risk non conditionnelle
+
+### Value at Risk non-conditionnelle historique
+
+On va commencer par calculer la Value at Risk non conditionnelle (ne dépend pas d'un ensemble d'information) historique (uniquement à partir des données. On ne suppose pas une loi suivie par les rendements). Pour cela il suffit de calculer le quantile voulu de la distribution empirique de nos rendements : 
+
+```{r}
+# Calcul de la VaR non conditionnelle historique pour un taux de couverture à 1%
+VaR_historique <- -quantile(as.numeric(rend_sp_500), probs = 0.01) |>  print()
+```
+
+La VaR non conditionnelle historique est de 3.64%. Cela signifie qu'il y aurait 1% de chance d'observer une perte supérieure à 3.64%. On peut représenter graphiquement ce que cela représente : 
+
+```{r}
+# Représenter les rendements et les dépassements de la VaR selon une loi normale
+# Représenter les rendements du S&P500
+plot(
+  as.zoo(rend_sp_500),
+  main = "Rendements et Value at Risk historique",
+  xlab = "Temps",
+  ylab = "Rendements"
+)
+# Ajouter une ligne pour la VaR historique
+abline(h=-VaR_historique, col="red")
+# Ajouter des points sur les dépassements de la VaR
+points(as.zoo(rend_sp_500[as.numeric(rend_sp_500) < -VaR_historique]), pch=20, col="red")
+legend("topright", legend = c("VaR Historique","Dépassements de la VaR HS"), 
+       pch = c(NA,20), lty = c(1, NA), col = "red")
+```
+
+### Value at Risk non conditionnelle selon une loi normale
+
+On peut également calculer la value at risk en supposant que les rendements suivent une loi normale. Au lieu de calculer le quantile empirique, on trouve le quantile de la loi normale avec la fonction `qnorm()` que l'on multiplie par l'écart-type empirique et auquel on ajoute la moyenne empirique (Car si on suppose que les rendements suivent une loi normale, cela ne veut pas dire que l'on suppose qu'ils suivent une loi normale centrée réduite).
+
+```{r}
+# Calcul de la VaR non conditionnelle selon une loi normale
+VaR_VCov<- -(mean(rend_sp_500)+sd(rend_sp_500)*qnorm(0.01)) |>  print()
+```
+
+La VaR en calculée en supposant que les rendements suivent une loi normale est plus faible que la VaR historique. Cela est attendue puisque l'on sait que les valeurs extrêmes sont plus fréquentes dans les rendements par rapport à la loi normale. Selon cette VaR il y aurait 1% de chance d'obtenir une perte supérieure à 2.88%. 
+
+```{r}
+# Représenter les rendements et les dépassements de la VaR selon une loi normale
+# Représenter les rendements du S&P500
+plot(
+  as.zoo(rend_sp_500),
+  main = "Rendements et Value at Risk normale",
+  xlab = "Temps",
+  ylab = "Rendements"
+)
+# Ajouter une ligne pour la VaR normale
+abline(h=-VaR_VCov, col="cornflowerblue")
+# Ajouter des points sur les dépassements de la VaR
+points(as.zoo(rend_sp_500[as.numeric(rend_sp_500) < -VaR_VCov]), pch=20, col="cornflowerblue")
+legend("topright", legend = c("VaR normale","Dépassements de la VaR normale"), 
+       pch = c(NA,20), lty = c(1, NA), col = "cornflowerblue")
+```
+
+Evidemment les dépassements sont plus nombreux que pour la VaR historique vu que la valeur est plus faible. 
+
+
+## Value at Risk non conditionnelle (fenêtre glissante)
+
+Ces mesures de la VaR ne sont guère utiles si l'on estime que la volatilité n'est pas constante dans le temps. Pour palier ce problème, on peut estimer les VaR non conditionnelle à partir d'une fenêtre glissante. L'idée est de calculer la VaR sur un sous échantillon de $t$ jours puis de décaler cet échantillon d'un jour, de calculer la VaR dessus etc... On aura aisni une mesure de la VaR qui varie dans le temps. Evidemment les résultats sont très sensibles à la taille de l'échantillon. 
+
+Pour utiliser une fenêtre glissante on peu utiliser la fonction `zoo::rollapply()` ou `runner::runner()`. Ici on utilisera la première option. On utilisera une taille de fenêtre de 252 jours. 
+
+### Value at Risk historique
+
+```{r}
+#Calcul de la VaR historique sur fenêtre glissante de 252 jours
+VaR_rolling_historique <- 
+  -rollapply(
+    rend_sp_500, # Données à utiliser
+    width=252, # Taille de la fenêtre
+    FUN = quantile, # Fonction à utiliser : ici la fonction quantile
+    probs=0.01 # Probabilité de la VaR / argument à passer à la fonction quantile
+  )
+
+# Représenter graphiquement la VaR hsitorique et ses dépassements
+plot(as.zoo(rend_sp_500), 
+     main = "Rendements et VaR historique sur fenêtre glissante de 252 jours", 
+     xlab = "Temps", 
+     ylab = "Rendements")
+lines(as.zoo(-VaR_rolling_historique), col = "magenta")
+points(as.zoo(rend_sp_500[as.numeric(rend_sp_500) < -VaR_rolling_historique]), pch=20, col="magenta")
+legend("topright", legend = c("VaR HS fenêtre glissante", "Dépassements"), 
+       lty = c(1,NA), pch = c(NA,20) ,col = "magenta")
+```
+
+On peut voir que la VaR réagit aux conditions économiques mais peut être assez lente à diminuer lorsque la volatilité décroit. Cela est du à la taille de la fenêtre qui garde l'information des 252 derniers jours. Une fenêtre plus petite montrerait certainement un ajustement plus rapide. 
+
+### Value at Risk non conditionnelle normale (fenêtre glissante)
+
+On peut calculer la VaR en fenêtre glissante en supposant que les rendements suivent une loi normale. 
+
+
+```{r}
+# Calculer  la VaR normale non conditionnelle sous fenêtre glissante
+
+# Calcuelr l'écart type en fenêtre glissante
+rolling_sd<-rollapply(rend_sp_500,width=252,FUN = sd)
+
+# Calculer la moyenne en fenêtre glissante
+rolling_mean<-rollapply(rend_sp_500,width=252,FUN = mean)
+
+# Pour chaque valeur de la moyenne et de l'écart-type calculer la VaR grâce au quantile de la loi normale
+VaR_rolling_normale <- -(rolling_mean+rolling_sd*qnorm(0.01)) 
+
+
+# Représenter la VaR et ses dépassements
+plot(as.zoo(rend_sp_500), 
+      main = "Rendements et VaR gaussienne sur fenêtre glissante de 252 jours", 
+      xlab = "Temps", 
+      ylab = "Rendements")
+  lines(as.zoo(-VaR_rolling_normale), col = "mediumblue")
+  points(as.zoo(rend_sp_500[as.numeric(rend_sp_500) < -VaR_rolling_normale]), pch=20, col="mediumblue")
+  legend("topright", legend = c("VaR gaussienne fenêtre glissante", "Dépassements"), 
+         lty = c(1,NA), pch = c(NA,20) ,col = "mediumblue")
+```
+
+## Value at Risk conditionnelle (modèle EGARCH)
+
+Nous allons utiliser le modèle EGARCH estimé précédemment pour calculer une VaR conditionnelle (qui dépend d'un ensemble d'information). Il suffit tout simplement d'utiliser la fonction `quantile()` sur le modèle estimé. 
+
+```{r}
+# Calculer la VaR à partir du modèle EGARCH
+VaR_EGARCH <- -(as.numeric(quantile(egarch11_fit, probs = 0.01)))
+
+# Représenter les rendements et la VaR
+plot(
+  # Combiner dans un seul df les rendements et la VaR
+  as.zoo(cbind(rend_sp_500,-VaR_EGARCH)),
+  screens=1,
+  col = c("black","lightseagreen"),
+  main="VaR ARMA(4,5)-EGARCH(1,1)", 
+  xlab = "Temps", 
+  ylab = "Rendements"
+)
+
+# Ajouter des points lors des dépassements
+points(as.zoo(rend_sp_500[as.numeric(rend_sp_500) < -VaR_EGARCH]), pch=20, col="red")
+  
+# Ajouter une légende
+legend("bottom",c("Rendements","VaR EGARCH", "Dépassements de la VaR"),
+         col = c("black","lightseagreen", 'red'),lty = c(1,1,NA),lwd = c(2,2,NA),pch = c(NA,NA,20))
+```
+
+On peut voir que la VaR ainsi estimé réagit bien plus vite aux variations des rendements et que les dépassements sont bien moins nombreux et semblent moins regroupés. Ils sont davantage espacés ce qui peut nous permettre d’espérer que les violations ne soient pas autocorrélées. 
+
+## Backtest des VaR
+
+Nous avons différentes mesures de VaR. Il faut maintenant se décider sur celle que l'on souhaite utiliser pour modéliser le risque. Pour cela nous allons Backtester nos différentes VaR. L'idée est de vérifier si le nombre de violation correspond bien à notre taux de couverture et si ces violations ne sont pas autocorrélées entre elles. 
+
+Attention, le backtest ne peut se faire que sur un échantillon out-of-sample. Cela signifie qu'il faut estimer les paramètres de la VaR sur un échantillon initial puis l'appliquer sur l'échantillon de test (les VaR en fenêtre glissante sont une exception).
+
+On va prendre une taille d'échantillon de test de 1000 jours. Les paramètres des VaR seront calculées sur l'échantillon total moins 1000 jours. 
+
+
+```{r}
+#Création des échantillons pour estimer et tester les VaR
+# Nombre de jours de l'échantillon de test : 500
+nb.obs.backtest <- 1000
+
+# Taille de l'échantillon d'estimation des paramètres de la VaR : T-500
+taille.echantillon <- length(rend_sp_500)-nb.obs.backtest
+
+# échantillon sur lequel on va estimer les paramètres de la VaR
+sample_estimation <- rend_sp_500[1:taille.echantillon] 
+
+# échantillon sur lequel on va backtester la VaR
+sample_backtest <- rend_sp_500[(taille.echantillon+1):length(rend_sp_500)] 
+```
+
+
+### Bactest de la VaR historique
+
+On va commencer par estimer la VaR historique sur l'échantillon d'estimation puis on appliquera la valeur trouvée à l'échantillon de test afin de backtester cette VaR. 
+
+```{r}
+VaR_historique_estimation <- -quantile(as.numeric(sample_estimation), probs=0.01) |>  print()
+```
+
+Sur l'échantillon d'estimation la VaR historique est de 3.90% soit un peu plus que la VaR historique sur l'ensemble de l'échantillon. 
+
+Pour faire les tests de Kupiec et de Christoffersen pour tester les hypothèses de couverture non conditionnelle et conditionnelle on va utiliser la fonction `rugarch::VaRTest()` qui va prendre comme paramètres les valeurs des rendements et les valeurs de la VaR. 
+
+```{r}
+# Tests de Kupiec et de Christoffersen sur la VaR historique
+test_VaR_historique <- 
+  rugarch::VaRTest(
+  alpha = 0.01,
+  actual = sample_backtest,
+  VaR = rep(-VaR_historique_estimation, times = length(sample_backtest)),
+  conf.level = 0.05 
+) |> 
+  print()
+```
+
+Le résultat de la fonction se présente comme une liste où chaque élément est la valeur correspondant au nom de l'élément de la liste. Pour plus de lisibilité, on va convertir ce résultat en un tibble afin d'avoir une vue plus claire. 
+
+
+```{r}
+# Convertir le résultat de backtest en un tibble
+tibble(
+  name = names(unlist(test_VaR_historique)), # Nom des éléments
+  value = unlist(test_VaR_historique) # Résultat des éléments
+) |> 
+  print(n = 20)
+```
+
+On peut voir que le nombre de violation devrait être de 10 (1% de 1000) mais que le nombre de dépassement observé est de 5. 
+
+Si on regarde la p.value du test de Kupiec (ligne 6), on voit que l'on ne peut pas rejeter l'hypothèse nulle de couverture non conditionnelle. Il semblerait que la VaR soit correctement calibrée sur le nombre de violations. En revanche si l'on regarde le p.value du test joint de Christoffersen (ligne 11), on voit que l'on rejette l'hypothèse de couverture conditionnelle. Si l'hypothèse de couverture non-conditionnelle n'est pas rejetée, il semblerait donc que ce soit l'indépendance des violations qui soit remise en cause. Il semblerait donc que la VaR non conditionnelle historique ne soit pas une bonne mesure de la VaR selon ces tests. 
+
+On peut tester l'hypothèse d'indépendance à des ordres supérieurs grâce à test de Ljung Box sur la fonction de violation centrée. Pour cela il faut d'abord créer cette fonction : 
+
+```{r}
+# Créer la variable des violations
+HIT <- if_else(sample_backtest < -VaR_historique_estimation, 1, 0)
+
+HIT_centre <- HIT - 0.01
+```
+
+
+On peut maintenant appliquer le test de Ljung-Box à l'ordre 5 (comme préconisé par les auteurs) pour tester l'hypothèse nulle d'indépendance des violations :
+
+```{r}
+stats::Box.test(HIT_centre, lag = 5, type = "Ljung-Box")
+```
+
+On rejette l'hypothèse nulle d'indépendance des violations à l'ordre 5. La mesure de la VaR n'est aps valide car les violations ne sont pas indépendantes. Elles sont concentrées sur des périodes de crises. 
+
+On peut également faire le test DQ en régressant cette fonction de violation centrée sur les rendements et les rendements au carré (on ne peut pas régresser sur la VaR passée car la valeur est constante). Pour estimer cette régression on va utiliser la fonction `ARDL::ardl()` afin d'inclure plus facilement les 5 retards que l'on souhaite
+
+```{r}
+# Créer un tibble pour utiliser la fonction
+df_ardl <- 
+  tibble(
+    HIT_centre = HIT_centre,
+    rend = sample_backtest,
+    rend2 = sample_backtest**2
+  )
+
+reg_DQ <- ARDL::ardl(
+  HIT_centre ~ rend + rend2,
+  data = df_ardl,
+  order = 5
+)
+
+summary(reg_DQ)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
