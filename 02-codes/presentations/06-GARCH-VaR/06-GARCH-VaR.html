@@ -2336,10 +2336,23 @@ window.Quarto = {
   </ul></li>
   <li><a href="#estimation-des-modèles-type-arch" id="toc-estimation-des-modèles-type-arch" class="nav-link" data-scroll-target="#estimation-des-modèles-type-arch">Estimation des Modèles type ARCH</a></li>
   <li><a href="#validation-du-modèle-arch-sélectionné" id="toc-validation-du-modèle-arch-sélectionné" class="nav-link" data-scroll-target="#validation-du-modèle-arch-sélectionné">Validation du modèle ARCH sélectionné</a></li>
-  <li><a href="#value-at-risk-et-modèles-garch" id="toc-value-at-risk-et-modèles-garch" class="nav-link" data-scroll-target="#value-at-risk-et-modèles-garch">Value at Risk et modèles GARCH</a>
-  <ul>
   <li><a href="#définition-de-la-value-at-risk-var" id="toc-définition-de-la-value-at-risk-var" class="nav-link" data-scroll-target="#définition-de-la-value-at-risk-var">Définition de la Value at Risk (VaR)</a></li>
   <li><a href="#estimation-de-la-var" id="toc-estimation-de-la-var" class="nav-link" data-scroll-target="#estimation-de-la-var">Estimation de la VaR</a></li>
+  <li><a href="#tester-la-validité-de-la-var-backtesting" id="toc-tester-la-validité-de-la-var-backtesting" class="nav-link" data-scroll-target="#tester-la-validité-de-la-var-backtesting">Tester la validité de la VaR (backtesting)</a>
+  <ul>
+  <li><a href="#problématique-des-tests-sur-la-var" id="toc-problématique-des-tests-sur-la-var" class="nav-link" data-scroll-target="#problématique-des-tests-sur-la-var">Problématique des tests sur la VaR</a></li>
+  <li><a href="#principe-du-backtesting" id="toc-principe-du-backtesting" class="nav-link" data-scroll-target="#principe-du-backtesting">Principe du Backtesting</a></li>
+  <li><a href="#test-de-kupiec-test-uc" id="toc-test-de-kupiec-test-uc" class="nav-link" data-scroll-target="#test-de-kupiec-test-uc">Test de Kupiec (Test UC)</a></li>
+  <li><a href="#test-de-christoffersen" id="toc-test-de-christoffersen" class="nav-link" data-scroll-target="#test-de-christoffersen">Test de Christoffersen</a>
+  <ul class="collapse">
+  <li><a href="#idée-du-test" id="toc-idée-du-test" class="nav-link" data-scroll-target="#idée-du-test">Idée du test</a></li>
+  <li><a href="#test-de-couverture-non-conditionnelle-uc" id="toc-test-de-couverture-non-conditionnelle-uc" class="nav-link" data-scroll-target="#test-de-couverture-non-conditionnelle-uc">Test de couverture non-conditionnelle (UC)</a></li>
+  <li><a href="#test-dindépendance-à-lordre-1-ind" id="toc-test-dindépendance-à-lordre-1-ind" class="nav-link" data-scroll-target="#test-dindépendance-à-lordre-1-ind">Test d’indépendance à l’ordre 1 (IND)</a></li>
+  <li><a href="#test-de-couverture-conditionnelle-cc" id="toc-test-de-couverture-conditionnelle-cc" class="nav-link" data-scroll-target="#test-de-couverture-conditionnelle-cc">Test de couverture conditionnelle (CC)</a></li>
+  </ul></li>
+  <li><a href="#test-de-ljung-box-berkowitz-et-al-2007" id="toc-test-de-ljung-box-berkowitz-et-al-2007" class="nav-link" data-scroll-target="#test-de-ljung-box-berkowitz-et-al-2007">Test de Ljung-Box (Berkowitz et al, 2007)</a></li>
+  <li><a href="#test-dq-de-engle-et-manganelli" id="toc-test-dq-de-engle-et-manganelli" class="nav-link" data-scroll-target="#test-dq-de-engle-et-manganelli">Test DQ de Engle et Manganelli</a></li>
+  <li><a href="#biais-relatif-moyen" id="toc-biais-relatif-moyen" class="nav-link" data-scroll-target="#biais-relatif-moyen">Biais relatif moyen</a></li>
   </ul></li>
   </ul></li>
   </ul>
@@ -2613,10 +2626,8 @@ LM = TR^2 \sim \chi^2(l)
 <p>Enfin, si jamais il apparaît que la série (et donc les résidus standardisés) présente des signe de non-normalité, alors on peut estimer le modèle en prenant une autre loi supposée suivie par les résidus.</p>
 <p>Cela peut donner un certain nombre de modèles à tester. On peut comparer les différents modèles grâce aux critères d’informations pour choisir celui qui va le mieux représenter les données tout en gardant une certaine parcimonie dans le nombre de paramètres estimés.</p>
 </section>
-<section id="value-at-risk-et-modèles-garch" class="level2">
-<h2 class="anchored" data-anchor-id="value-at-risk-et-modèles-garch">Value at Risk et modèles GARCH</h2>
-<section id="définition-de-la-value-at-risk-var" class="level3">
-<h3 class="anchored" data-anchor-id="définition-de-la-value-at-risk-var">Définition de la Value at Risk (VaR)</h3>
+<section id="définition-de-la-value-at-risk-var" class="level2">
+<h2 class="anchored" data-anchor-id="définition-de-la-value-at-risk-var">Définition de la Value at Risk (VaR)</h2>
 <p>La Value at Risk est une mesure du risque introduite par Jorion (2007) qui correspond au montant des pertes qui ne devraient pas être dépassées pour un niveau de confiance donné sur un horizon temporel donné. Elle correspond à une perte potentielle ou maximale qui ne devrait être atteinte qu’avec une probabilité donnée sur un horizon donné.</p>
 <p>La distribution statistique de la VaR va reposer sur 3 éléments :</p>
 <ul>
@@ -2660,11 +2671,11 @@ LM = TR^2 \sim \chi^2(l)
   VaR_t (\alpha |I_t) = - F_{R_t}^{-1} (\alpha |I_t)    
 \end{aligned}
 \]</span></p>
-<p>Où <span class="math inline">\(F_{R_t}^{-1} (\alpha |I_t)\)</span> correspond à la fonction de répartition conditionnelle de la fonction de densité conditionnelle $f_{R_t}^{-1} (|I_t) $</p>
+<p>Où <span class="math inline">\(F_{R_t}^{-1} (\alpha |I_t)\)</span> correspond à la fonction de répartition conditionnelle de la fonction de densité conditionnelle <span class="math inline">\(f_{R_t}^{-1} (\alpha |I_t)\)</span></p>
 <p>On peut supposer que la densité conditionnelle varie elle aussi dans le temps, mais généralement on va la supposer constante (le processus générateur des donnée reste constant dans le temps).</p>
 </section>
-<section id="estimation-de-la-var" class="level3">
-<h3 class="anchored" data-anchor-id="estimation-de-la-var">Estimation de la VaR</h3>
+<section id="estimation-de-la-var" class="level2">
+<h2 class="anchored" data-anchor-id="estimation-de-la-var">Estimation de la VaR</h2>
 <p>Si l’espérance conditionnelle des rendements est nulle (<span class="math inline">\(\mu_{t+1|t} = 0\)</span>), alors le calcul de la VaR ne nécessite qu’un estimateur de la variance des rendements. A partir de là, si la volatilité des rendements est constante dans le temps : <span class="math inline">\(\sigma_{t+1|t} = \sigma\)</span>, alors il suffit d’estimer l’écart-type des rendements puis de trouver le <span class="math inline">\(\alpha\)</span> quantile de la loi que sont supposées suivre les rendements.</p>
 <p>Si la volatilité n’est pas constante, on peut calculer l’écart-type des rendements sur une fenêtre glissante, c’est à dire calculer l’écart-type sur les <span class="math inline">\(x\)</span> premiers jours, puis décaler la fenêtre de 1 jour, calculer l’écart-type etc… Cela permet d’avoir une mesure de la volatilité qui dépend du temps. Dans ce cas, il faut trouver la <span class="math inline">\(\alpha\)</span> quantile de la loi supposée suivie par les rendements pour chaque période de temps.</p>
 <p>Une autre solution consiste à estimer des modèles calculant la volatilité conditionnelle de la série puis à trouver le <span class="math inline">\(\alpha\)</span> quantile associé à la loi de distribution que sont supposés suivre les rendements</p>
@@ -2703,6 +2714,351 @@ V \left[ R_{t+1}|I_t \right] &amp;= V \left[ \varepsilon_{t+1} |I_t \right] = \a
 <li><p><span class="math inline">\(h_t\)</span> est la volatilité conditionnelle des rendements à la période <span class="math inline">\(t\)</span></p></li>
 <li><p><span class="math inline">\(z_\alpha\)</span> est le <span class="math inline">\(\alpha\)</span>-quantile (négatif) de la loi de probabilité supposée suivie par les résidus.</p></li>
 </ul>
+</section>
+<section id="tester-la-validité-de-la-var-backtesting" class="level2">
+<h2 class="anchored" data-anchor-id="tester-la-validité-de-la-var-backtesting">Tester la validité de la VaR (backtesting)</h2>
+<section id="problématique-des-tests-sur-la-var" class="level3">
+<h3 class="anchored" data-anchor-id="problématique-des-tests-sur-la-var">Problématique des tests sur la VaR</h3>
+<p>Les manières de calculer la VaR sont nombreuses (bien plus que celles abordées ici) et les valeurs trouvées dépendent énormément du modèle utilisé. L’estimation de différentes VaR conduit à des estimations différentes du risque et des implication spour les institutions financières.</p>
+<p>IL devient donc nécessaire d’avoir une méthode pour comparer l’efficacité des différents modèles.</p>
+<p>De manière générale, on évalue la qualité de prévision d’une grandeur économique en comparant sa vraie réalisation (ex-post) à la valeur prédite par le modèle (ex-ante). On calcule alors une erreur de prévision qui permet de construire des critères d’évaluation (RMSE, MAE…). On peut également construire des tests statistiques où l’hypothèse nulle est que les deux modèles présentent des capacités prédictives similaires.</p>
+<p>Le problème qui se pose est que ces méthodes ne peuvent être utilisées que si la réalisation ex-post de la variable d’intérêt est réellement observable (de manière objective), ou bien s’il existe une variable proxy de cette variable d’intérêt permettant une comparaison.</p>
+<p>Or la construction d’une telle variable objective ou de proxy est impossible.</p>
+</section>
+<section id="principe-du-backtesting" class="level3">
+<h3 class="anchored" data-anchor-id="principe-du-backtesting">Principe du Backtesting</h3>
+<p>Plusieurs tests ont été proposés afin d’évaluer la qualité de prévision d’une VaR. Ils sont pour la plupart fondés sur les occurences de violation. On va généralement tester statistiquement les deux principales hypothèses que le modèle de mesure du risque doit satisfaire :</p>
+<ul>
+<li><p>L’hypothèse de couverture non conditionnelle (UC)</p></li>
+<li><p>L’hypothèse d’indépendance des violations (IND)</p></li>
+</ul>
+<p>On définit la violation comme une situation dans laquelle on observe ex-post (après coup) une perte plus importante en valeur absolue que la valeur de la VaR prévue ex-ante (précédemment). (Rappel que la VaR est positive il faut donc prendre l’opposée des rendements pour comparer les pertes avec la VaR).</p>
+<p><span class="math display">\[
+\begin{aligned}
+  L_{t+1}^{\Delta} = -R_{t+1} &gt; VaR_{t+1|t}(1-\alpha)
+\end{aligned}
+\]</span></p>
+<p>A partir de là on peut définir une variable binaire (dichotomique / dummy) associée à l’occurence d’une violation appelée <strong>“Hit Function”</strong>. Elle prend la valeur 1 lorsque la perte est supérieure à la VaR et la valeur 0 sinon.</p>
+<p><span class="math display">\[
+\begin{aligned}
+  HIT_{t+1} = 1_{\left( L_{t+1}^{\Delta} &gt; VaR_{t+1|t}(1-\alpha)\right)}
+\end{aligned}
+\]</span></p>
+<p>Cette variable va permettre d’identifier les périodes pour lesquelles on observe une perte plus importante que la VaR (donc que la perte maximale probable).</p>
+<p>C’est sur cette variable que l’on va généralement appliquer des tests statistiques pour tester l’hypothèse de couverture conditionnelle et l’hypothèse d’indépendance.</p>
+<p>L’hypothèse de couverture non conditionnelle est l’hypothèse que le nombre de violations observées ex-post est effectivement égal au taux de couverture <span class="math inline">\(\alpha\)</span>. Il faut que la probabilité que se réalise ex-post une perte en excès par rapport à la VaR anticipée ex-ante soit précisément égale au taux de couverture <span class="math inline">\(\alpha\)</span>.</p>
+<p><span class="math display">\[
+\begin{aligned}
+  Pr [HIT_t (\alpha) = 1] = E [HIT_t (\alpha)]= \alpha
+\end{aligned}
+\]</span></p>
+<p>Si la probabilité de violation est significativement inférieure au taux de couverture <span class="math inline">\(\alpha\)</span>, cela traduit une surestimation de la VaR et donc du risque, conduisant par conséquent à peu de violations. La VaR est dite <strong>conservative</strong>.</p>
+<p>L’hypothèse d’indépendance indique que les violations de la VaR observées à deux dates différentes pour un même taux de couverture sont indépendamment distribuées :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  corr \left( HIT_t(\alpha), HIT_{t-k} (\alpha) \right) = 0 \hspace{0.2cm} \forall \hspace{0.2cm} k \neq0
+\end{aligned}
+\]</span></p>
+<p>L’observation des violations de la VaR n’apporte aucune information sur les violations contemporaines ou futures. Cette hypothèse implique donc qu’il ne doit pas y avoir de cluster de violations. il ne faut pas que les violations s’enchaînent en période de crises et n’existent pas en périodes calmes.</p>
+<p>Ces deux hypothèses de validité de la VaR sont indépendentes l’une de l’autre. La validité ou le rejet de l’une de ces hypothèses ne donne pas d’indications sur la validité ou le rejet de l’autre hypothèse. Ainsi, si la VaR ne satisfait pas à l’une ou l’autre des hypothèses, elle doit être considérée comme non valide (Christoffersen, 1998).</p>
+<p>Finalement, on va qualifier de <strong>couverture conditionnelle</strong> la situation qui prévaut lorsque la prévision de la VaR satisfait les 2 hypothèses : CC = UC + IND.</p>
+<p>Sous l’hypothèse jointe de couverture conditionnelle, la fonction HIT est identiquement et indépendament distribuée et doit suivre une loi de Bernoulli de paramètre <span class="math inline">\(\alpha\)</span> :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  HIT_t (\alpha) \sim \mathcal{B}(\alpha)
+\end{aligned}
+\]</span></p>
+<p>De nombreux tests ont été proposés pour tester les hypothèses UC, IND et CC. La difficulté majeure consiste à spécifier correctement la forme de la dépendance des processus <span class="math inline">\(HIT_t\)</span> sous H1.</p>
+<p><strong>ATTENTION</strong> : les tests de backtesting doivent toujours se faire sur un <strong>échantillon out of sample</strong>. Il faut couper son échantillon en 2 :</p>
+<ul>
+<li><p>Le premier pour estimer la VaR (les paramètres du modèle)</p></li>
+<li><p>Le second pour effectuer les tests de backtesting en ayant calculer la VaR avec les paramètres trouvés grâce au premier échantillon.</p></li>
+</ul>
+<p>Il faut au minimum 250 observations dans chaque échantillon.</p>
+</section>
+<section id="test-de-kupiec-test-uc" class="level3">
+<h3 class="anchored" data-anchor-id="test-de-kupiec-test-uc">Test de Kupiec (Test UC)</h3>
+<p>Kupiec (1995) propose un test de couverture non-conditionnelle (UC).</p>
+<p>On considère une séquence de T prévisions successives de la VaR et on note <span class="math inline">\(N\)</span> le nombre de violations associées :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  N = \sum_{t=1}^T HIT_t (\alpha)
+\end{aligned}
+\]</span></p>
+<p>Le rapport <span class="math inline">\(\frac{N}{T}\)</span> définit la fréquence empirique des violations (aussi appelé <strong>failure rate</strong>).</p>
+<p>Sous l’hypothèse de couverture non-conditionnelle (UC), le failure rate constitue un estimateur convergent du taux de couverture <span class="math inline">\(\alpha\)</span> (en moyenne sur de nombreux échantillons il converge vers la valeur <span class="math inline">\(\alpha\)</span>).</p>
+<p>Sous l’hypothèse d’indépendance des violations (IND), alors le nombre total de violations suit une loi Binomiale.</p>
+<p><span class="math display">\[
+\begin{aligned}
+  &amp;N \sim \mathcal{Bi}[T;\alpha] \\[2ex]
+  &amp;E(N) = \alpha T \\[2ex]
+  &amp;V(N) = \alpha (1 - \alpha)T
+\end{aligned}
+\]</span></p>
+<p>Lorsque T va être suffisament grand on va pouvoir approximier la loi Binomiale par une loi Normale.</p>
+<p>A partir de ces considérations, on va tester :</p>
+<p><span class="math display">\[
+\begin{cases}
+  H0 : E[HIT_t(\alpha)] = \alpha \\[2ex]
+  H1 : E[HIT_t(\alpha)] \neq \alpha
+\end{cases}
+\]</span></p>
+<p>La statistique de test est une statistique LR (ratio de vraisemblance) et est :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  LR_{UC} = -2 log \left[ \left(1-\alpha\right)^{T-N} \times \alpha^N \right] + 2 log \left[ \left(1- \left(\frac{N}{T}\right)\right)^{T-N} \times \left( \frac{N}{T} \right) ^N \right] \sim \chi^2(1)
+\end{aligned}
+\]</span></p>
+<p>Il faut faire attention car ce test suppose que les violations sont indépendantes. La règle de décision est la suivante :</p>
+<ul>
+<li><p>Si <span class="math inline">\(LR_{UC} \geq \chi^2(1)\)</span>, on rejette l’hypothèse nulle de couverture non-conditionnelle. La VaR est soit trop stricte, soit pas assez. Le risque n’est pas correctement estimé. Cette mesure de la VaR n’est pas valide, il faut changer de modèle.</p></li>
+<li><p>Si <span class="math inline">\(LR_{UC} &lt; \chi^2(1)\)</span>, on ne peut pas rejeter l’hypothèse nulle de couverture non-conditionnelle. La VaR est semble correctement calibrer du point de vue du nombre de violations.</p></li>
+</ul>
+</section>
+<section id="test-de-christoffersen" class="level3">
+<h3 class="anchored" data-anchor-id="test-de-christoffersen">Test de Christoffersen</h3>
+<section id="idée-du-test" class="level4">
+<h4 class="anchored" data-anchor-id="idée-du-test">Idée du test</h4>
+<p>Christoffersen (1998) propose de modéliser la non efficience de la VaR par une chaîne de Markov. L’idée est de modéliser les états dans lesquels la variable HIT peut se trouver et les probabilités de changer d’état.</p>
+<p>Les hypothèses UC, IND et CC vont alors correspondre à des restrictions sur les paramètres qui peuvent être testées avec des statistiques LR.</p>
+<p>On suppose que la dépendance dans le processus des violation <span class="math inline">\(HIT_t(\alpha)\)</span> peut être modélisée par une chaîne de Markov d’ordre 1 avec la matrice des probabilités de transition suivante :</p>
+<p><span class="math display">\[
+\Pi =
+\begin{pmatrix}
+  \pi_{00} &amp; \pi_{01}  \\
+  \pi_{10} &amp; \pi_{11}
+\end{pmatrix}
+\]</span></p>
+<p>Où :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  \pi_{ij} = Pr \left[ HIT_t(\alpha) = j \hspace{0.2cm} | \hspace{0.2cm} HIT_{t-1}(\alpha) = i \right]  
+\end{aligned}
+\]</span></p>
+<p>Avec l’état <span class="math inline">\(O\)</span> correspondant à une non violation et l’état <span class="math inline">\(1\)</span> correspondant à une violation.</p>
+<p>Ainsi :</p>
+<ul>
+<li><p><span class="math inline">\(\pi_{00}\)</span> mesure la probabilité de ne pas observer de violation en <span class="math inline">\(t\)</span> sachant qu’il n’y a pas eu de violation en <span class="math inline">\(t-1\)</span></p></li>
+<li><p><span class="math inline">\(\pi_{10}\)</span> mesure la probabilité de ne pas observer de violations en <span class="math inline">\(t\)</span> sachant qu’il y a eu une violation en <span class="math inline">\(t-1\)</span></p></li>
+<li><p><span class="math inline">\(\pi_{01}\)</span> mesure la probabilité d’observer une violation en <span class="math inline">\(t\)</span> sachant qu’il n’y a pas eu de violation en <span class="math inline">\(t-1\)</span></p></li>
+<li><p><span class="math inline">\(\pi_{11}\)</span> mesure la probabilité d’observer une violation en <span class="math inline">\(t\)</span> sachant qu’il y a pas eu une violation en <span class="math inline">\(t-1\)</span></p></li>
+</ul>
+<p>Par définition, on a : <span class="math inline">\(\pi_{00} = 1 - \pi_{01}\)</span> et <span class="math inline">\(\pi_{10} = 1 - \pi_{11}\)</span>.</p>
+<p>La matrice de transition est donc :</p>
+<p><span class="math display">\[
+\Pi =
+\begin{pmatrix}
+  1 - \pi_{01} &amp; \pi_{01}  \\
+  1 - \pi_{11} &amp; \pi_{11}
+\end{pmatrix}
+\]</span></p>
+<p>Sous l’hypothèse d’indépendance (IND), la probabilité d’observer une violation à la date <span class="math inline">\(t\)</span> est indépendante de l’état en <span class="math inline">\(t-1\)</span>. Ainsi les probabilités deviennent : <span class="math inline">\(\pi_{11} = \pi_{01} = \pi\)</span> et <span class="math inline">\(\pi_{00} = \pi_{10}\)</span>. Et la matrice de transition devient :</p>
+<p><span class="math display">\[
+\Pi =
+\begin{pmatrix}
+  1 - \pi &amp; \pi  \\
+  1 - \pi &amp; \pi
+\end{pmatrix}
+\]</span></p>
+<p>Si l’on ajoute l’hypothèse de couverture non conditionnelle (UC), quel que soit l’état du système en <span class="math inline">\(t-1\)</span> (violation ou non en <span class="math inline">\(t-1\)</span>), la probabilité d’observer à la date <span class="math inline">\(t\)</span> une violation doit être égale au taux de couverture conditionnel <span class="math inline">\(\alpha\)</span>. On a donc</p>
+<p><span class="math display">\[
+\begin{aligned}
+  \pi_{01} = \pi_{11} = \pi_t = Pr[HIT_t(\alpha) = 1] = \alpha  
+\end{aligned}
+\]</span></p>
+<p>Donc sous l’hypothèse de couverture conditionnelle (hypothèse d’indépendance jointe à l’hypothèse de couverture non-conditionnelle), on a la matrice :</p>
+<p><span class="math display">\[
+\Pi_\alpha =
+\begin{pmatrix}
+  1 - \alpha &amp; \alpha  \\
+  1 - \alpha &amp; \alpha
+\end{pmatrix}
+\]</span></p>
+<p>A partir de ces matrices et hypothèses, on peut tester les hypothèses nulles de couverture non-conditionnelle, d’indépendance et même tester l’hypothèse nulle de couverture conditionnelle (aussi appelée efficience conditionnelle).</p>
+</section>
+<section id="test-de-couverture-non-conditionnelle-uc" class="level4">
+<h4 class="anchored" data-anchor-id="test-de-couverture-non-conditionnelle-uc">Test de couverture non-conditionnelle (UC)</h4>
+<p>Le test de couverture non-conditionnelle est le suivant :</p>
+<p><span class="math display">\[
+\begin{cases}
+  H0^{UC} : Pr[HIT_t(\alpha) = 1] = \alpha  : \text{Couverture non conditionnelle respectée} \\[2ex]
+  H1^{UC} : Pr[HIT_t(\alpha) = 1] \neq \alpha : \text{Couverture non conditionnelle non respectée}
+\end{cases}
+\]</span></p>
+<p>La statistique de test est la même que le test de Kupiec : :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  LR_{UC} = &amp;-2 log \left[ \left(1-\alpha\right)^{T-N} \times \alpha^N \right] \\[2ex]
+  &amp;+ 2 log \left[ \left(1- \left(\frac{N}{T}\right)\right)^{T-N} \times \left( \frac{N}{T} \right) ^N \right] \sim \chi^2(1)
+\end{aligned}
+\]</span></p>
+<p>La règle de décision est la suivante :</p>
+<ul>
+<li><p>Si <span class="math inline">\(LR_{UC} \geq \chi^2(1)\)</span>, on rejette l’hypothèse nulle de couverture non-conditionnelle. La probabilité d’observer une violation de la VaR en <span class="math inline">\(t\)</span> est supérieure au taux de couverture <span class="math inline">\(\alpha\)</span>. La VaR estime mal le risque, il faut changer de modèle.</p></li>
+<li><p>Si <span class="math inline">\(LR_{UC} &lt; \chi^2(1)\)</span>, on ne peut pas rejeter l’hypothèse nulle de couverture non-conditionnelle. La probabilité d’observer une violation de la VaR en <span class="math inline">\(t\)</span> est égale au taux de couverture <span class="math inline">\(\alpha\)</span>. La VaR semble estimer correctement le risque en <span class="math inline">\(t\)</span>.</p></li>
+</ul>
+</section>
+<section id="test-dindépendance-à-lordre-1-ind" class="level4">
+<h4 class="anchored" data-anchor-id="test-dindépendance-à-lordre-1-ind">Test d’indépendance à l’ordre 1 (IND)</h4>
+<p>Le test d’indépendance des violations est le suivant :</p>
+<p><span class="math display">\[
+\begin{cases}
+  H0^{IND} : \text{Indépendance des violations} \\[2ex]
+  H1^{IND} : \text{Dépendance des violations à l&#39;état passé}
+\end{cases}
+\]</span></p>
+<p>La statistique de test est la suivante :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  LR_{IND} = &amp;-2 log \left[ \left( 1 - \left( \frac{N}{T} \right) \right)^{T-N} \times \left( \frac{N}{T} \right)^N \right] \\[2ex]
+  &amp;+ 2 log \left[ \left( 1 - \hat{\pi}_{01} \right)^{n_{00}} \hat{\pi}_{01}^{n_{01}} \left( 1 - \hat{\pi}_{11} \right)^{n_{10}} \hat{\pi}_{11}^{n_{11}} \right] \sim \chi^2(1)  
+\end{aligned}
+\]</span></p>
+<p>Avec :</p>
+<ul>
+<li><p><span class="math inline">\(n_{00} = (T-N) \times (1 - \hat{\pi}_{01})\)</span> : le nombre de non-violation en <span class="math inline">\(t\)</span> alors qu’il n’y a pas eu de violation en <span class="math inline">\(t-1\)</span></p></li>
+<li><p><span class="math inline">\(n_{01}\)</span> : le nombre de violation en <span class="math inline">\(t\)</span> alors qu’il n’y a pas eu de violation en <span class="math inline">\(t-1\)</span></p></li>
+<li><p><span class="math inline">\(n_{11}\)</span> : le nombre de violation en <span class="math inline">\(t\)</span> sachant qu’il y a eu une violation en <span class="math inline">\(t-1\)</span></p></li>
+<li><p><span class="math inline">\(n_{10} = N \times (1-\hat{\pi}_{11})\)</span> : le nombre de non-violation en <span class="math inline">\(t\)</span> alors qu’il y a eu une violation en <span class="math inline">\(t-1\)</span></p></li>
+<li><p><span class="math inline">\(N = n_{01} + n_{11}\)</span> : le nombre de violations total</p></li>
+<li><p><span class="math inline">\(\hat{\pi}_{01} = \frac{n_{01}}{T-N}\)</span> : la fréquence d’obtention d’une violation en <span class="math inline">\(t\)</span> alors qu’il n’y a pas eu de violation en <span class="math inline">\(t-1\)</span></p></li>
+<li><p><span class="math inline">\(\hat{\pi}_{11} = \frac{n_{11}}{N}\)</span> : la fréquence d’obtention d’une violation en <span class="math inline">\(t\)</span> alors qu’il y a eu une violation en <span class="math inline">\(t-1\)</span></p></li>
+</ul>
+<p>La règle de décision est la suivante :</p>
+<ul>
+<li><p>Si <span class="math inline">\(LR_{IND} \geq \chi^2(1)\)</span>, on rejette l’hypothèse nulle d’indépendance. La probabilité d’obtenir une violation de la VaR n’est pas indépendante de l’état de la fonction de violation en <span class="math inline">\(t-1\)</span>. Les violations ne sont donc pas indépendantes à l’ordre 1. Le modèle de la VaR est rejeté.</p></li>
+<li><p>Si <span class="math inline">\(LR_{IND} &lt; \chi^2(1)\)</span>, on ne peut pas rejeter l’hypothèse nulle d’indépendance. La probabilité d’obtenir une violation de la VaR est indépendante de l’état de la fonction de violation en <span class="math inline">\(t-1\)</span> . Les violations semblent donc indépendantes à l’ordre 1.</p></li>
+</ul>
+</section>
+<section id="test-de-couverture-conditionnelle-cc" class="level4">
+<h4 class="anchored" data-anchor-id="test-de-couverture-conditionnelle-cc">Test de couverture conditionnelle (CC)</h4>
+<p>Si l’on combine les tests de couverture non-conditionnelle et d’indépendance en un test joint, on teste l’hypothèse de couverture conditionnelle (efficience conditionnelle) :</p>
+<p>Le jeu d’hypothèse est :</p>
+<p><span class="math display">\[
+\begin{cases}
+  H0^{CC} : \text{Efficience conditionnelle} \\
+  H1^{CC} : \text{Rejet de l&#39;efficience conditionnelle}
+\end{cases}
+\]</span></p>
+<p>La statistique de test est : donnée par :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  LR_{CC} = &amp;LR_{UC} + LR_{IND} \\[2ex]
+  LR_{CC} = &amp;-2 log \left[ \left(1-\alpha\right)^{T-N} \times \alpha^N \right] \\[2ex]
+  &amp;+2 log \left[ \left( 1 - \hat{\pi}_{01} \right)^{n_{00}} \hat{\pi}_{01}^{n_{01}} \left( 1 - \hat{\pi}_{11} \right)^{n_{10}} \hat{\pi}_{11}^{n_{11}} \right] \sim \chi^2(2)
+\end{aligned}
+\]</span></p>
+<p>Avec :</p>
+<ul>
+<li><p><span class="math inline">\(n_{00} = (T-N) \times (1 - \hat{\pi}_{01})\)</span> : le nombre de non-violation en <span class="math inline">\(t\)</span> alors qu’il n’y a pas eu de violation en <span class="math inline">\(t-1\)</span></p></li>
+<li><p><span class="math inline">\(n_{01}\)</span> : le nombre de violation en <span class="math inline">\(t\)</span> alors qu’il n’y a pas eu de violation en <span class="math inline">\(t-1\)</span></p></li>
+<li><p><span class="math inline">\(n_{11}\)</span> : le nombre de violation en <span class="math inline">\(t\)</span> sachant qu’il y a eu une violation en <span class="math inline">\(t-1\)</span></p></li>
+<li><p><span class="math inline">\(n_{10} = N \times (1-\hat{\pi}_{11})\)</span> : le nombre de non-violation en <span class="math inline">\(t\)</span> alors qu’il y a eu une violation en <span class="math inline">\(t-1\)</span></p></li>
+<li><p><span class="math inline">\(N = n_{01} + n_{11}\)</span> : le nombre de violations total</p></li>
+<li><p><span class="math inline">\(\hat{\pi}_{01} = \frac{n_{01}}{T-N}\)</span> : la fréquence d’obtention d’une violation en <span class="math inline">\(t\)</span> alors qu’il n’y a pas eu de violation en <span class="math inline">\(t-1\)</span></p></li>
+<li><p><span class="math inline">\(\hat{\pi}_{11} = \frac{n_{11}}{N}\)</span> : la fréquence d’obtention d’une violation en <span class="math inline">\(t\)</span> alors qu’il y a eu une violation en <span class="math inline">\(t-1\)</span></p></li>
+</ul>
+<p>La règle de décision est la suivante :</p>
+<ul>
+<li><p>Si <span class="math inline">\(LR_{CC} \geq \chi^2(2)\)</span>, on rejette l’hypothèse nulle d’efficience conditionnelle de la VaR. Les violations ne sont pas indépendantes à l’ordre 1 et/ou n’ont pas la bonne probabilité d’apparition. Le modèle de la VaR est rejeté.</p></li>
+<li><p>Si <span class="math inline">\(LR_{CC} &lt; \chi^2(2)\)</span>, on ne peut pas rejeter l’hypothèse nulle d’efficience conditionnelle de la VaR. Il semblerait que les violations soient indépendantes à l’ordre 1 et que leur probabilité d’apparition soit égale au taux de couverture.</p></li>
+</ul>
+<p>Ces tests sont faciles à mettre en oeuvre mais sont assez réducteurs. En effet, l’indépendance testée est uniquement une indépendance à l’ordre 1. On ne prend pas en compte une possible dépendance à un ordre plus élevé. De plus, l’utilisation d’une chaîne de Markov pour modéliser cette indépendance ne permet pas de mesurer le rôle de variables autre que la séquence des violations <span class="math inline">\(HIT_t(\alpha)\)</span> dans une possible dépendance des violations.</p>
+</section>
+</section>
+<section id="test-de-ljung-box-berkowitz-et-al-2007" class="level3">
+<h3 class="anchored" data-anchor-id="test-de-ljung-box-berkowitz-et-al-2007">Test de Ljung-Box (Berkowitz et al, 2007)</h3>
+<p>Berkowitz et al (2007) montrent que l’hypothèse d’indépendance implique que la série des de violations <span class="math inline">\(HIT_t(\alpha)\)</span> ne doit pas être auto-corrélée. Plus précisément, ils montrent que la variable <span class="math inline">\(HIT\)</span> centrée doit suivre une différence de martingale :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  E[(HIT_t(\alpha) - \alpha) \hspace{0.2cm} | \hspace{0.2cm} \Omega_{t-1}] = 0  
+\end{aligned}
+\]</span></p>
+<p>Avec <span class="math inline">\(\Omega_{t-1}\)</span> l’ensemble d’information disponible à la date <span class="math inline">\(t-1\)</span>.</p>
+<p>Ils proposent donc d’utiliser le test de Ljung-Box pour tester l’absence d’autocorrélation à l’ordre <span class="math inline">\(m\)</span> de la variable <span class="math inline">\(HI\)</span> centrée :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  I_t(\alpha) = HIT_t(\alpha) - \alpha  
+\end{aligned}
+\]</span></p>
+<p>Soit <span class="math inline">\(\gamma_k\)</span> la covariance entre deux dates de la série <span class="math inline">\(I_t(\alpha)\)</span> :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  \gamma_k = E[I_t(\alpha) \times I_{t-k}(\alpha)]  
+\end{aligned}
+\]</span></p>
+<p>On teste :</p>
+<p><span class="math display">\[
+\begin{cases}
+  H0 : \gamma_1 = \gamma_2 = \cdots = \gamma_m = 0 \\[2ex]
+  H1 : \exists \hspace{0.2 cm} \gamma_i \neq 0; \hspace{0.2cm}  i \in [1, m]
+\end{cases}
+\]</span></p>
+<p>La statistique de test est :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  LB(m) = T(T+2) \sum_{k=1}^m \frac{\hat{\gamma}_k}{T-k} \sim \chi^2(m)  
+\end{aligned}
+\]</span></p>
+<p>Dans le cadre du management du risque sur des données journalières, ils recommandent d’utiliser <span class="math inline">\(m=5\)</span>.</p>
+<p>La règle de décision est la suivante :</p>
+<ul>
+<li><p>Si <span class="math inline">\(LB(m) \geq \chi^2(m)\)</span>, on rejette l’hypothèse nulle d’indépendance des violations à l’ordre <span class="math inline">\(m\)</span>. Les violations sont autocorrélées à l’ordre <span class="math inline">\(m\)</span>. Le modèle de la VaR n’est pas valide.</p></li>
+<li><p>Si <span class="math inline">\(LB(m) &lt; \chi^2(m)\)</span>, on ne peut pas rejeter l’hypothèse nulle d’indépendance des violations à l’ordre <span class="math inline">\(m\)</span>. Les violations ne semblent pas autocorrélées à l’ordre <span class="math inline">\(m\)</span>.</p></li>
+</ul>
+</section>
+<section id="test-dq-de-engle-et-manganelli" class="level3">
+<h3 class="anchored" data-anchor-id="test-dq-de-engle-et-manganelli">Test DQ de Engle et Manganelli</h3>
+<p>Engle et Manganelli (2004) proposent de tester l’efficience conditionnelle à partir d’un modèle de régression linéaire liant les violations courantes aux violations passées.</p>
+<p>Sous l’hypothèse d’efficience conditionnelle, la variable <span class="math inline">\(I_t(\alpha) = HIT_t(\alpha) - \alpha\)</span> ne doit pas être corrélée avec l’ensemble d’information disponible jusqu’à la date <span class="math inline">\(t-1\)</span>, noté <span class="math inline">\(\Omega_{t-1}\)</span>.</p>
+<p>Ils proposent d’estimer la régression suivante par les MCO :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  I_t(\alpha) = \delta + \sum_{k=1}^K \beta_k I_{t-k}(\alpha) + \sum_{k=1}^K \gamma_k X_{t-k} + u_t  
+\end{aligned}
+\]</span></p>
+<p>Où <span class="math inline">\(X_{t-k}\)</span> correspond à l’ensemble des variables entrant dans l’ensemble d’information <span class="math inline">\(\Omega_t-1\)</span>. On peut penser à :</p>
+<ul>
+<li><p><span class="math inline">\(R_{t-k}\)</span></p></li>
+<li><p><span class="math inline">\(R^2_{t-k}\)</span></p></li>
+<li><p><span class="math inline">\(VaR_{(t-k)|(t-k+1)}(1-\alpha)\)</span>…</p></li>
+</ul>
+<p>Ce type de spécification permet de vérifier si les violations ne sont pas corrélées avec des variables explicatives. S’il existe une corrélation, les violations sont prédictibles et ne sont donc plus indépendantes.</p>
+<p>Peu importe la spécification retenue, tester l’hypothèse jointe d’efficience conditionnelle revient à tester :</p>
+<p><span class="math display">\[
+\begin{cases}
+  H0^{CC} : \delta = \beta_k = \gamma_k = 0; \hspace{0.2cm} k = 1, \cdots,K \\[2ex]
+  H1^{CC} : \exists \hspace{0.2cm} A \neq 0; \hspace{0.2cm} A = \{\delta, \beta_k, \gamma_k\}; \hspace{0.2cm} k = 1, \cdots,K
+\end{cases}
+\]</span></p>
+<p><span class="math inline">\(delta = 0\)</span> permet de tester l’hypothèse de couverture non-conditionnelle puisque si cette hypothèse est respectée, la variable <span class="math inline">\(HIT\)</span> centrée est égale à <span class="math inline">\(0\)</span> et donc le modèle n’a pas de constante significative. Les tests sur les coefficients <span class="math inline">\(\beta\)</span> et <span class="math inline">\(\gamma\)</span> permettent de tester l’hypothèse d’indépendance.</p>
+<p>Ce test revient à effectuer un test de Fisher de significativité globale du modèle :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  F = \frac{R^2/K}{\left( 1 - R^2 \right)/ \left( N-K-1 \right)} \sim \mathcal{F} \left( K, N-K-1 \right)  
+\end{aligned}
+\]</span></p>
+<p>où <span class="math inline">\(R^2\)</span> correspond au coefficient de détermination du modèle.</p>
+<p>La règle de décision est la suivante :</p>
+<ul>
+<li><p>Si <span class="math inline">\(F \geq \mathcal{F} \left( K, N-K-1 \right)\)</span>, on rejette l’hypothèse nulle d’efficience conditionnelle de la VaR. Les violations ne sont pas indépendantes et/ou leur probabilité d’apparition n’est pas égale au taux de couverture. Le modèle de la VaR n’est pas correct.</p></li>
+<li><p>Si <span class="math inline">\(F &lt; \mathcal{F} \left( K, N-K-1 \right)\)</span>, on ne peut pas rejeter l’hypothèse nulle d’efficience conditionnelle de la VaR. Il semblerait que les violations soient indépendantes et que leur probabilité d’apparition soit égale au taux de couverture.</p></li>
+</ul>
+<p>Ce test est plus restrictifs que les précédents et aura tendance à moins valider les modèles de VaR.</p>
+</section>
+<section id="biais-relatif-moyen" class="level3">
+<h3 class="anchored" data-anchor-id="biais-relatif-moyen">Biais relatif moyen</h3>
+<p>Les procédures de Backtesting sont en général assez peu discriminantes et vont avoir tendance à valider un grand nombre de modèles de VaR. Si plusieurs modèles de VaR passent les tests de Backtesting, on peut recourir à la statistique du <strong>Biais Relatif Moyen</strong> (MRB). Cette mesure permet de capturer l’ampleur à laquelle différentes approches produisent des estimations de tailles moyennes semblables.</p>
+<p>Le MRB pour une approche <span class="math inline">\(i\)</span> donnée et une période de test de <span class="math inline">\(t\)</span> jours est :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  MRB_i &amp;= \frac{1}{T} \sum_{t=1}^T \frac{VaR_{it} - \overline{VaR}_t}{\overline{VaR}_t} \\[2ex]
+  \overline{VaR}_t &amp;= \frac{1}{T} \sum_{i=1}^N VaR_{it}
+\end{aligned}
+\]</span></p>
+<p>Le MRB compare la valeur de la VaR pour une méthode donnée à un jour donné avec la moyenne valeur de toutes les mesures de VaR testées à un jour donné. <span class="math inline">\(\overline{VaR}_t\)</span> implique de calculer pour chaque jour <span class="math inline">\(t\)</span> la moyenne de toutes les méthodes de VaR testées.</p>
+<p>Le MRB s’interprète comme un pourcentage d’écart à la valeur moyenne des approches VaR. Ainsi si le MRB obtenu est de <span class="math inline">\(0.1\)</span>, cela signifie qu’en moyenne cette mesure de la VaR est 10% plus grande que la moyenne de l’ensemble des VaR.</p>
+<p>On va comparer les différents MRB entre eux et choisir la méthode qui a le MRB le plus faible en valeur absolue. Cette méthode sera celle qui sera la moins éloignée de la moyenne des VaR obtenue par l’ensemble des approches.</p>
 </section>
 </section>
 </section>
