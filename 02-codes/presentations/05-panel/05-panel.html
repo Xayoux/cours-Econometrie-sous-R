@@ -4048,7 +4048,7 @@ formula: lrpmg ~ lgaspcar + lcarpcap + lincomep
 <span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Effectuer le test de Poolability en comparant les deux modèles via un F-test</span></span>
-<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a><span class="fu">pooltest</span>(</span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>plm<span class="sc">::</span><span class="fu">pooltest</span>(</span>
 <span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>  model_pooled, <span class="co"># Modèle pooled</span></span>
 <span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>  indiv_variable_coef_model <span class="co"># Modèle à coefficients variables</span></span>
 <span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -4081,7 +4081,7 @@ alternative hypothesis: unstability</code></pre>
 <span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Effectuer le test de Poolability en comparant les deux modèles via un F-test</span></span>
-<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a><span class="fu">pooltest</span>(</span>
+<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a>plm<span class="sc">::</span><span class="fu">pooltest</span>(</span>
 <span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a>  model_pooled, <span class="co"># Modèle pooled</span></span>
 <span id="cb33-20"><a href="#cb33-20" aria-hidden="true" tabindex="-1"></a>  time_variable_coef_model <span class="co"># Modèle à coefficients variables</span></span>
 <span id="cb33-21"><a href="#cb33-21" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -4391,7 +4391,7 @@ Variables partialled out: 13 </code></pre>
 </div>
 </div>
 <p>En ajoutant les moyennes cross-sectionnelles de nos variables, on remarque que nos statistiques de test diminuent mais leur p.value reste toujours largement inférieure à 1%.</p>
-<p>En conclusion, notre panel présente de la corrélation inter-individuelle qu’il convient de prendre en compte. De plus, il semble y avoir une forte hétérogénéité individuelle avec la présence d’effets fixes individuels mais également une hétérogénéité dans les relations entre les variables. L’hétérogénité temporelle est moindre et semble se modéliser uniquement par la présence d’effets fixes temporels (dont la présence n’est pas certaine). Il semblerait donc qu’il faille utiliser un modèle à effets hétérogènes couplé avec une prise en compte des effets commun individuels : estimateur CCEMG.</p>
+<p>En conclusion, notre panel présente de la corrélation inter-individuelle qu’il convient de prendre en compte. De plus, il semble y avoir une forte hétérogénéité individuelle avec la présence d’effets fixes individuels mais également une hétérogénéité dans les relations entre les variables. L’hétérogénéité temporelle est moindre et semble se modéliser uniquement par la présence d’effets fixes temporels (dont la présence n’est pas certaine). Il semblerait donc qu’il faille utiliser un modèle à effets hétérogènes couplé avec une prise en compte des effets commun individuels : estimateur CCEMG.</p>
 </section>
 </section>
 <section id="estimer-la-relation-via-lestimateur-ccemg" class="level2">

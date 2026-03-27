@@ -1723,7 +1723,7 @@ indiv_variable_coef_model <- plm::pvcm(
 )
 
 # Effectuer le test de Poolability en comparant les deux modèles via un F-test
-pooltest(
+plm::pooltest(
   model_pooled, # Modèle pooled
   indiv_variable_coef_model # Modèle à coefficients variables
 )
@@ -1751,7 +1751,7 @@ time_variable_coef_model <- plm::pvcm(
 )
 
 # Effectuer le test de Poolability en comparant les deux modèles via un F-test
-pooltest(
+plm::pooltest(
   model_pooled, # Modèle pooled
   time_variable_coef_model # Modèle à coefficients variables
 )
@@ -1994,7 +1994,7 @@ xtbhst::xtbhst(
 
 En ajoutant les moyennes cross-sectionnelles de nos variables, on remarque que nos statistiques de test diminuent mais leur p.value reste toujours largement inférieure à 1%. 
 
-En conclusion, notre panel présente de la corrélation inter-individuelle qu'il convient de prendre en compte. De plus, il semble y avoir une forte hétérogénéité individuelle avec la présence d'effets fixes individuels mais également une hétérogénéité dans les relations entre les variables. L'hétérogénité temporelle est moindre et semble se modéliser uniquement par la présence d'effets fixes temporels (dont la présence n'est pas certaine). Il semblerait donc qu'il faille utiliser un modèle à effets hétérogènes couplé avec une prise en compte des effets commun individuels : estimateur CCEMG. 
+En conclusion, notre panel présente de la corrélation inter-individuelle qu'il convient de prendre en compte. De plus, il semble y avoir une forte hétérogénéité individuelle avec la présence d'effets fixes individuels mais également une hétérogénéité dans les relations entre les variables. L'hétérogénéité temporelle est moindre et semble se modéliser uniquement par la présence d'effets fixes temporels (dont la présence n'est pas certaine). Il semblerait donc qu'il faille utiliser un modèle à effets hétérogènes couplé avec une prise en compte des effets commun individuels : estimateur CCEMG. 
 
 ## Estimer la relation via l'estimateur CCEMG
 
