@@ -2372,7 +2372,11 @@ window.Quarto = {
   <li><a href="#estimation-des-modèles-type-arch" id="toc-estimation-des-modèles-type-arch" class="nav-link" data-scroll-target="#estimation-des-modèles-type-arch">Estimation des Modèles type ARCH</a></li>
   <li><a href="#validation-du-modèle-arch-sélectionné" id="toc-validation-du-modèle-arch-sélectionné" class="nav-link" data-scroll-target="#validation-du-modèle-arch-sélectionné">Validation du modèle ARCH sélectionné</a></li>
   <li><a href="#définition-de-la-value-at-risk-var" id="toc-définition-de-la-value-at-risk-var" class="nav-link" data-scroll-target="#définition-de-la-value-at-risk-var">Définition de la Value at Risk (VaR)</a></li>
-  <li><a href="#estimation-de-la-var" id="toc-estimation-de-la-var" class="nav-link" data-scroll-target="#estimation-de-la-var">Estimation de la VaR</a></li>
+  <li><a href="#estimation-de-la-var" id="toc-estimation-de-la-var" class="nav-link" data-scroll-target="#estimation-de-la-var">Estimation de la VaR</a>
+  <ul>
+  <li><a href="#volatilité-constante-dans-le-temps" id="toc-volatilité-constante-dans-le-temps" class="nav-link" data-scroll-target="#volatilité-constante-dans-le-temps">Volatilité constante dans le temps</a></li>
+  <li><a href="#volatilité-non-constante-dans-le-temps" id="toc-volatilité-non-constante-dans-le-temps" class="nav-link" data-scroll-target="#volatilité-non-constante-dans-le-temps">Volatilité non-constante dans le temps</a></li>
+  </ul></li>
   <li><a href="#tester-la-validité-de-la-var-backtesting" id="toc-tester-la-validité-de-la-var-backtesting" class="nav-link" data-scroll-target="#tester-la-validité-de-la-var-backtesting">Tester la validité de la VaR (backtesting)</a>
   <ul>
   <li><a href="#problématique-des-tests-sur-la-var" id="toc-problématique-des-tests-sur-la-var" class="nav-link" data-scroll-target="#problématique-des-tests-sur-la-var">Problématique des tests sur la VaR</a></li>
@@ -2745,8 +2749,54 @@ LM = TR^2 \sim \chi^2(l)
 </section>
 <section id="estimation-de-la-var" class="level2">
 <h2 class="anchored" data-anchor-id="estimation-de-la-var">Estimation de la VaR</h2>
+<section id="volatilité-constante-dans-le-temps" class="level3">
+<h3 class="anchored" data-anchor-id="volatilité-constante-dans-le-temps">Volatilité constante dans le temps</h3>
 <p>Si l’espérance conditionnelle des rendements est nulle (<span class="math inline">\(\mu_{t+1|t} = 0\)</span>), alors le calcul de la VaR ne nécessite qu’un estimateur de la variance des rendements. A partir de là, si la volatilité des rendements est constante dans le temps : <span class="math inline">\(\sigma_{t+1|t} = \sigma\)</span>, alors il suffit d’estimer l’écart-type des rendements puis de trouver le <span class="math inline">\(\alpha\)</span> quantile de la loi que sont supposées suivre les rendements.</p>
-<p>Si la volatilité n’est pas constante, on peut calculer l’écart-type des rendements sur une fenêtre glissante, c’est à dire calculer l’écart-type sur les <span class="math inline">\(x\)</span> premiers jours, puis décaler la fenêtre de 1 jour, calculer l’écart-type etc… Cela permet d’avoir une mesure de la volatilité qui dépend du temps. Dans ce cas, il faut trouver la <span class="math inline">\(\alpha\)</span> quantile de la loi supposée suivie par les rendements pour chaque période de temps.</p>
+<p>Si l’on suppose que les rendements suivent une loi normale, on peut estimer la VaR Variance-Covariance avec la formule suivante :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  -\left( \mu_r + \sigma_r \times \Theta^{-1}(\alpha) \right)
+\end{aligned}
+\]</span></p>
+<p>Où :</p>
+<ul>
+<li><p><span class="math inline">\(\mu_r\)</span> est la moyenne empirique des rendements</p></li>
+<li><p><span class="math inline">\(\sigma_r\)</span> est l’écart-type empirique des rendements</p></li>
+<li><p><span class="math inline">\(\Theta^{-1}(\alpha)\)</span> est le quantile <span class="math inline">\(\alpha\)</span> de la loi normale.</p></li>
+</ul>
+<p>Si nos rendements sont caractérisés par des queues de distribution plus épaisse, on peut estimer une VaR avec une loi de Student :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  - \left( \mu_r - \sigma_r \times \sqrt{\frac{v-2}{v}} \times G^{-1}(v;\alpha)  \right)  
+\end{aligned}
+\]</span></p>
+<p>où :</p>
+<ul>
+<li><p><span class="math inline">\(\mu_r\)</span> est la moyenne empirique des rendements</p></li>
+<li><p><span class="math inline">\(\sigma_r\)</span> est l’écart-type empirique des rendements</p></li>
+<li><p><span class="math inline">\(v\)</span> est le paramètre de forme de la loi de student suivie par les résidus</p></li>
+<li><p><span class="math inline">\(G^{-1}(v;\alpha)\)</span> est le quantile <span class="math inline">\(\alpha\)</span> de la loi de Student de paramètre <span class="math inline">\(v\)</span>.</p></li>
+</ul>
+<p>Si la distribution empirique présente des queues de distributions épaisses mais n’est pas si éloignée de la loi normale, on peut utiliser l’approximation de Cornish-Fisher pour modéliser ces queues de distribution plus épaisses :</p>
+<p><span class="math display">\[
+\begin{aligned}
+  &amp;-\left( \mu_r + \sigma_r \times \kappa^{-1}_\alpha\right) \\[2ex]
+  &amp;\kappa_\alpha^{-1} = a + \frac{a^2 - 1}{6}S + \frac{a^3 - 3a}{24}K + \frac{2a^3 - 5a}{36}S^2 \\[2ex]
+  &amp;a = \Theta^{-1}(\alpha)
+\end{aligned}
+\]</span></p>
+<p>Où :</p>
+<ul>
+<li><p><span class="math inline">\(\mu_r\)</span> est la moyenne empirique des rendements</p></li>
+<li><p><span class="math inline">\(\sigma_r\)</span> est l’écart-type empirique des rendements</p></li>
+<li><p><span class="math inline">\(\Theta^{-1}(\alpha)\)</span> est le quantile <span class="math inline">\(\alpha\)</span> de la loi normale.</p></li>
+<li><p><span class="math inline">\(S\)</span> est le coefficient de skewness de la série</p></li>
+</ul>
+<p>-<span class="math inline">\(K\)</span> est le coefficient de kurtosis de la série</p>
+</section>
+<section id="volatilité-non-constante-dans-le-temps" class="level3">
+<h3 class="anchored" data-anchor-id="volatilité-non-constante-dans-le-temps">Volatilité non-constante dans le temps</h3>
+<p>Si la volatilité n’est pas constante, on peut calculer l’écart-type des rendements sur une fenêtre glissante, c’est à dire calculer l’écart-type sur les <span class="math inline">\(x\)</span> premiers jours, puis décaler la fenêtre de 1 jour (au début et à la fin), calculer l’écart-type etc… Cela permet d’avoir une mesure de la volatilité qui dépend du temps. Dans ce cas, il faut trouver le <span class="math inline">\(\alpha\)</span> quantile de la loi supposée suivie par les rendements pour chaque période de temps. Les formules vu dans le cas où la volatilité est constante restent applicables. Seulement la moyenne et l’écart-type vont varier au fil du temps.</p>
 <p>Une autre solution consiste à estimer des modèles calculant la volatilité conditionnelle de la série puis à trouver le <span class="math inline">\(\alpha\)</span> quantile associé à la loi de distribution que sont supposés suivre les rendements</p>
 <p>Supposons que les rendements suivent un processus AR(1)-GARCH(1,1) :</p>
 <p><span class="math display">\[
@@ -2774,7 +2824,7 @@ V \left[ R_{t+1}|I_t \right] &amp;= V \left[ \varepsilon_{t+1} |I_t \right] = \a
 <p>De manière plus générale on peut calculer la VaR avec la formule suivante :</p>
 <p><span class="math display">\[
 \begin{aligned}
-  VaR_{t+1|t} (1-\alpha) &amp;= - \mu_t + z_\alpha \sqrt{h_t}  
+  VaR_{t+1|t} (1-\alpha) &amp;= - \left( \mu_t + z_\alpha \sqrt{h_t} \right)
 \end{aligned}
 \]</span></p>
 <p>Où :</p>
@@ -2783,6 +2833,7 @@ V \left[ R_{t+1}|I_t \right] &amp;= V \left[ \varepsilon_{t+1} |I_t \right] = \a
 <li><p><span class="math inline">\(h_t\)</span> est la volatilité conditionnelle des rendements à la période <span class="math inline">\(t\)</span></p></li>
 <li><p><span class="math inline">\(z_\alpha\)</span> est le <span class="math inline">\(\alpha\)</span>-quantile (négatif) de la loi de probabilité supposée suivie par les résidus.</p></li>
 </ul>
+</section>
 </section>
 <section id="tester-la-validité-de-la-var-backtesting" class="level2">
 <h2 class="anchored" data-anchor-id="tester-la-validité-de-la-var-backtesting">Tester la validité de la VaR (backtesting)</h2>
@@ -3496,7 +3547,7 @@ Adjusted Pearson Goodness-of-Fit Test:
 4 0.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000109502
 
 
-Elapsed time : 3.230763 </code></pre>
+Elapsed time : 3.189273 </code></pre>
 </div>
 </div>
 <p>Les résultats sont organisés de la façon suivante :</p>
@@ -3775,7 +3826,7 @@ Adjusted Pearson Goodness-of-Fit Test:
 4    50    102.07 0.0000133655
 
 
-Elapsed time : 1.633225 </code></pre>
+Elapsed time : 1.483046 </code></pre>
 </div>
 </div>
 <p>On peut voir que de nouveaux coefficients sont apparus. Le paramètre <code>beta1</code> est le paramètre généralisé du modèle GARCH. Le paramètre <code>skew</code> représente le coefficient d’asymétrie de la distribution sstd estimée. Le paramètre <code>shape</code> correspond au paramètre de la loi sstd estimée. On peut voir que le paramètre <code>Omega</code> qui est la constante présente dans l’équation de la variance conditionnelle n’a plus d’erreur standard. Cela est du à l’utilisation de <code>variance.targeting = TRUE</code> qui va imposer une valeur sur cette constante qui va dépendre de la persistance du modèle et de la variance inconditionnelle des rendements. Ce n’est donc pas une estimation.</p>
@@ -4016,7 +4067,7 @@ Adjusted Pearson Goodness-of-Fit Test:
 4    50     78.38    0.0048470
 
 
-Elapsed time : 1.98441 </code></pre>
+Elapsed time : 2.136403 </code></pre>
 </div>
 </div>
 <p>Le coefficient <code>gamma1</code> représente le coefficient d’asymétrie du modèle. On sait que la variable associée au coefficient <code>gamma1</code> est une variable binaire qui va prendre la valeur 1 lorsque le choc de volatilité est négatif. Ainsi la réponse de la volatilité conditionnelle lorsque le choc de volatilité est positif est donné par le coefficient <code>alpha1</code>. La réponse de la volatilité conditionnelle lorsque le choc de volatilité est négatif est donné par la somme <code>alpha1 + gamma1</code>. Ici on peut voir que <code>alpha1</code> n’est pas statistiquement différent de 0. Cela indique que selon cette spécification la volatilité conditionnelle ne réagit pas à un choc de volatilité positif positif. Elle réagit simplement à un choc de volatilité négatif à hauteur de <span class="math inline">\(0.26\)</span>.</p>
@@ -4182,7 +4233,7 @@ Adjusted Pearson Goodness-of-Fit Test:
 4    50     94.51   0.00010232
 
 
-Elapsed time : 1.428311 </code></pre>
+Elapsed time : 1.416627 </code></pre>
 </div>
 </div>
 <p>Dans le modèle EGARCH, il faut interpréter le paramètre <code>alpha1</code> comme l’effet de signe. Ici <code>alpha1</code> est significativement différent de 0 et est négatif (il n’y a pas de contraintes de positivité dans la spécification EGARCH). Cela signifie qu’un choc négatif de rendements va faire augmenter la volatilité conditionnelle tandis qu’un choc positif de rendements va faire diminuer la volatilité conditionnelle. Ce qui est bien l’effet de levier attendu. Le paramètre <code>gamma1</code> représente l’effet de taille. Plus le choc de rendement est éloigné de la moyenne attendue, plus l’effet sur la volatilité sera important.</p>

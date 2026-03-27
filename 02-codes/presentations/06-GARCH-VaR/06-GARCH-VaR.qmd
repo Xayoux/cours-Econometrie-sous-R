@@ -411,9 +411,71 @@ On peut supposer que la densité conditionnelle varie elle aussi dans le temps, 
 
 ## Estimation de la VaR
 
+### Volatilité constante dans le temps
+
 Si l'espérance conditionnelle des rendements est nulle ($\mu_{t+1|t} = 0$), alors le calcul de la VaR ne nécessite qu'un estimateur de la variance des rendements. A partir de là, si la volatilité des rendements est constante dans le temps : $\sigma_{t+1|t} = \sigma$, alors il suffit d'estimer l'écart-type des rendements puis de trouver le $\alpha$ quantile de la loi que sont supposées suivre les rendements.
 
-Si la volatilité n'est pas constante, on peut calculer l'écart-type des rendements sur une fenêtre glissante, c'est à dire calculer l'écart-type sur les $x$ premiers jours, puis décaler la fenêtre de 1 jour, calculer l'écart-type etc... Cela permet d'avoir une mesure de la volatilité qui dépend du temps. Dans ce cas, il faut trouver la $\alpha$ quantile de la loi supposée suivie par les rendements pour chaque période de temps.
+Si l'on suppose que les rendements suivent une loi normale, on peut estimer la VaR Variance-Covariance avec la formule suivante : 
+
+$$
+\begin{aligned}
+  -\left( \mu_r + \sigma_r \times \Theta^{-1}(\alpha) \right) 
+\end{aligned}
+$$
+
+Où : 
+
+- $\mu_r$ est la moyenne empirique des rendements
+
+- $\sigma_r$ est l'écart-type empirique des rendements
+
+- $\Theta^{-1}(\alpha)$ est le quantile $\alpha$ de la loi normale. 
+
+Si nos rendements sont caractérisés par des queues de distribution plus épaisse, on peut estimer une VaR avec une loi de Student : 
+
+$$
+\begin{aligned}
+  - \left( \mu_r - \sigma_r \times \sqrt{\frac{v-2}{v}} \times G^{-1}(v;\alpha)  \right)  
+\end{aligned}
+$$
+
+où : 
+
+- $\mu_r$ est la moyenne empirique des rendements
+
+- $\sigma_r$ est l'écart-type empirique des rendements
+
+- $v$ est le paramètre de forme de la loi de student suivie par les résidus
+
+- $G^{-1}(v;\alpha)$ est le quantile $\alpha$ de la loi de Student de paramètre $v$.
+
+
+Si la distribution empirique présente des queues de distributions épaisses mais n'est pas si éloignée de la loi normale, on peut utiliser l'approximation de Cornish-Fisher pour modéliser ces queues de distribution plus épaisses : 
+
+$$
+\begin{aligned}
+  &-\left( \mu_r + \sigma_r \times \kappa^{-1}_\alpha\right) \\[2ex] 
+  &\kappa_\alpha^{-1} = a + \frac{a^2 - 1}{6}S + \frac{a^3 - 3a}{24}K + \frac{2a^3 - 5a}{36}S^2 \\[2ex]
+  &a = \Theta^{-1}(\alpha)
+\end{aligned}
+$$
+
+Où : 
+
+- $\mu_r$ est la moyenne empirique des rendements
+
+- $\sigma_r$ est l'écart-type empirique des rendements
+
+- $\Theta^{-1}(\alpha)$ est le quantile $\alpha$ de la loi normale. 
+
+- $S$ est le coefficient de skewness de la série
+
+-$K$ est le coefficient de kurtosis de la série
+
+
+### Volatilité non-constante dans le temps
+
+Si la volatilité n'est pas constante, on peut calculer l'écart-type des rendements sur une fenêtre glissante, c'est à dire calculer l'écart-type sur les $x$ premiers jours, puis décaler la fenêtre de 1 jour (au début et à la fin), calculer l'écart-type etc... Cela permet d'avoir une mesure de la volatilité qui dépend du temps. Dans ce cas, il faut trouver le $\alpha$ quantile de la loi supposée suivie par les rendements pour chaque période de temps. Les formules vu dans le cas où la volatilité est constante restent applicables. Seulement la moyenne et l'écart-type vont varier au fil du temps. 
 
 Une autre solution consiste à estimer des modèles calculant la volatilité conditionnelle de la série puis à trouver le $\alpha$ quantile associé à la loi de distribution que sont supposés suivre les rendements
 
@@ -451,7 +513,7 @@ De manière plus générale on peut calculer la VaR avec la formule suivante :
 
 $$
 \begin{aligned}
-  VaR_{t+1|t} (1-\alpha) &= - \mu_t + z_\alpha \sqrt{h_t}  
+  VaR_{t+1|t} (1-\alpha) &= - \left( \mu_t + z_\alpha \sqrt{h_t} \right) 
 \end{aligned}
 $$
 
