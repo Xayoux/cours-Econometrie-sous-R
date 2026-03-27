@@ -85,36 +85,175 @@ quarto::quarto_render(
 
 *La réponse à la question précédente influe-t-elle sur la réponse de la question 7 ?*
 
-## Question 8
+## Question 9
 
 *En fonction des réponses précédentes estimer le modèle qui vous semble le plus adéquat. Interprétez les résultats.*
 
 
+# Exercice 2
+
+*A partir des données `Grunfeld` du package `plm` estimer et déterminer la relation qu'il existe entre la valeur d'une entreprise et son investissement.*
+
+# Exercice 3
+
+*Vous devez reprendre le travail d'un collège sur la détermination du salaire horaire et plus particulièrement sur l'influence d'une mauvaise santé sur le salaire. Commentez les méthodes et résultats utilisés.*
+
+```{r setup}
+#| message: false
+#| warning: false
+# Exécute le script setup.R pour charger tous les éléments importants
+source(here::here("02-codes", "utils", "setup.R"))
+```
+
+```{r}
+data("LaborSupply", package = "plm")
+
+df <- plm::pdata.frame(LaborSupply, index = c("id", "year"))
+
+df$lag_lnhr<- plm::lag(df$lnhr, 1)
+
+# df <-
+#   df |>
+#   drop_na()
+```
+
+```{r}
+spec <- lnhr ~ lag_lnhr + kids + age + disab
+```
 
 
+```{r}
+poobly::hsiao(
+  formula = spec,
+  data = df
+)
+```
+
+```{r}
+model_pooled <- 
+    plm::plm(
+    spec, 
+    data = df, 
+    model = "pooling" 
+  )
+
+model_indiv_variable_coef <- 
+  plm::pvcm(
+    spec, 
+    data = df, 
+    model = "within", 
+    effect = "individual" 
+  )
+
+plm::pooltest(
+  model_pooled, 
+  model_indiv_variable_coef
+)
+```
+
+```{r}
+model_pooled <- 
+    plm::plm(
+    spec, 
+    data = df, 
+    model = "pooling" 
+  )
+
+model_time_variable_coef <- 
+  plm::pvcm(
+    spec, 
+    data = df, 
+    model = "within", 
+    effect = "time" 
+  )
+
+plm::pooltest(
+  model_pooled, 
+  model_time_variable_coef
+)
+```
+
+```{r}
+plm::plmtest(
+  model_pooled, 
+  effect = "individual", 
+  type = "bp" 
+)
+```
+
+```{r}
+plm::plmtest(
+  model_pooled, 
+  effect = "time", 
+  type = "bp" 
+)
+```
+
+```{r}
+plm::plmtest(
+  model_pooled, 
+  effect = "twoways", 
+  type = "bp" 
+)
+```
 
 
+```{r}
+model_FE_TW <- 
+  plm::plm(
+    spec, 
+    data = df,
+    model = "within", 
+    effect = "twoways" 
+  )
 
+model_RE_TW <- 
+  plm::plm(
+    spec, 
+    data = df, 
+    model = "random", 
+    effect = "twoways" 
+  )
 
+plm::phtest(
+  model_FE_TW,
+  model_RE_TW
+)
+```
 
+```{r}
+plm::pooltest(
+  model_FE_TW, 
+  model_indiv_variable_coef
+)
+```
 
+```{r}
+plm::pcdtest(
+  spec, 
+  data = df, 
+  test = "cd" 
+)
+```
 
+```{r}
+plm::pcce(
+  formula = spec,
+  data = df,
+  model = "p"
+) |> 
+  summary()
+```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```{r}
+plm::plm(
+    formula = spec,
+    data = df,
+    effect = "twoways",
+    model = "within"
+  ) |> 
+  summary()
+```
 
 
 
