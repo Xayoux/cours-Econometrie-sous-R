@@ -24,7 +24,7 @@ format:
         \usepackage{amsfonts}
         \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines=true, breaksymbol=, commandchars=\\\{\}}
         \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true, breaksymbol=,commandchars=\\\{\}}
-editor: visual
+editor: source
 ---
 
 ```{r}
@@ -1304,7 +1304,18 @@ De manière attendue, on retrouve toujours des signes d'asymétrie dans la répo
 plot(garch11_fit, which = 9)
 ```
 
-On peut voir graphiquement, que les quantiles empiriques de npos résidus standardisés s'éloignent bien moins des quantiles théoriques de la loi sstd qu'ils ne s'éloignaient des quantiles théoriques de la loi normale. CEla semble indiquer que l'on prend mieux en compte la kurtosis et la skewness de nos rendements. Mais on peut voir que ce résultat n'est pas parfait. 
+On peut voir graphiquement, que les quantiles empiriques de nos résidus standardisés s'éloignent bien moins des quantiles théoriques de la loi sstd qu'ils ne s'éloignaient des quantiles théoriques de la loi normale. Cela semble indiquer que l'on prend mieux en compte la kurtosis et la skewness de nos rendements. Mais on peut voir que ce résultat n'est pas parfait. 
+
+La fonction `rugarch::sigma()` permet de récupérer la volatilité conditionnelle estimée du modèle. 
+
+```{r}
+# Réprésenter la volatiloté estimée du modèle
+garch11_fit |> 
+  rugarch::sigma() |> 
+  plot()
+```
+
+Comme on s'y attendais, on observe des pics de volatilité lors des périodes de crises ou d'incertitudes. On observe également qu'effectivement la volatilité est organisée en cluster de volatilité. Une forte (faible) volatilité semble entrainer par la suite une forte (faible) volatilité. 
 
 ## Estimation d'un modèle ARMA(4,5)-GJR-GARCH(1,1)
 
@@ -1312,7 +1323,7 @@ On, va maintenant estimer un modèle GJR-GARCH afin d'essayer de prendre en comp
 
 
 ```{r}
-# Spécifier le modèle ARMA(4,5)-ARCH(1)
+# Spécifier le modèle ARMA(4,5)-GJR-ARCH(1)
 gjr_garch11_spec <- 
   rugarch::ugarchspec(
     # Spécification de la variance conditionnelle
@@ -1354,7 +1365,7 @@ Les contraintes de positivité du modèle sont respectées. On peut voir qu'avec
 Pour essayer de mieux prendre en compte l'asymétrie, on va estimer un modèle EGARCH(1,1). 
 
 ```{r}
-# Spécifier le modèle ARMA(4,5)-ARCH(1)
+# Spécifier le modèle ARMA(4,5)-EGARCH(1)
 egarch11_spec <- 
   rugarch::ugarchspec(
     # Spécification de la variance conditionnelle
@@ -1393,7 +1404,7 @@ Tout comme pour le modèle GJR-GARCH, toute l'autocorrélation des rendements et
 
 ## Sélection du modèle
 
-Les modèles ARCH(1) et GARCH(1,1) ne sont pas retenus pour modéliser la volatilité conditionnelle des rendements puisque l'on n'arrive à modéliser toute l'autocorrélation ainsi que les effets de signes. Les modèles GJR-GARCH et EGARCH font mieux sur tous les points mais ne sont pas parfait sur les effets de signe. On hésite donc entre ces deux modèles asymétriques. POur les comparer on peut regarder leurs critères d'information. On peut obetnir les critères d'information de nos modèles avec la fonction `rugarch::infocriteria()`.
+Les modèles ARCH(1) et GARCH(1,1) ne sont pas retenus pour modéliser la volatilité conditionnelle des rendements puisque l'on n'arrive à modéliser toute l'autocorrélation ainsi que les effets de signes. Les modèles GJR-GARCH et EGARCH font mieux sur tous les points mais ne sont pas parfait sur les effets de signe. On hésite donc entre ces deux modèles asymétriques. Pour les comparer on peut regarder leurs critères d'information. On peut obtenir les critères d'information de nos modèles avec la fonction `rugarch::infocriteria()`.
 
 ```{r}
 # Créer une tible contenant les critères d'information de chaque modèle
@@ -1424,7 +1435,7 @@ table_criterion |>
   )
 ```
 
-Les 4 critères d'information indiquent que le modèle EGARCH(1,1) est celui qui reproduit le mieux les données sous contrainte de parcimonie. On utilisera donc ce modèle pour le calcul de la Value at Risk. 
+Les 4 critères d'information indiquent que le modèle EGARCH(1,1) est celui qui reproduit le mieux les données sous contrainte de parcimonie. On utilisera donc principalement ce modèle pour le calcul de la Value at Risk. 
 
 ## Value at Risk non conditionnelle
 
@@ -1493,12 +1504,12 @@ Ces mesures de la VaR ne sont guère utiles si l'on estime que la volatilité n'
 
 Pour utiliser une fenêtre glissante on peu utiliser la fonction `zoo::rollapply()` ou `runner::runner()`. Ici on utilisera la première option. On utilisera une taille de fenêtre de 252 jours. 
 
-### Value at Risk historique
+### Value at Risk non-conditionnelle historique
 
 ```{r}
 #Calcul de la VaR historique sur fenêtre glissante de 252 jours
 VaR_rolling_historique <- 
-  -rollapply(
+  -zoo::rollapply(
     rend_sp_500, # Données à utiliser
     width=252, # Taille de la fenêtre
     FUN = quantile, # Fonction à utiliser : ici la fonction quantile
@@ -1527,10 +1538,10 @@ On peut calculer la VaR en fenêtre glissante en supposant que les rendements su
 # Calculer  la VaR normale non conditionnelle sous fenêtre glissante
 
 # Calcuelr l'écart type en fenêtre glissante
-rolling_sd<-rollapply(rend_sp_500,width=252,FUN = sd)
+rolling_sd <- zoo::rollapply(rend_sp_500,width=252,FUN = sd)
 
 # Calculer la moyenne en fenêtre glissante
-rolling_mean<-rollapply(rend_sp_500,width=252,FUN = mean)
+rolling_mean <- zoo::rollapply(rend_sp_500,width=252,FUN = mean)
 
 # Pour chaque valeur de la moyenne et de l'écart-type calculer la VaR grâce au quantile de la loi normale
 VaR_rolling_normale <- -(rolling_mean+rolling_sd*qnorm(0.01)) 
@@ -1576,6 +1587,35 @@ legend("bottom",c("Rendements","VaR EGARCH", "Dépassements de la VaR"),
 
 On peut voir que la VaR ainsi estimé réagit bien plus vite aux variations des rendements et que les dépassements sont bien moins nombreux et semblent moins regroupés. Ils sont davantage espacés ce qui peut nous permettre d’espérer que les violations ne soient pas autocorrélées. 
 
+## Value at Risk conditionnelle (modèle GJR-GARCH)
+
+Nous allons quand même calculer la VaR à partir du modèle GJRT-GARCH pour comparer les résultats notamment lors des tests de backtest. 
+
+```{r}
+# Calculer la VaR à partir du modèle GJR-GARCH
+VaR_GJR <- -(as.numeric(quantile(gjr_garch11_fit, probs = 0.01)))
+
+# Représenter les rendements et la VaR
+plot(
+  # Combiner dans un seul df les rendements et la VaR
+  as.zoo(cbind(rend_sp_500,-VaR_GJR)),
+  screens=1,
+  col = c("black","mediumvioletred"),
+  main="VaR ARMA(4,5)-GJR-GARCH(1,1)", 
+  xlab = "Temps", 
+  ylab = "Rendements"
+)
+
+# Ajouter des points lors des dépassements
+points(as.zoo(rend_sp_500[as.numeric(rend_sp_500) < -VaR_GJR]), pch=20, col="red")
+  
+# Ajouter une légende
+legend("bottom",c("Rendements","VaR GJR-GARCH", "Dépassements de la VaR"),
+         col = c("black","mediumvioletred", 'red'),lty = c(1,1,NA),lwd = c(2,2,NA),pch = c(NA,NA,20))
+```
+
+IL semble que l'on observe un peu plus de violations avec cette VaR qu'avec la VaR du modèle EGARCH. 
+
 ## Backtest des VaR
 
 Nous avons différentes mesures de VaR. Il faut maintenant se décider sur celle que l'on souhaite utiliser pour modéliser le risque. Pour cela nous allons Backtester nos différentes VaR. L'idée est de vérifier si le nombre de violation correspond bien à notre taux de couverture et si ces violations ne sont pas autocorrélées entre elles. 
@@ -1606,6 +1646,7 @@ sample_backtest <- rend_sp_500[(taille.echantillon+1):length(rend_sp_500)]
 On va commencer par estimer la VaR historique sur l'échantillon d'estimation puis on appliquera la valeur trouvée à l'échantillon de test afin de backtester cette VaR. 
 
 ```{r}
+# Estimer la VaR historique sur l'échantillon d'estimation
 VaR_historique_estimation <- -quantile(as.numeric(sample_estimation), probs=0.01) |>  print()
 ```
 
@@ -1614,14 +1655,14 @@ Sur l'échantillon d'estimation la VaR historique est de 3.90% soit un peu plus 
 Pour faire les tests de Kupiec et de Christoffersen pour tester les hypothèses de couverture non conditionnelle et conditionnelle on va utiliser la fonction `rugarch::VaRTest()` qui va prendre comme paramètres les valeurs des rendements et les valeurs de la VaR. 
 
 ```{r}
-# Tests de Kupiec et de Christoffersen sur la VaR historique
+# Tests de Kupiec et de Christoffersen sur la VaR historique en prenant l'échantillon de backtest
 test_VaR_historique <- 
   rugarch::VaRTest(
-  alpha = 0.01,
-  actual = sample_backtest,
-  VaR = rep(-VaR_historique_estimation, times = length(sample_backtest)),
-  conf.level = 0.05 
-) |> 
+    alpha = 0.01, # Seuil de la VaR calculée
+    actual = sample_backtest, # Echantillon de backtest
+    VaR = rep(-VaR_historique_estimation, times = length(sample_backtest)), # VaR calculée : créer un vecteur de même longueur que l'échantillon de backtest car la VaR historique n'a qu'une valeur
+    conf.level = 0.95 # Niveau de confiance des tests statistiques (attention pour uen fois ce n'est pas le risque)
+  ) |> 
   print()
 ```
 
@@ -1639,14 +1680,20 @@ tibble(
 
 On peut voir que le nombre de violation devrait être de 10 (1% de 1000) mais que le nombre de dépassement observé est de 5. 
 
-Si on regarde la p.value du test de Kupiec (ligne 6), on voit que l'on ne peut pas rejeter l'hypothèse nulle de couverture non conditionnelle. Il semblerait que la VaR soit correctement calibrée sur le nombre de violations. En revanche si l'on regarde le p.value du test joint de Christoffersen (ligne 11), on voit que l'on rejette l'hypothèse de couverture conditionnelle. Si l'hypothèse de couverture non-conditionnelle n'est pas rejetée, il semblerait donc que ce soit l'indépendance des violations qui soit remise en cause. Il semblerait donc que la VaR non conditionnelle historique ne soit pas une bonne mesure de la VaR selon ces tests. 
+Si on regarde la p.value du test de Kupiec (ligne 6), on voit que l'on ne peut pas rejeter l'hypothèse nulle de couverture non conditionnelle au seuil de 5% mais on peut le faire au seuil de 10%. Il semblerait que la VaR soit correctement calibrée sur le nombre de violations. En revanche si l'on regarde le p.value du test joint de Christoffersen (ligne 11), on voit que l'on rejette l'hypothèse de couverture conditionnelle. Si l'hypothèse de couverture non-conditionnelle n'est pas rejetée, il semblerait donc que ce soit l'indépendance des violations qui soit remise en cause. Il semblerait donc que la VaR non conditionnelle historique ne soit pas une bonne mesure de la VaR selon ces tests. 
 
 On peut tester l'hypothèse d'indépendance à des ordres supérieurs grâce à test de Ljung Box sur la fonction de violation centrée. Pour cela il faut d'abord créer cette fonction : 
 
 ```{r}
 # Créer la variable des violations
-HIT <- if_else(sample_backtest < -VaR_historique_estimation, 1, 0)
+HIT <- 
+  if_else(
+    sample_backtest < -VaR_historique_estimation, # Condition : que les rendements observés soient inférieurs à la VaR
+    1, # Si la condition est vraie la variable HIT prend la valeur 1
+    0 # Si la condition est fausse, la variable HIT prend la valeur 0
+  )
 
+# Créer la variable des violations centrées : soustraire le taux de couverture à la variable HIT
 HIT_centre <- HIT - 0.01
 ```
 
@@ -1654,6 +1701,7 @@ HIT_centre <- HIT - 0.01
 On peut maintenant appliquer le test de Ljung-Box à l'ordre 5 (comme préconisé par les auteurs) pour tester l'hypothèse nulle d'indépendance des violations :
 
 ```{r}
+# Test de Ljung-Box sur la variable des violations centrées : lag = 5 comme préconisé
 stats::Box.test(HIT_centre, lag = 5, type = "Ljung-Box")
 ```
 
@@ -1662,7 +1710,84 @@ On rejette l'hypothèse nulle d'indépendance des violations à l'ordre 5. La me
 On peut également faire le test DQ en régressant cette fonction de violation centrée sur les rendements et les rendements au carré (on ne peut pas régresser sur la VaR passée car la valeur est constante). Pour estimer cette régression on va utiliser la fonction `ARDL::ardl()` afin d'inclure plus facilement les 5 retards que l'on souhaite
 
 ```{r}
-# Créer un tibble pour utiliser la fonction
+# Créer un tibble pour utiliser la fonction ardl
+# Le tibble doit contenir toutes les variables utilisées dans la régression
+df_ardl <- 
+  tibble(
+    HIT_centre = HIT_centre, # Variable des violations centrée
+    rend = sample_backtest, # Variable des rendements de l'échantillon de backtest
+    rend2 = sample_backtest**2 # Variable des rendements au carré de l'échantillon de backtest
+  )
+
+# Estimer la régression linéaire selon un modèle ARDL avec 5 retards pour chaque variable
+reg_DQ <- 
+  ARDL::ardl( 
+    HIT_centre ~ rend + rend2, # Spécification du modèle
+    data = df_ardl, # Données
+    order = 5 # Nombre de lags à inclure pour toutes les variables
+  )
+
+summary(reg_DQ)
+```
+
+On peut voir que certains des coefficients de la régression sont statistiquement significatifs. Cela signifie que la fonction des violations centrées répond significativement à des informations disponibles dans son ensemble d'information. Il semblerait donc que l'indépendance ne soit pas respectée. Egalement, on remarque que la constante est significativement différente de 0. Cela signifie qu'il est probable que l'on observe pas assez (car constante négative) de violations pour notre taux de couverture. 
+
+Le test de significativité globale du modèle est significatif. Cela signifie que notre modèle explique globalement quelque chose. On rejette donc l'hypothèse nulle de couverture conditionnelle. Il semblerait que ce modèle de VaR ne soit pas valide. 
+
+
+### Bactest de la VaR normale
+
+On va commencer par estimer la VaR normale sur l'échantillon d'estimation puis on appliquera la valeur trouvée à l'échantillon de test afin de backtester cette VaR. 
+
+```{r}
+# Estimer la VaR normale sur l'échantillon d'estimation
+VaR_normale_estimation <- -(mean(sample_estimation)+sd(sample_estimation)*qnorm(0.01)) |>  print()
+```
+
+Sur l'échantillon d'estimation la VaR normale est de 2.96% soit un peu plus que la VaR historique sur l'ensemble de l'échantillon. On peut se dire que c'est une indication que le risque a diminué ces derniers temps. 
+
+On effectue les tests de Kupiec et de Christoffersen pour tester les hypothèses de couverture non conditionnelle et conditionnelle.
+
+```{r}
+# Tests de Kupiec et de Christoffersen sur la VaR historique
+test_VaR_normale <- 
+  rugarch::VaRTest(
+    alpha = 0.01, # Taux de couverture de la VaR
+    actual = sample_backtest, # Echantillon de backtest
+    VaR = rep(-VaR_normale_estimation, times = length(sample_backtest)), # VaR calculée
+    conf.level = 0.95 # Niveau de confiance des tests
+  )
+
+# Créer un tibble pour résumer les résultats
+tibble(
+  name = names(unlist(test_VaR_normale)), # Nom des éléments
+  value = unlist(test_VaR_normale) # Résultat des éléments
+) |> 
+  print(n = 20)
+```
+
+On peut voir que le nombre de violation devrait être de 10 (1% de 1000) mais que le nombre de dépassement observé est de 14. On a plus de violations que pour la VaR historique non conditionnelle.  
+
+Si on regarde la p.value du test de Kupiec (ligne 6), on voit que l'on ne peut pas rejeter l'hypothèse nulle de couverture non conditionnelle. Il semblerait que la VaR soit correctement calibrée sur le nombre de violations. En observant la p.value du test joint de Christoffersen (ligne 11), on voit que l'on ne peut pas rejeter l'hypothèse nulle de couverture conditionnelle. Il semblerait que nos violations soient indépendantes et que la VaR soit correctement calibrée (ce qui est un résultat étonnant). 
+
+On peut tester l'hypothèse d'indépendance à des ordres supérieurs grâce à test de Ljung Box sur la fonction de violation centrée.
+
+```{r}
+# Créer la variable des violations
+HIT <- if_else(sample_backtest < -VaR_normale_estimation, 1, 0)
+
+# Créer la variable des violations centrées
+HIT_centre <- HIT - 0.01
+
+# Test de Ljung Box sur les violations centrées
+stats::Box.test(HIT_centre, lag = 5, type = "Ljung-Box")
+```
+
+On rejette l'hypothèse nulle d'indépendance des violations à l'ordre 5. La mesure de la VaR n'est pas valide car les violations ne sont pas indépendantes. Elles sont concentrées sur des périodes de crises. 
+
+On peut également faire le test DQ en régressant cette fonction de violation centrée sur les rendements et les rendements au carré (on ne peut pas régresser sur la VaR passée car la valeur est constante). 
+```{r}
+# Créer un tibble pour utiliser la fonction ardl qui doit contenir toutes les données utilisées
 df_ardl <- 
   tibble(
     HIT_centre = HIT_centre,
@@ -1679,23 +1804,385 @@ reg_DQ <- ARDL::ardl(
 summary(reg_DQ)
 ```
 
+On peut voir que certains des coefficients de la régression sont statistiquement significatifs. Cela signifie que la fonction des violations centrées répond significativement à des informations disponibles dans son ensemble d'information. Il semblerait donc que l'indépendance ne soit pas respectée. Egalement, on remarque que la constante est significativement différente de 0. Cela signifie qu'il est probable que l'on observe pas assez (car constante négative) de violations pour notre taux de couverture. 
+
+Le test de significativité globale du modèle est significatif. Cela signifie que notre modèle explique globalement quelque chose. On rejette donc l'hypothèse nulle de couverture conditionnelle. Il semblerait que ce modèle de VaR ne soit pas valide. 
+
+## Backtest de la VaR conditionnelle (EGARCH)
+
+Pour backtester la VaR conditionnelle d'un modèle GARCH, il faut dans un premier temps spécifier puis estimer le modèle sur l'échantillon d'estimation. On pourra ensuite prédire (forecast) les rendements et volatilité conditionnelle pour la période $t+1$ de manière glissante. L'idée ets de prédire la valeur des rendements et de la volatilité, à partir des paramètres estimés sur l'échantillon d'estimation, pour la premier jour de l'échantillon de backtest. On prédit ensuite le jour suivant en utilisant la valeur des rendements réalisé sur le premier jour etc... (processus similaire à la validation out-of-sample vue dans le chapitre sur les ARMA). Il faut noter ici que l'on ne ré-estime pas le modèle à chaque période. On forecast en gardant toujours les mêmes paramètres que ceux estimés sur l'échantillon d'estimation. 
 
 
+L'étape de spécification du modèle est identique à celle vue précédemment.
+
+```{r}
+# Spécifier le modèle ARMA(4,5)-EGARCH(1)
+egarch11_estimation_spec <- 
+  rugarch::ugarchspec(
+    # Spécification de la variance conditionnelle
+    variance.model = 
+      list(
+        model = "eGARCH", # Utiliser un modèle GJR-GARCH
+        garchOrder = c(1,1), # Ordres du GARCH(q,p)
+        variance.targeting = TRUE # Définir si on veut utiliser la variance non conditionnelle empirique comme cible ou non
+      ),
+    # Spécification de la moyenne conditionnelle
+    mean.model = 
+      list(
+        armaOrder = c(4,5), # Ordres (p,q) du modèle ARMA
+        include.mean = TRUE # Inclure une constante
+      ),
+    distribution.model = "sstd" # Distribution de Student asymétrique des résidus
+  )
+```
+
+Pour l'estimation du modèle, il faut indiquer que l'on ne souhaite estimer les paramètres du modèle sur un sous échantillon et que l'on souhaite ainsi laisser les dernières données de côté afin d'effectuer par la suite des tests out-of-sample. Pour cela on va utiliser le paramètre `out.sample` afin d'indiquer le nombre d'observations finales que l'on souhaite laisser de coté. On va prendre ici `out.sample = 1000` pour rester cohérent avec nos échantillons de backtest pour les VaR non-conditionnelles. 
+
+```{r}
+# Estimer le modèle
+egarch11_estimation_fit <- rugarch::ugarchfit(
+  egarch11_spec, # Spécification du modèle
+  rend_sp_500, # Données à utiliser
+  out.sample = 1000 # Nombre d'observation à laisser de coté pour les backtests
+)
+```
+
+On va maintenant prédire les rendements et la volatilité de manière glissante (avec intégration des données réelles). Pour cela on utilise la fonction `rugarch::ugarchforecast()` avec le paramètre `n.roll` qui permet d'indiquer le nombre de fois que l'on veut prédire de manière glissante (ici ce sera donc 1000 pour avoir un échantillon de backtest de 1000). La fonction pour forecast peut soit prendre une spécification GARCH, auquel cas elle estimeras le modèle, ou bien elle peut prendre un modèle GARCH estimé et utiliser les paramètres déjà estimés comme des paramètres fixes pour le forecast. C'est cette deuxième option que l'on va utiliser ici.
+
+```{r}
+# Prédire de manière glissante les rendements et la volatilité
+forecast_egarch <- 
+  rugarch::ugarchforecast(
+    egarch11_estimation_fit, # Modèle GARCH estimé à utiliser
+    data = rend_sp_500, # Données à utiliser pour les prédictions (même jeu de données que le modèle GARCH estimé)
+    n.roll = 1000-1, # Nombre de glissements à effectuer.
+    n.ahead = 1 # Période de forecast ici 1 jour
+  )
+```
+
+On peut représenter le forecast de la volatilité conditionnelle : 
+
+```{r}
+# Représenter le forecast de la volatilité conditionnelle 
+plot(forecast_egarch, which = 4)
+```
+
+Le calcul de la VaR se fait de la même manière avec la fonction `rugarch::quantile()`. 
+
+```{r}
+# Calculer la VaR à partir du modèle EGARCH
+VaR_EGARCH_backtest <- -(as.numeric(quantile(forecast_egarch, probs = 0.01)))
+
+# Représenter les rendements et la VaR
+plot(
+  # Combiner dans un seul df les rendements et la VaR
+  as.zoo(cbind(sample_backtest,-VaR_EGARCH_backtest)),
+  screens=1,
+  col = c("black","lightseagreen"),
+  main="VaR ARMA(4,5)-EGARCH(1,1)", 
+  xlab = "Temps", 
+  ylab = "Rendements"
+)
+
+# Ajouter des points lors des dépassements
+points(as.zoo(sample_backtest[as.numeric(sample_backtest) < -VaR_EGARCH_backtest]), pch=20, col="red")
+  
+# Ajouter une légende
+legend("bottom",c("Rendements","VaR EGARCH", "Dépassements de la VaR"),
+         col = c("black","lightseagreen", 'red'),lty = c(1,1,NA),lwd = c(2,2,NA),pch = c(NA,NA,20))
+```
+
+Les tests de Backtests de font de la même manière que pour les VaR inconditionnelles. On commence par les tests de Kupiec et de Christoffersen.
 
 
+```{r}
+# Tests de Kupiec et de Christoffersen sur la VaR historique
+test_VaR_EGARCH<- 
+  rugarch::VaRTest(
+    alpha = 0.01, # Taux de couverture de la VaR
+    actual = sample_backtest, # Echantillon de backtest
+    VaR = -VaR_EGARCH_backtest, # VaR calculée
+    conf.level = 0.95 # Niveau de confiance des tests
+  )
+
+# Créer un tibble pour résumer les résultats
+tibble(
+  name = names(unlist(test_VaR_EGARCH)), # Nom des éléments
+  value = unlist(test_VaR_EGARCH) # Résultat des éléments
+) |> 
+  print(n = 20)
+```
+
+On peut voir que le nombre de violation devrait être de 10 (1% de 1000) mais que le nombre de dépassement observé est de 7.
+
+Si on regarde la p.value du test de Kupiec (ligne 6), on voit que l'on ne peut pas rejeter l'hypothèse nulle de couverture non-conditionnelle. Il semblerait que la VaR soit correctement calibrée sur le nombre de violations. En observant la p.value du test joint de Christoffersen (ligne 11), on voit que l'on ne peut pas rejeter l'hypothèse nulle de couverture conditionnelle. Il semblerait que nos violations soient indépendantes et que la VaR soit correctement calibrée. 
+
+On peut tester l'hypothèse d'indépendance à des ordres supérieurs grâce à test de Ljung Box sur la fonction de violation centrée.
+
+```{r}
+# Créer la variable des violations
+HIT <- if_else(sample_backtest < -VaR_EGARCH_backtest, 1, 0)
+
+# Créer la variable des violations centrées
+HIT_centre <- HIT - 0.01
+
+# Test de Ljung Box sur les violations centrées
+stats::Box.test(HIT_centre, lag = 5, type = "Ljung-Box")
+```
+
+On ne peut pas rejeter l'hypothèse nulle d'indépendance des violations à l'ordre 5. Il semblerait que les violations soient bien indépendantes entre elles. 
+
+On peut également faire le test DQ en régressant cette fonction de violation centrée sur les rendements et les rendements au carré (on ne peut pas régresser sur la VaR passée car la valeur est constante). 
+
+```{r}
+# Créer un tibble pour utiliser la fonction ardl qui doit contenir toutes les données utilisées
+df_ardl <- 
+  tibble(
+    HIT_centre = HIT_centre,
+    rend = sample_backtest,
+    rend2 = sample_backtest**2
+  )
+
+reg_DQ <- ARDL::ardl(
+  HIT_centre ~ rend + rend2,
+  data = df_ardl,
+  order = 5
+)
+
+summary(reg_DQ)
+```
+
+On peut voir que certains des coefficients de la régression sont statistiquement significatifs. Cela ne concerne que les variables des rendements et rendements au carré. Il semble effectivement que les violations ne dépendent pas de leur passé. Par contre les violations semblent influencées par la valeur actuelle des rendements et par leur volatilité présente et passée. Cela indiquerait que les violations soient dans une certaine mesure prévisibles alors qu'elles ne devraient pas l'être. Cela pourrait être un motif d'invalidation de la VaR. 
+
+En revanche, la constante n'est pas significativement différente de 0. Il semble donc qu'effectivement l'hypothèse de couverture non-conditionnelle soit respectée. 
+
+Le test de significativité globale du modèle est significatif. Cela signifie que notre modèle explique globalement quelque chose. On rejette donc l'hypothèse nulle de couverture conditionnelle. Il semblerait que ce modèle de VaR ne soit pas valide selon ce test. 
 
 
+## Backtest de la VaR conditionnelle (GJR-GARCH)
+
+On va backtester la VaR du modèle GJRT-GARCh pour comparer ses résultats avec celle du modèle EGARCH. On commence par spécifier le modèle GJR-GARCH. 
+
+```{r}
+# Spécifier le modèle ARMA(4,5)-GJR-GARCH(1)
+gjr_garch11_estimation_spec <- 
+  rugarch::ugarchspec(
+    # Spécification de la variance conditionnelle
+    variance.model = 
+      list(
+        model = "gjrGARCH", # Utiliser un modèle GJR-GARCH
+        garchOrder = c(1,1), # Ordres du GARCH(q,p)
+        variance.targeting = TRUE # Définir si on veut utiliser la variance non conditionnelle empirique comme cible ou non
+      ),
+    # Spécification de la moyenne conditionnelle
+    mean.model = 
+      list(
+        armaOrder = c(4,5), # Ordres (p,q) du modèle ARMA
+        include.mean = TRUE # Inclure une constante
+      ),
+    distribution.model = "sstd" # Distribution de Student asymétrique des résidus
+  )
+```
+
+On estime ensuite le modèle en laissant de côté les 1000 dernières observations.  
+
+```{r}
+# Estimer le modèle
+gjr_garch11_estimation_fit <- 
+  rugarch::ugarchfit(
+    gjr_garch11_estimation_spec, # Spécification du modèle
+    rend_sp_500, # Données à utiliser
+    out.sample = 1000 # Nombre d'observation à laisser de coté pour les backtests
+  )
+```
+
+On prédit maintenant les rendements et la volatilité conditionnelle de manière glissante afin de pouvoir estimer la VaR par la suite. 
+
+```{r}
+# Prédire de manière glissante les rendements et la volatilité
+forecast_gjr_garch <- 
+  rugarch::ugarchforecast(
+    gjr_garch11_estimation_fit, # Modèle GARCH estimé à utiliser
+    data = rend_sp_500, # Données à utiliser pour les prédictions (même jeu de données que le modèle GARCH estimé)
+    n.roll = 1000-1, # Nombre de glissements à effectuer. (On enlève 1 pour avoir 999 glissements + la première valeur)
+    n.ahead = 1 # Période de forecast ici 1 jour
+  )
+```
+
+On peut représenter le forecast de la volatilité conditionnelle : 
+
+```{r}
+# Représenter le forecast de la volatilité conditionnelle 
+plot(forecast_gjr_garch, which = 4)
+```
+
+On calcule maintenant la VaR de ce modèle à partir des forecast réalisés. 
+
+```{r}
+# Calculer la VaR à partir du modèle EGARCH
+VaR_GJR_GARCH_backtest <- -(as.numeric(quantile(forecast_gjr_garch, probs = 0.01)))
+
+# Représenter les rendements et la VaR
+plot(
+  # Combiner dans un seul df les rendements et la VaR
+  as.zoo(cbind(sample_backtest,-VaR_GJR_GARCH_backtest)),
+  screens=1,
+  col = c("black","mediumvioletred"),
+  main="VaR ARMA(4,5)-EGARCH(1,1)", 
+  xlab = "Temps", 
+  ylab = "Rendements"
+)
+
+# Ajouter des points lors des dépassements
+points(as.zoo(sample_backtest[as.numeric(sample_backtest) < -VaR_GJR_GARCH_backtest]), pch=20, col="red")
+  
+# Ajouter une légende
+legend("bottom",c("Rendements","VaR EGARCH", "Dépassements de la VaR"),
+         col = c("black","mediumvioletred", 'red'),lty = c(1,1,NA),lwd = c(2,2,NA),pch = c(NA,NA,20))
+```
+
+On commence par les tests de Kupiec et de Christoffersen.
+
+```{r}
+# Tests de Kupiec et de Christoffersen sur la VaR historique
+test_VaR_GJR_GARCH<- 
+  rugarch::VaRTest(
+    alpha = 0.01, # Taux de couverture de la VaR
+    actual = sample_backtest, # Echantillon de backtest
+    VaR = -VaR_GJR_GARCH_backtest, # VaR calculée
+    conf.level = 0.95 # Niveau de confiance des tests
+  )
+
+# Créer un tibble pour résumer les résultats
+tibble(
+  name = names(unlist(test_VaR_GJR_GARCH)), # Nom des éléments
+  value = unlist(test_VaR_GJR_GARCH) # Résultat des éléments
+) |> 
+  print(n = 20)
+```
+
+On peut voir que le nombre de violation devrait être de 10 (1% de 1000) mais que le nombre de dépassement observé est de 8.
+
+Si on regarde la p.value du test de Kupiec (ligne 6), on voit que l'on ne peut pas rejeter l'hypothèse nulle de couverture non-conditionnelle. Il semblerait que la VaR soit correctement calibrée sur le nombre de violations. En observant la p.value du test joint de Christoffersen (ligne 11), on voit que l'on ne peut pas rejeter l'hypothèse nulle de couverture conditionnelle. Il semblerait que nos violations soient indépendantes et que la VaR soit correctement calibrée. 
+
+On peut tester l'hypothèse d'indépendance à des ordres supérieurs grâce à test de Ljung Box sur la fonction de violation centrée.
+
+```{r}
+# Créer la variable des violations
+HIT <- if_else(sample_backtest < -VaR_GJR_GARCH_backtest, 1, 0)
+
+# Créer la variable des violations centrées
+HIT_centre <- HIT - 0.01
+
+# Test de Ljung Box sur les violations centrées
+stats::Box.test(HIT_centre, lag = 5, type = "Ljung-Box")
+```
+
+On ne peut pas rejeter l'hypothèse nulle d'indépendance des violations à l'ordre 5. Il semblerait que les violations soient bien indépendantes entre elles. 
+
+On peut également faire le test DQ en régressant cette fonction de violation centrée sur les rendements et les rendements au carré (on ne peut pas régresser sur la VaR passée car la valeur est constante). 
+
+```{r}
+# Créer un tibble pour utiliser la fonction ardl qui doit contenir toutes les données utilisées
+df_ardl <- 
+  tibble(
+    HIT_centre = HIT_centre,
+    rend = sample_backtest,
+    rend2 = sample_backtest**2
+  )
+
+reg_DQ <- ARDL::ardl(
+  HIT_centre ~ rend + rend2,
+  data = df_ardl,
+  order = 5
+)
+
+summary(reg_DQ)
+```
+
+On peut voir que certains des coefficients de la régression sont statistiquement significatifs. Cela ne concerne que les variables des rendements et rendements au carré. Il semble effectivement que les violations ne dépendent pas de leur passé. Par contre les violations semblent influencées par la valeur actuelle des rendements et par leur volatilité présente et passée. Cela indiquerait que les violations soient dans une certaine mesure prévisibles alors qu'elles ne devraient pas l'être. Cela pourrait être un motif d'invalidation de la VaR. 
+
+En revanche, la constante n'est pas significativement différente de 0. Il semble donc qu'effectivement l'hypothèse de couverture non-conditionnelle soit respectée. 
+
+Le test de significativité globale du modèle est significatif. Cela signifie que notre modèle explique globalement quelque chose. On rejette donc l'hypothèse nulle de couverture conditionnelle. Il semblerait que ce modèle de VaR ne soit pas valide selon ce test. 
 
 
+## Sélection du modèle de VaR
 
+Même si aucun modèle de VaR ne passe le test DQ, les VaR conditionnelles (EGARCH et GJR-GARCH) passent les autres tests. On peut donc possiblement les considérer comme valide. La question qu'il se pose maintenant est de choisir entre ces modèles de VaR. Pour cela on va reprendre nos premières estimations de la VaR (sur l'ensemble de l'échantillon), calculer pour chaque période la moyenne de la VaR de l'ensemble de nos modèles (on va prendre tous les modèles même les non-valides pour montrer comment faire et avoir une moyenne avec plus que 2 observations) puis calculer le Biais Relatif Moyen pour voir quelle mesure de la VaR s'éloigne le moins de la moyenne. 
 
+On va commencer par créer un jeu de données qui contienne toutes les valeurs des VaR que l'on a calculé : 
 
+```{r}
+df_VaR <- 
+  # Tibble avec les différentes mesures de la VaR in-sample
+  tibble(
+    VaR_historique = VaR_historique, # La valeur va se dupliquer toute seule
+    VaR_normale = VaR_VCov,
+    VaR_historique_rolling = VaR_rolling_historique |> as.numeric(), # Convertir la série temporelle en série numérique
+    VaR_normale_rolling = VaR_rolling_normale |> as.numeric(),
+    VaR_EGARCH = VaR_EGARCH,
+    VaR_GJR = VaR_GJR
+  ) |> 
+  drop_na() |> # Retirer les 252 premières valeurs manquantes causées par la VaR en fenêtre glissante
+  print()
+```
 
+On va maintenant calculer pour chaque période de temps, la moyenne des VaR. Pour cela on va créer un nouveau jeu de données dans lequel toutes les valeurs des VaR vont être mises dans une seule colonne. Une deuxième variable indiquera le modèle de VaR et une troisième indiquera la période de temps. 
 
+```{r}
+# Créer le dataframe servant à calculer les moyennes des VaR pour chaque période
+df_VaR_long <- 
+  df_VaR |>
+  # Ajouter une colone qui contient l'indication de la période temporelle (le numéro de ligne)
+  mutate(temps = row_number()) |> 
+  # Pivoter le df pour mettre toutes les VaR dans une même variable
+  pivot_longer(
+    cols = -temps,
+    names_to = "model",
+    values_to = "VaR"
+  ) |> 
+  print()
+```
 
+On va maintenant pouvoir calculer la moyenne des VaR pour chaque période de temps.
 
+```{r}
+# Calculer la moyenne des VaR pour chaque période de temps
+df_VaR_mean <- 
+  df_VaR_long |>
+  summarize(
+    .by = temps, # Grouper par temps : la moyenne sera calculée pour chaque groupe
+    moyenne_VaR = mean(VaR)
+  ) |> 
+  print()
+```
 
+On va maintenant pouvoir calculer le BRM pour chaque modèle de VaR en comparant la valeur de sa VaR avec la valeur moyenne des VaR pour chaque période
 
+```{r}
+# Reprendre le jeu de données avec les VaR dans une seule variable
+df_VaR_long |> 
+  # Fusionner avec la moyenne des VaR pour chaque période de temps
+  left_join(
+    df_VaR_mean,
+    join_by(temps == temps)
+  ) |> 
+  # Pour chaque observation soustraire à la VaR la moyenne des VaR de la période et diviser le tout par la moyenne des VaR de la période
+  mutate(
+    ecart = (VaR - moyenne_VaR) / moyenne_VaR
+  ) |> 
+  # Pour chaque modèle calculer le MRB
+  summarize(
+    .by = model,
+    MRB = abs(mean(ecart))
+  ) |> 
+  print()
+```
+
+Le Biais Relatif Moyen nous indique que la VaR calculée à partir du modèle EGARCH est celle qui s'éloigne le moins de la moyenne des autres VaR. Cette mesure s'éloigne en moyenne de 0.3% de la mesure moyenne des VaR. La VaR GJR-GARCH quant à elle s'éloigne de plus de 6% en moyenne. La moins bonne VaR du point de vue de ce critère est la VaR historique qui s'éloigne en moyenne de 24.6% de la valeur moyenne des autres VaR. 
+
+On a ici inclue toutes nos VaR calculées. Il serait probablement plus rigoureux de n'inclure que que les mesures de VaR ayant été validées par les backtests s'il y en a un nombre assez conséquent. 
 
 
 
