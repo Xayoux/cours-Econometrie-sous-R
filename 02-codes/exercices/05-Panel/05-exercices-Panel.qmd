@@ -1,0 +1,127 @@
+---
+title: "05-Exercices-Panel"
+author: "Romain CAPLIEZ"
+format:
+  html:
+    embed-resources: true
+    code-overflow: wrap
+    toc: true
+    toc-location: left
+    toc-depth: 5
+    toc-expand: 2
+    include-in-header:
+      text: |
+        <style>
+          p {
+            text-align: justify
+          }
+        </style>
+  pdf:
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \usepackage{amsmath}
+        \usepackage{amsfonts}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines=true, breaksymbol=, commandchars=\\\{\}}
+        \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true, breaksymbol=,commandchars=\\\{\}}
+editor: source
+---
+
+```{r}
+#| eval: false
+#| include: false
+# A UTILISER POUR RENDER EN HTML ET PDF
+quarto::quarto_render(
+    here::here(
+        "02-codes", 
+        "exercices",
+        "05-Panel", 
+        "05-exercices-Panel.qmd"
+    ), 
+    output_format = "all"
+)
+```
+
+
+# Exercice 1 : Prix des cigarettes
+
+*Vous souhaitez déterminer si le prix des cigarettes évolue proportionnellement à l'inflation et si la richesse ainsi que la taille de marché potentiel influent sur le prix des cigarettes.* 
+
+*Données `Cigar` du package `plm`.* 
+
+## Question 0
+
+*Importer le setup de l'analyse*
+
+## Question 1
+
+*Importer les données. Quelles variables (dépendante et indépendantes) allez vous utiliser ? Quelles sont les dimensions du panel ?*
+
+## Question 2
+
+*Effectuer la procédure de Hsiao. Qu'en concluez-vous ?*
+
+## Question 3
+
+*Tester si le modèle est homogène ou complètement hétérogène dans la dimension individuelle. Faites la même chose pour la dimension temporelle. Qu'en concluez-vous ?*
+
+## Question 4
+
+*Tester la présence d'effets fixes dans le modèle. Qu'en concluez-vous ?*
+
+## Question 5
+
+*Si des effets fixes sont présents, vaut-il mieux les modéliser par une modélisation within ou aléatoire ? Justifiez et concluez.*
+
+## Question 6
+
+*Les relations sont-elles homogènes pour tous les individus ? Pour toutes les périodes de temps ? Qu'en concluez-vous ?*
+
+## Question 7
+
+*Existe-t-il une forte corrélation inter-individuelle entre les individus du panel ? Justifiez et concluez sur les implication.*
+
+## Question 8
+
+*La réponse à la question précédente influe-t-elle sur la réponse de la question 7 ?*
+
+## Question 8
+
+*En fonction des réponses précédentes estimer le modèle qui vous semble le plus adéquat. Interprétez les résultats.*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
