@@ -1,0 +1,720 @@
+---
+title: "06-Exercices-GARCH-VaR"
+author: "Romain CAPLIEZ"
+format:
+  html:
+    embed-resources: true
+    code-overflow: wrap
+    toc: true
+    toc-location: left
+    toc-depth: 5
+    toc-expand: 2
+    include-in-header:
+      text: |
+        <style>
+          p {
+            text-align: justify
+          }
+        </style>
+  pdf:
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \usepackage{amsmath}
+        \usepackage{amsfonts}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines=true, breaksymbol=, commandchars=\\\{\}}
+        \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true, breaksymbol=,commandchars=\\\{\}}
+editor: source
+---
+
+```{r}
+#| eval: false
+#| include: false
+# A UTILISER POUR RENDER EN HTML ET PDF
+quarto::quarto_render(
+    here::here(
+        "02-codes", 
+        "exercices",
+        "06-GARCH-VaR", 
+        "06-exercices-GARCH-VaR.qmd"
+    ), 
+    output_format = "all"
+)
+```
+
+# Exercice 1 : Modéliser le risque du CAC40
+
+Données à partir de la base Yahoo Finance : fonction `pdfetch::pdfetch_YAHOO()`. 
+
+Vous avez pour mission de modéliser le risque présent sur le marché du CAC40. 
+
+## Question 0
+
+*Importer le setup de l'analyse.*
+
+## Question 1
+
+*Importer les données du CAC40 à partir de la base Yahoo Finance.*
+
+## Question 2
+
+*Les données de cours boursier du CAC40 sont-elles stationnaires ?*
+
+## Question 3
+
+*Stationnariser la série si besoin*
+
+## Question 4
+
+*Modéliser le risque à partir d'une mesure de Value at Risk non-conditionnelle historique, de Student (normale pour une version plus simple) en statique et en fenêtre glissante de 252 jours. Commentez.* 
+
+## Question 5
+
+*Trouver le meilleur modèle (S)ARIMA pour modéliser l'espérance conditionnelle de la série stationnaire à partir du critère d'information BIC*
+
+## Question 6
+
+*Les résidus de ce modèle sont-ils normaux ? Sont-ils auto-corrélés ? Les résidus au carré sont-ils auto-corrélés ? Y a-t-il des effets ARCH dans les résidus. Qu'en concluez-vous pour la suite de l'analyse.* 
+
+## Question 7
+
+*Estimer la volatilité conditionnelle à partir de 3 modèles (minimum) différents. Expliquez votre processus de sélection et de validation des modèles utilisés.*
+
+## Question 8
+
+*Calculer la VaR associée à ces 3 modèles.*
+
+## Question 9
+
+*Effectuer les tests de Backtests sur tous les modèles de VaR estimés. Quelles sont les conclusions ?*
+
+## Question 10
+
+*Parmi tous les modèles de VaR validés (ou parmi tous les modèles s'il n'y a pas assez de modèles validés) quel est le modèle que vous choisissez pour modéliser le risque du CAC40 ?*
+
+
+# Exercice 2 : Prédire le FTSE100
+
+*Votre patron vous demande de prédire les futurs rendements du FTSE100 ainsi que les risques de perte maximum pour un niveau de confiance de 99%. Expliquer votre démarche et abalyser les résultats.*
+
+# Exercice 3
+
+Votre collège part à la retraite et vous transmet le projet sur lequel il travaillait : modéliser le risque des prix de l'action LVMH. Commentez les résultats et les méthodes qu'il utilise. 
+
+```{r}
+#| message: false
+#| warning: false
+# Exécute le script setup.R pour charger tous les éléments importants
+source(here::here("02-codes", "utils", "setup.R"))
+```
+
+```{r}
+lvmh <- 
+  pdfetch::pdfetch_YAHOO(
+    "MC.PA", # Code de la série que l'on souhaite importer
+    fields = "adjclose", # Variable que l'on souhaite importer
+    from = as.Date("2008-01-03"), # Date de départ
+    to = as.Date("2026-03-27") # Date de fin
+  )
+```
+
+```{r}
+forecast::ggtsdisplay(lvmh, point = FALSE)
+```
+
+```{r}
+plot(lvmh)
+```
+
+```{r}
+urca::ur.df(lvmh, "trend", lags = 20, selectlags = "AIC") |> summary()
+```
+
+```{r}
+urca::ur.df(lvmh, "drift", lags = 20, selectlags = "AIC") |> summary()
+```
+
+```{r}
+urca::ur.df(lvmh, "none", lags = 20, selectlags = "AIC") |> summary()
+```
+
+```{r}
+rend_lvmh <- 
+  log(lvmh) - log(lag(lvmh)) |> 
+  na.omit()
+
+forecast::ggtsdisplay(rend_lvmh, point = FALSE)
+```
+
+```{r}
+moments::jarque.test(as.numeric(rend_lvmh))
+```
+
+```{r}
+t_couv <- 0.01
+```
+
+
+```{r}
+VaR_VCov <- (-(mean(rend_lvmh)+sd(rend_lvmh)*qnorm(t_couv))) |> print()
+```
+
+```{r}
+plot(as.zoo(rend_lvmh),
+      main = "Rendements et Value at Risk variance-covariance",
+      xlab = "Temps",
+      ylab = "Rendements")
+  abline(h= -VaR_VCov, col="cornflowerblue")
+  points(as.zoo(rend_lvmh[as.numeric(rend_lvmh) < -VaR_VCov]), pch=20, col="cornflowerblue")
+  legend("topright", legend = c("VaR Vcov","Dépassements de la VaR Vcov"), 
+         pch = c(NA,20), lty = c(1, NA), col = "cornflowerblue")
+```
+
+```{r}
+K <- kurtosis(rend_lvmh)
+S <- skewness(rend_lvmh)
+
+k <- as.numeric(qnorm(t_couv)+(qnorm(t_couv)^2-1)*(S/6)+(qnorm(t_couv)^3-3*qnorm(t_couv))*(K/24)+(2*qnorm(t_couv)^3-5*qnorm(t_couv))*(S^2/36))
+
+VaR_CFisher<- as.numeric(-(mean(rend_lvmh)+sd(rend_lvmh)*k)) |> print()
+```
+
+```{r}
+plot(as.zoo(rend_lvmh),
+      main = "Rendements et Value at Risk Cornish-Fisher",
+      xlab = "Temps",
+      ylab = "Rendements")
+  abline(h= -VaR_CFisher, col="mediumorchid")
+  points(as.zoo(rend_lvmh[as.numeric(rend_lvmh) < -VaR_CFisher]), pch=20, col="mediumorchid")
+  legend("topright", legend = c("VaR CFisher","Dépassements de la VaR CFisher"), 
+         pch = c(NA,20), lty = c(1, NA), col = "mediumorchid")
+```
+
+```{r}
+param.sd <- fitdist(distribution = 'std', x = rend_lvmh)$pars
+quantile.sd <- qt(t_couv, df=param.sd["shape"])
+
+VaR_student <- (-mean(rend_lvmh)-sd(rend_lvmh)*quantile.sd*sqrt((quantile.sd-2)/quantile.sd)) |> print()
+```
+
+```{r}
+plot(as.zoo(rend_lvmh),
+      main = "Rendements et Value at Risk Student",
+      xlab = "Temps",
+      ylab = "Rendements")
+  abline(h= -VaR_student, col="mediumseagreen")
+  points(as.zoo(rend_lvmh[as.numeric(rend_lvmh) < -VaR_student]), pch=20, col="mediumseagreen")
+  legend("topright", legend = c("VaR Student","Dépassements de la VaR Student"), 
+         pch = c(NA,20), lty = c(1, NA), col = "mediumseagreen")
+```
+
+```{r}
+n_backtest <- 2000
+
+taille_sample_estimation <- length(rend_lvmh) - n_backtest
+
+sample_estimation <- rend_lvmh[1:taille_sample_estimation]
+
+sample_backtest <- rend_lvmh[(taille_sample_estimation+1):length(rend_lvmh)]
+```
+
+```{r}
+VaR_VCov_estimation <- (-(mean(sample_estimation)+sd(sample_estimation)*qnorm(t_couv)))
+
+test_VaR_VCov <- 
+  rugarch::VaRTest(
+    alpha = t_couv, 
+    actual = sample_backtest, 
+    VaR = rep(-VaR_VCov_estimation, times = length(sample_backtest)),
+    conf.level = 0.95 
+  )
+
+tibble(
+  name = names(unlist(test_VaR_VCov)), 
+  value = unlist(test_VaR_VCov) 
+) |> 
+  print(n = 20)
+```
+
+```{r}
+HIT_VCov <- 
+  if_else(sample_backtest < -VaR_VCov_estimation, 1, 0)
+
+HIT_centre_VCov <- HIT_VCov - t_couv
+
+stats::Box.test(HIT_centre_VCov, lag = 5, type = "Ljung-Box")
+```
+
+
+```{r}
+df <- tibble(
+  HIT_centre = HIT_centre_VCov, 
+  rend = sample_backtest |> as.numeric(), 
+  rend2 = sample_backtest**2 |> as.numeric()
+) 
+
+ARDL::ardl( 
+  HIT_centre ~ rend + rend2, 
+  data = df,
+  order = 5 
+) |> 
+  summary()
+```
+
+```{r}
+K <- kurtosis(sample_estimation)
+S <- skewness(sample_estimation)
+
+k <- as.numeric(qnorm(t_couv)+(qnorm(t_couv)^2-1)*(S/6)+(qnorm(t_couv)^3-3*qnorm(t_couv))*(K/24)+(2*qnorm(t_couv)^3-5*qnorm(t_couv))*(S^2/36))
+
+VaR_CFisher_estimation <- as.numeric(-(mean(sample_estimation)+sd(sample_estimation)*k))
+
+test_VaR_CFisher <- 
+  rugarch::VaRTest(
+    alpha = t_couv, 
+    actual = sample_backtest, 
+    VaR = rep(-VaR_CFisher_estimation, times = length(sample_backtest)),
+    conf.level = 0.95 
+  )
+
+tibble(
+  name = names(unlist(test_VaR_CFisher)), 
+  value = unlist(test_VaR_CFisher) 
+) |> 
+  print(n = 20)
+```
+
+```{r}
+HIT_CFisher <- 
+  if_else(sample_backtest < -VaR_CFisher_estimation, 1, 0)
+
+HIT_centre_CFisher <- HIT_VCov - t_couv
+
+stats::Box.test(HIT_centre_VCov, lag = 5, type = "Ljung-Box")
+```
+
+
+```{r}
+df <- tibble(
+  HIT_centre = HIT_centre_CFisher, 
+  rend = sample_backtest |> as.numeric(), 
+  rend2 = sample_backtest**2 |> as.numeric()
+) 
+
+ARDL::ardl( 
+  HIT_centre ~ rend + rend2, 
+  data = df,
+  order = 5 
+) |> 
+  summary()
+```
+
+
+```{r}
+param.sd <- fitdist(distribution = 'std', x = sample_estimation)$pars
+quantile.sd <- qt(t_couv, df=param.sd["shape"])
+
+VaR_student_estimation <- (-mean(sample_estimation)-sd(sample_estimation)*quantile.sd*sqrt((quantile.sd-2)/quantile.sd))
+
+test_VaR_student <- 
+  rugarch::VaRTest(
+    alpha = t_couv, 
+    actual = sample_backtest, 
+    VaR = rep(-VaR_student_estimation, times = length(sample_backtest)),
+    conf.level = 0.95 
+  )
+
+tibble(
+  name = names(unlist(test_VaR_student)), 
+  value = unlist(test_VaR_student) 
+) |> 
+  print(n = 20)
+```
+
+```{r}
+HIT_student <- 
+  if_else(sample_backtest < -VaR_student_estimation, 1, 0)
+
+HIT_centre_student <- HIT_VCov - t_couv
+
+stats::Box.test(HIT_centre_student, lag = 5, type = "Ljung-Box")
+```
+
+
+```{r}
+df <- tibble(
+  HIT_centre = HIT_centre_student, 
+  rend = sample_backtest |> as.numeric(), 
+  rend2 = sample_backtest**2 |> as.numeric()
+) 
+
+ARDL::ardl( 
+  HIT_centre ~ rend + rend2, 
+  data = df,
+  order = 5 
+) |> 
+  summary()
+```
+
+```{r}
+best_arma <- forecast::auto.arima(rend_lvmh)
+
+ar <- best_arma$arma[1]
+ma <- ar <- best_arma$arma[2]
+
+best_arma$arma[c(1,6,2)] |>  print()
+```
+
+```{r}
+LSTS::Box.Ljung.Test(best_arma$residuals**2, lag = 40)
+```
+
+```{r}
+fDMA::archtest(as.numeric(best_arma$residuals**2), lag = 20)
+```
+
+```{r}
+garch11_spec <- 
+  rugarch::ugarchspec(
+    variance.model = 
+      list(
+        model = "sGARCH", 
+        garchOrder = c(1,1),
+        variance.targeting = TRUE 
+      ),
+    mean.model = 
+      list(
+        armaOrder = c(ar,ma), 
+        include.mean = TRUE 
+      ),
+    distribution.model = "sged" 
+  )
+
+garch11_fit <- 
+  rugarch::ugarchfit(
+    garch11_spec, 
+    rend_lvmh 
+  )
+
+garch11_fit
+```
+
+```{r}
+plot(garch11_fit, which = 9)
+```
+
+```{r}
+# Calculer la VaR à partir du modèle EGARCH
+VaR_GARCH <- -(as.numeric(quantile(garch11_fit, probs = t_couv)))
+
+# Représenter les rendements et la VaR
+plot(
+  # Combiner dans un seul df les rendements et la VaR
+  as.zoo(cbind(rend_lvmh,-VaR_GARCH)),
+  screens=1,
+  col = c("black","lightseagreen"),
+  main="VaR ARMA-GARCH(1,1)", 
+  xlab = "Temps", 
+  ylab = "Rendements"
+)
+points(as.zoo(rend_lvmh[as.numeric(rend_lvmh) < -VaR_GARCH]), pch=20, col="red")
+legend("bottom",c("Rendements","VaR GARCH", "Dépassements de la VaR"),
+         col = c("black","lightseagreen", 'red'),lty = c(1,1,NA),lwd = c(2,2,NA),pch = c(NA,NA,20))
+```
+
+
+```{r}
+garch11_estimation_fit <- 
+  rugarch::ugarchfit(
+    garch11_spec, 
+    rend_lvmh, 
+    out.sample = n_backtest 
+  )
+
+forecast_garch11 <- 
+  rugarch::ugarchforecast(
+    garch11_estimation_fit, 
+    data = rend_lvmh,
+    n.roll = n_backtest-1,
+    n.ahead = 1 
+  )
+
+VaR_GARCH_backtest <- -(as.numeric(quantile(forecast_garch11, probs = 0.01)))
+
+test_VaR_GARCH<- 
+  rugarch::VaRTest(
+    alpha = t_couv, 
+    actual = sample_backtest,
+    VaR = -VaR_GARCH_backtest,
+    conf.level = 0.95 
+  )
+
+tibble(
+  name = names(unlist(test_VaR_GARCH)), 
+  value = unlist(test_VaR_GARCH) 
+) |> 
+  print(n = 20)
+```
+
+```{r}
+HIT <- if_else(sample_backtest < -VaR_GARCH_backtest, 1, 0)
+
+HIT_centre <- HIT - 0.01
+
+stats::Box.test(HIT_centre, lag = 5, type = "Ljung-Box")
+```
+
+
+```{r}
+df <- 
+  tibble(
+    HIT_centre = HIT_centre,
+    rend = sample_backtest,
+    rend2 = sample_backtest**2
+  )
+
+ARDL::ardl(
+  HIT_centre ~ rend + rend2,
+  data = df,
+  order = 5
+) |>  
+  summary()
+```
+
+
+```{r}
+egarch11_spec <- 
+  rugarch::ugarchspec(
+    variance.model = 
+      list(
+        model = "eGARCH", 
+        garchOrder = c(1,1),
+        variance.targeting = TRUE 
+      ),
+    mean.model = 
+      list(
+        armaOrder = c(ar,ma), 
+        include.mean = TRUE 
+      ),
+    distribution.model = "sged" 
+  )
+
+egarch11_fit <- 
+  rugarch::ugarchfit(
+    egarch11_spec, 
+    rend_lvmh 
+  )
+
+egarch11_fit
+```
+
+```{r}
+VaR_EGARCH <- -(as.numeric(quantile(egarch11_fit, probs = t_couv)))
+
+plot(
+  as.zoo(cbind(rend_lvmh,-VaR_EGARCH)),
+  screens=1,
+  col = c("black","lightseagreen"),
+  main="VaR ARMA-EGARCH(1,1)", 
+  xlab = "Temps", 
+  ylab = "Rendements"
+)
+points(as.zoo(rend_lvmh[as.numeric(rend_lvmh) < -VaR_EGARCH]), pch=20, col="red")
+legend("bottom",c("Rendements","VaR EGARCH", "Dépassements de la VaR"),
+         col = c("black","lightseagreen", 'red'),lty = c(1,1,NA),lwd = c(2,2,NA),pch = c(NA,NA,20))
+```
+
+
+```{r}
+egarch11_estimation_fit <- 
+  rugarch::ugarchfit(
+    egarch11_spec, 
+    rend_lvmh, 
+    out.sample = n_backtest 
+  )
+
+forecast_egarch11 <- 
+  rugarch::ugarchforecast(
+    egarch11_estimation_fit, 
+    data = rend_lvmh,
+    n.roll = n_backtest-1,
+    n.ahead = 1 
+  )
+
+VaR_EGARCH_backtest <- -(as.numeric(quantile(forecast_egarch11, probs = 0.01)))
+
+test_VaR_EGARCH<- 
+  rugarch::VaRTest(
+    alpha = t_couv, 
+    actual = sample_backtest,
+    VaR = -VaR_EGARCH_backtest,
+    conf.level = 0.95 
+  )
+
+tibble(
+  name = names(unlist(test_VaR_EGARCH)), 
+  value = unlist(test_VaR_EGARCH) 
+) |> 
+  print(n = 20)
+```
+
+```{r}
+HIT <- if_else(sample_backtest < -VaR_EGARCH_backtest, 1, 0)
+
+HIT_centre <- HIT - 0.01
+
+stats::Box.test(HIT_centre, lag = 5, type = "Ljung-Box")
+```
+
+
+```{r}
+df <- 
+  tibble(
+    HIT_centre = HIT_centre,
+    rend = sample_backtest,
+    rend2 = sample_backtest**2
+  )
+
+ARDL::ardl(
+  HIT_centre ~ rend + rend2,
+  data = df,
+  order = 5
+) |>  
+  summary()
+```
+
+```{r}
+egarch22_spec <- 
+  rugarch::ugarchspec(
+    variance.model = 
+      list(
+        model = "eGARCH", 
+        garchOrder = c(2,2),
+        variance.targeting = TRUE 
+      ),
+    mean.model = 
+      list(
+        armaOrder = c(ar,ma), 
+        include.mean = TRUE 
+      ),
+    distribution.model = "sged" 
+  )
+
+egarch22_fit <- 
+  rugarch::ugarchfit(
+    egarch22_spec, 
+    rend_lvmh 
+  )
+
+egarch22_fit
+```
+
+```{r}
+VaR_EGARCH22 <- -(as.numeric(quantile(egarch22_fit, probs = t_couv)))
+
+plot(
+  as.zoo(cbind(rend_lvmh,-VaR_EGARCH22)),
+  screens=1,
+  col = c("black","lightseagreen"),
+  main="VaR ARMA-EGARCH(2,2)", 
+  xlab = "Temps", 
+  ylab = "Rendements"
+)
+points(as.zoo(rend_lvmh[as.numeric(rend_lvmh) < -VaR_EGARCH22]), pch=20, col="red")
+legend("bottom",c("Rendements","VaR EGARCH(2,2)", "Dépassements de la VaR"),
+         col = c("black","lightseagreen", 'red'),lty = c(1,1,NA),lwd = c(2,2,NA),pch = c(NA,NA,20))
+```
+
+
+```{r}
+egarch22_estimation_fit <- 
+  rugarch::ugarchfit(
+    egarch22_spec, 
+    rend_lvmh, 
+    out.sample = n_backtest 
+  )
+
+forecast_egarch22 <- 
+  rugarch::ugarchforecast(
+    egarch22_estimation_fit, 
+    data = rend_lvmh,
+    n.roll = n_backtest-1,
+    n.ahead = 1 
+  )
+
+VaR_EGARCH22_backtest <- -(as.numeric(quantile(forecast_egarch22, probs = 0.01)))
+
+test_VaR_EGARCH22<- 
+  rugarch::VaRTest(
+    alpha = t_couv, 
+    actual = sample_backtest,
+    VaR = -VaR_EGARCH22_backtest,
+    conf.level = 0.95 
+  )
+
+tibble(
+  name = names(unlist(test_VaR_EGARCH22)), 
+  value = unlist(test_VaR_EGARCH22) 
+) |> 
+  print(n = 20)
+```
+
+```{r}
+HIT <- if_else(sample_backtest < -VaR_EGARCH22_backtest, 1, 0)
+
+HIT_centre <- HIT - 0.01
+
+stats::Box.test(HIT_centre, lag = 5, type = "Ljung-Box")
+```
+
+
+```{r}
+df <- 
+  tibble(
+    HIT_centre = HIT_centre,
+    rend = sample_backtest,
+    rend2 = sample_backtest**2
+  )
+
+ARDL::ardl(
+  HIT_centre ~ rend + rend2,
+  data = df,
+  order = 5
+) |>  
+  summary()
+```
+
+```{r}
+df_VaR <- 
+  tibble(
+    VaR_VCov = VaR_VCov,
+    VaR_CFisher = VaR_CFisher,
+    VaR_student = VaR_student, 
+    VaR_GARCH= VaR_GARCH,
+    VaR_EGARCH = VaR_EGARCH,
+    VaR_EGARCH22 = VaR_EGARCH22
+  ) |> 
+  drop_na() 
+
+df_VaR_long <- 
+  df_VaR |>
+  mutate(temps = row_number()) |> 
+  pivot_longer(
+    cols = -temps,
+    names_to = "model",
+    values_to = "VaR"
+  ) |> 
+  mutate(
+    .by = temps,
+    moyenne_VaR = mean(VaR)
+  ) |> 
+  mutate(
+    ecart = (VaR - moyenne_VaR) / moyenne_VaR
+  ) |> 
+  summarize(
+    .by = model,
+    MRB = abs(mean(ecart))
+  ) |> 
+  print()
+```
+
