@@ -1942,7 +1942,7 @@ Les tests disponibles sont :
 
 - Le test $LM$ de Breusch-Pagan (utilisable avec le paramètre `test = "lm"`) qui est valide lorsque $T \rightarrow \infty$ et $n$ fixe. Ce test est donc valide lorsque la dimension temporelle est grande tandis que la dimension individuelle n'est pas si grande. 
 
-- Le test `SCLM` qui est une version augmentée du test $LM$ (utilisable avec le paramètre `test = "sclm"`) qui est valide lorsque $T \rightarrow \infty$ puis que $N \rightarrow \infty$. Il faut donc une grande dimension temporelle suivie par une grande dimension individuelle. 
+- Le test $SCLM$ qui est une version augmentée du test $LM$ (utilisable avec le paramètre `test = "sclm"`) qui est valide lorsque $T \rightarrow \infty$ puis que $N \rightarrow \infty$. Il faut donc une grande dimension temporelle suivie par une grande dimension individuelle. 
 
 - Le test $BCSCLM$ qui est une version du test $SCLM$ qui intègre une correction de biais (utilisable avec le paramètre `test = "bcsclm"`). 
 

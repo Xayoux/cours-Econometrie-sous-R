@@ -1221,7 +1221,7 @@ rugarch::halflife(arch1_fit)
 
 La persistance de ce modèle étant faible, un choc met 1,27 jours pour être à moitié absorbé. 
 
-On peut calcuelr la variance non-conditionnelle estimée par le modèle et la comparer avec la vraie variance non-conditionnelle de nos rendements
+On peut calculer la variance non-conditionnelle estimée par le modèle et la comparer avec la vraie variance non-conditionnelle de nos rendements
 
 ```{r}
 # Volatilité non conditionnelle des rendements
