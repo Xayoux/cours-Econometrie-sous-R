@@ -97,6 +97,7 @@ quarto::quarto_render(
 *Vous travaillez comme économètre pour une organisation de commerce international. On vous remet le script R suivant qui analyse l'évolution des importations d'un produit chimique. Commentez les étapes de ce code, expliquez les résultats, justifier les différentes étapes. Quelles critiques pourriez-vous faire de cette analyse dont le but serait ultimement de prédire les futures importations chinoises de barium.*
 
 ```{r, message=FALSE}
+rm(list = ls())
 source(here::here("02-codes", "utils", "setup.R"))
 ```
 
@@ -275,3 +276,333 @@ autoplot(forecast(arma, h = 12))
 ```{r}
 autoplot(forecast(rw, h = 12))
 ```
+
+# Exercice 4 : Dow Jones
+
+*Sélectionnez le modèle que vous pensez être le meilleur parmi ceux proposés. Vous parait-il correct ?*
+
+
+```{r}
+rm(list = ls())
+dj <- 
+  pdfetch::pdfetch_YAHOO(
+    "^DJI",
+    fields = "adjclose",
+    from = as.Date("2007-01-03"), 
+    to = as.Date("2026-03-30") 
+  )
+```
+
+```{r}
+dj |> 
+  plot()
+```
+
+```{r}
+dj |> 
+  acf()
+```
+
+```{r}
+urca::ur.df(
+  y = dj, 
+  type = "trend",
+  lags = 10,
+  selectlags = "AIC"
+) |> 
+  summary()
+```
+
+```{r}
+urca::ur.df(
+  y = dj, 
+  type = "drift",
+  lags = 10,
+  selectlags = "AIC"
+) |> 
+  summary()
+```
+
+```{r}
+urca::ur.df(
+  y = dj, 
+  type = "none",
+  lags = 10,
+  selectlags = "AIC"
+) |> 
+  summary()
+```
+
+```{r}
+rend_dj <- 
+  na.omit((log(dj) - log(lag(dj))) * 100) 
+
+rend_dj |> 
+  plot()
+```
+
+```{r}
+rend_dj |> 
+  acf()
+```
+
+```{r}
+rend_dj |> 
+  pacf()
+```
+
+```{r}
+moments::agostino.test(rend_dj)
+```
+
+```{r}
+moments::anscombe.test(rend_dj)
+```
+
+```{r}
+moments::jarque.test(as.numeric(rend_dj))
+```
+
+```{r}
+LSTS::Box.Ljung.Test(rend_dj, lag = 40)
+```
+
+```{r}
+fDMA::archtest(as.numeric(rend_dj**2), lag = 20)
+```
+
+```{r}
+model_ar6 <- 
+  forecast::Arima(rend_dj, order = c(6,0,0)) |> 
+  print()
+```
+
+```{r}
+tibble(
+  variable = names(model_ar6$coef), 
+  coef = model_ar6$coef, 
+  std = sqrt(diag(model_ar6$var.coef)) 
+) |> 
+  mutate(
+    t_stat = abs(coef / std) 
+  )
+```
+
+```{r}
+dobby::check_univariate_autocorr(model_ar6$residuals, "residus")[1]
+```
+
+```{r}
+LSTS::Box.Ljung.Test(model_ar6$residuals, lag = 40)
+```
+
+```{r}
+whitestrap::white_test(model_ar6)
+```
+
+```{r}
+fDMA::archtest(as.numeric(model_ar6$residuals**2), lag = 20)
+```
+
+```{r}
+tibble(
+  real_value = as.numeric(model_ar6$x),
+  fitted_value = model_ar6$fitted, 
+  t = time(model_ar6$x)
+) |>
+  pivot_longer(
+    cols = !t,
+    names_to = "variable",
+    values_to = "rendements"
+  ) |> 
+  filter(row_number() > 9000) |>
+  ggplot(aes(x = t, y = rendements, color = variable)) +
+  geom_line()
+```
+
+
+```{r}
+model_aic <- 
+  forecast::auto.arima(rend_dj, ic = "aic")|> 
+  print()
+```
+
+```{r}
+tibble(
+  variable = names(model_aic$coef), 
+  coef = model_aic$coef, 
+  std = sqrt(diag(model_aic$var.coef)) 
+) |> 
+  mutate(
+    t_stat = abs(coef / std) 
+  )
+```
+
+```{r}
+model_aic <- 
+  forecast::Arima(rend_dj, order = c(2,0,1), include.mean = FALSE) 
+
+tibble(
+  variable = names(model_aic$coef), 
+  coef = model_aic$coef, 
+  std = sqrt(diag(model_aic$var.coef)) 
+) |> 
+  mutate(
+    t_stat = abs(coef / std) 
+  )
+```
+
+
+```{r}
+model_aic <- 
+  forecast::Arima(rend_dj, order = c(1,0,1), include.mean = FALSE) 
+
+tibble(
+  variable = names(model_aic$coef), 
+  coef = model_aic$coef, 
+  std = sqrt(diag(model_aic$var.coef)) 
+) |> 
+  mutate(
+    t_stat = abs(coef / std) 
+  )
+```
+
+```{r}
+model_aic <- 
+  forecast::Arima(rend_dj, order = c(1,0,0), include.mean = FALSE) 
+
+tibble(
+  variable = names(model_aic$coef), 
+  coef = model_aic$coef, 
+  std = sqrt(diag(model_aic$var.coef)) 
+) |> 
+  mutate(
+    t_stat = abs(coef / std) 
+  )
+```
+
+```{r}
+dobby::check_univariate_autocorr(model_aic$residuals, "residus")[1]
+```
+
+```{r}
+LSTS::Box.Ljung.Test(model_aic$residuals, lag = 40)
+```
+
+```{r}
+whitestrap::white_test(model_aic)
+```
+
+```{r}
+fDMA::archtest(as.numeric(model_aic$residuals**2), lag = 20)
+```
+
+```{r}
+tibble(
+  real_value = as.numeric(model_aic$x),
+  fitted_value = model_aic$fitted, 
+  t = time(model_aic$x)
+) |>
+  pivot_longer(
+    cols = !t,
+    names_to = "variable",
+    values_to = "rendements"
+  ) |> 
+  filter(row_number() > 9000) |>
+  ggplot(aes(x = t, y = rendements, color = variable)) +
+  geom_line()
+```
+
+```{r}
+model_ar_6 <- 
+  forecast::Arima(rend_dj, order = c(6,0,0), include.mean = FALSE) |> 
+  print()
+```
+
+```{r}
+tibble(
+  variable = names(model_ar_6$coef), 
+  coef = model_ar_6$coef, 
+  std = sqrt(diag(model_ar_6$var.coef)) 
+) |> 
+  mutate(
+    t_stat = abs(coef / std) 
+  )
+```
+
+```{r}
+dobby::check_univariate_autocorr(model_ar_6$residuals, "residus")[1]
+```
+
+```{r}
+LSTS::Box.Ljung.Test(model_ar_6$residuals, lag = 40)
+```
+
+```{r}
+whitestrap::white_test(model_ar_6)
+```
+
+```{r}
+fDMA::archtest(as.numeric(model_ar_6$residuals**2), lag = 20)
+```
+
+```{r}
+tibble(
+  real_value = as.numeric(model_ar_6$x),
+  fitted_value = model_ar_6$fitted, 
+  t = time(model_ar_6$x)
+) |>
+  pivot_longer(
+    cols = !t,
+    names_to = "variable",
+    values_to = "rendements"
+  ) |> 
+  filter(row_number() > 9000) |>
+  ggplot(aes(x = t, y = rendements, color = variable)) +
+  geom_line()
+```
+
+```{r}
+model_rw <- 
+  forecast::Arima(rend_dj, order = c(0,1,0)) |> 
+  print()
+```
+
+```{r}
+tibble(
+  real_value = as.numeric(model_rw$x),
+  fitted_value = model_rw$fitted, 
+  t = time(model_rw$x)
+) |>
+  pivot_longer(
+    cols = !t,
+    names_to = "variable",
+    values_to = "rendements"
+  ) |> 
+  filter(row_number() > 9000) |>
+  ggplot(aes(x = t, y = rendements, color = variable)) +
+  geom_line()
+```
+
+```{r}
+models_RMSE <- 
+  map_dbl(
+    list(model_ar_6$residuals, model_aic$residuals, model_rw$residuals), 
+    \(epsilon) {sqrt(mean(epsilon**2))}
+  )
+
+models_MAE <- 
+  map_dbl(
+    list(model_ar_6$residuals, model_aic$residuals, model_rw$residuals), 
+    \(epsilon) {mean(abs(epsilon))}
+  )
+
+tibble(
+  model = c("AR(6)", "ARMA aic", "RW"),
+  AIC = c(AIC(model_ar_6), AIC(model_aic),AIC(model_rw)),
+  BIC = c(BIC(model_ar_6), BIC(model_aic), BIC(model_rw)),
+  RMSE = models_RMSE,
+  MAE = models_MAE
+)
+```
+
