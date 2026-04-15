@@ -81,7 +81,7 @@ Estimer cette régression linéaire, interpréter les coefficients et tester les
 
 *L'impact de la présence est-il le même pour un freshman que pour un autre élève ?* Le modèle au global est-il le même ?
 
-## Exercice2 : Estimation de la valeur d'une maison
+## Exercice 2 : Estimation de la valeur d'une maison
 
 *Données : `hprice2` du package `wooldridge`.*
 
@@ -92,6 +92,7 @@ Estimer cette régression linéaire, interpréter les coefficients et tester les
 *Vous travaillez dans un laboratoire de recherche. Un de vos collègue vous demande de l'aider à comprendre et interpréter le travail d'un stagiaire qui n'a pas laissé d'indications sur ce qu'il a fait. Lisez le code suivant, commenter ce qui y est fait et interprétez les résultats. Quelle politique publique pourriez-vous recommander sur la base de ces résultats ?*
 
 ```{r, message=FALSE}
+rm(list = ls())
 source(here::here("02-codes", "utils", "setup.R"))
 
 data("bwght")
@@ -200,6 +201,274 @@ modelplot(
   list_exported_models, 
   coef_omit = 'Interc', 
   coef_map = cm, 
+  vcov = \(x) hccm(x, type = "hc0")
+  ) +
+geom_vline(xintercept = 0, color = "black", linewidth = 1.2)
+```
+
+
+## Exercice 4 : Education et nombre d'enfants
+
+*L'éducation de la mère affecte-t-elle le nombre d'enfant quelle aura ?*
+
+```{r, message=FALSE}
+rm(list = ls())
+source(here::here("02-codes", "utils", "setup.R"))
+
+data("fertil1")
+
+df <- 
+  fertil1 |> 
+  tibble()
+```
+
+```{r}
+ggplot(df, aes(x = educ, y = kids)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", color = "red", formula = y~x) 
+```
+
+```{r}
+model_1 <- lm(kids ~ educ + meduc + feduc + age + black, data = df)
+summary(model_1)
+```
+
+```{r}
+shapiro.test(residuals(model_1))
+```
+
+```{r}
+white_test(model_1)
+```
+
+```{r}
+check_collinearity(model_1)
+```
+
+
+```{r}
+coeftest(model_1, vcov = hccm(model_1, type = "hc0"))
+```
+
+```{r}
+linearHypothesis(
+  model_1, 
+  c("meduc = 0", "feduc = 0"), 
+  vcov = hccm(model_1, type = "hc0")
+)
+```
+
+
+```{r}
+model_2 <- lm(kids ~ educ + age + black, data = df)
+coeftest(model_2, vcov = hccm(model_2, type = "hc0"))
+```
+
+
+```{r}
+shapiro.test(residuals(model_2))
+```
+
+```{r}
+white_test(model_2)
+```
+
+```{r}
+check_collinearity(model_2)
+```
+
+```{r}
+model_3 <- lm(kids ~ educ +I(educ^2) + age + black, data = df)
+coeftest(model_3, vcov = hccm(model_3, type = "hc0"))
+```
+
+
+```{r}
+shapiro.test(residuals(model_3))
+```
+
+```{r}
+white_test(model_3)
+```
+
+```{r}
+check_collinearity(model_3)
+```
+
+
+```{r}
+effects::effect("educ", model_3, vcov. = hccm) |>
+  plot()
+```
+
+```{r}
+summary(df$educ)
+```
+
+```{r}
+coef_educ_model_3 <- model_3$coefficients["educ"]
+coef_educ_2_model_3 <- model_3$coefficients["I(educ^2)"]
+
+-coef_educ_model_3 / (2*coef_educ_2_model_3)
+```
+
+```{r}
+car::linearHypothesis(
+  model_3,
+  c("educ = 0", "I(educ^2) = 0"),
+  vcov. = hccm
+)
+```
+
+```{r}
+list_exported_models <-
+  ls(pattern = "^model_*") |>
+  mget() |>
+  set_names(ls(pattern = "^model_*"))
+```
+
+```{r}
+modelsummary::modelsummary(
+  list_exported_models, 
+  stars = TRUE,
+  gof_map = c("nobs", "adj.r.squared", "aic")
+  ) 
+```
+
+```{r}
+modelplot(
+  list_exported_models, 
+  coef_omit = 'Interc',
+  vcov = \(x) hccm(x, type = "hc0")
+  ) +
+geom_vline(xintercept = 0, color = "black", linewidth = 1.2)
+```
+
+## Exercice 5 : Prix des cigarettes
+
+*Le prix des cigarettes a-t-il un impact sur la consommation journalière ?*
+
+```{r, message=FALSE}
+rm(list = ls())
+source(here::here("02-codes", "utils", "setup.R"))
+
+data("smoke")
+
+df <- 
+  smoke |> 
+  tibble()
+```
+
+```{r}
+ggplot(df, aes(x = cigpric, y = cigs)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", color = "red", formula = y~x) 
+```
+
+```{r}
+model_1 <- lm(cigs ~ cigpric, data = df)
+summary(model_1)
+```
+
+```{r}
+shapiro.test(residuals(model_1))
+```
+
+```{r}
+bptest(model_1)
+```
+
+```{r}
+coeftest(model_1, vcov = hccm(model_1, type = "hc0"))
+```
+
+```{r}
+model_2 <- lm(cigs ~ cigpric + age, data = df)
+summary(model_2)
+```
+
+
+```{r}
+shapiro.test(residuals(model_2))
+```
+
+```{r}
+bptest(model_2)
+```
+
+```{r}
+white_test(model_2)
+```
+
+```{r}
+coeftest(model_2, vcov = hccm(model_2, type = "hc0"))
+```
+
+
+```{r}
+model_3 <- lm(cigs ~ cigpric + age + lincome + white, data = df)
+coeftest(model_3, vcov = hccm(model_3, type = "hc0"))
+```
+
+
+```{r}
+shapiro.test(residuals(model_3))
+```
+
+```{r}
+white_test(model_3)
+```
+
+```{r}
+check_collinearity(model_3)
+```
+
+```{r}
+model_4 <- lm(cigs ~ cigpric + lincome + white + white*lincome, data = df)
+coeftest(model_4, vcov = hccm(model_4, type = "hc0"))
+```
+
+
+```{r}
+shapiro.test(residuals(model_4))
+```
+
+```{r}
+white_test(model_4)
+```
+
+```{r}
+check_collinearity(model_4)
+```
+
+
+```{r}
+car::linearHypothesis(
+  model_4,
+  c("white = 0", "lincome:white = 0"),
+  vcov. = hccm
+)
+```
+
+```{r}
+list_exported_models <-
+  ls(pattern = "^model_*") |>
+  mget() |>
+  set_names(ls(pattern = "^model_*"))
+```
+
+```{r}
+modelsummary::modelsummary(
+  list_exported_models, 
+  stars = TRUE,
+  gof_map = c("nobs", "adj.r.squared", "aic")
+  ) 
+```
+
+```{r}
+modelplot(
+  list_exported_models, 
+  coef_omit = 'Interc',
   vcov = \(x) hccm(x, type = "hc0")
   ) +
 geom_vline(xintercept = 0, color = "black", linewidth = 1.2)
