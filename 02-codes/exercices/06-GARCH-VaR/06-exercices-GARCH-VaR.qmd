@@ -97,24 +97,24 @@ Vous avez pour mission de modéliser le risque présent sur le marché du CAC40.
 
 *Votre patron vous demande de prédire les futurs rendements du FTSE100 ainsi que les risques de perte maximum pour un niveau de confiance de 99%. Expliquer votre démarche et abalyser les résultats.*
 
-# Exercice 3
+# Exercice 3 : LVMH
 
-Votre collège part à la retraite et vous transmet le projet sur lequel il travaillait : modéliser le risque des prix de l'action LVMH. Commentez les résultats et les méthodes qu'il utilise. 
+*Votre collège part à la retraite et vous transmet le projet sur lequel il travaillait : modéliser le risque des prix de l'action LVMH. Commentez les résultats et les méthodes qu'il utilise.*
 
 ```{r}
 #| message: false
 #| warning: false
-# Exécute le script setup.R pour charger tous les éléments importants
+rm(list = ls())
 source(here::here("02-codes", "utils", "setup.R"))
 ```
 
 ```{r}
 lvmh <- 
   pdfetch::pdfetch_YAHOO(
-    "MC.PA", # Code de la série que l'on souhaite importer
-    fields = "adjclose", # Variable que l'on souhaite importer
-    from = as.Date("2008-01-03"), # Date de départ
-    to = as.Date("2026-03-27") # Date de fin
+    "MC.PA",
+    fields = "adjclose", 
+    from = as.Date("2008-01-03"), 
+    to = as.Date("2026-03-27") 
   )
 ```
 
@@ -718,3 +718,526 @@ df_VaR_long <-
   print()
 ```
 
+# Exercice 4 : Dow Jones
+
+*Quel modèle de VaR décidez-vous de prendre ? Est-il un bon modèle de VaR ? Si non comment l'améliorer ?*
+
+```{r}
+#| message: false
+#| warning: false
+rm(list = ls())
+source(here::here("02-codes", "utils", "setup.R"))
+```
+
+```{r}
+dj <- 
+  pdfetch::pdfetch_YAHOO(
+    "RMS.PA",
+    fields = "adjclose",
+    from = as.Date("2007-01-03"), 
+    to = as.Date("2026-03-30") 
+  )
+
+rend_dj <- 
+  na.omit((log(dj) - log(lag(dj))) * 100) 
+
+ar <- 6
+integration <- 0
+ma <- 0
+
+t_couv <- 0.01
+
+n_backtest <- 2000
+
+taille_sample_estimation <- length(rend_dj) - n_backtest
+
+sample_estimation <- rend_dj[1:taille_sample_estimation]
+
+sample_backtest <- rend_dj[(taille_sample_estimation+1):length(rend_dj)]
+```
+
+
+```{r}
+garch11_spec <- 
+  rugarch::ugarchspec(
+    variance.model = 
+      list(
+        model = "sGARCH", 
+        garchOrder = c(1,1), 
+        variance.targeting = FALSE 
+      ),
+    mean.model = 
+      list(
+        armaOrder = c(ar,ma), 
+        include.mean = FALSE
+      ),
+    distribution.model = "norm" 
+  )
+```
+
+```{r}
+garch11_fit <- 
+  rugarch::ugarchfit(
+    garch11_spec,
+    rend_dj 
+  )
+
+garch11_fit
+```
+
+```{r}
+rugarch::persistence(garch11_fit)
+```
+
+```{r}
+rugarch::halflife(garch11_fit)
+```
+
+```{r}
+plot(garch11_fit, which = 9)
+```
+
+
+```{r}
+rugarch::sigma(garch11_fit) |> 
+  as.zoo() |> 
+  plot()
+
+```
+
+```{r}
+rugarch::residuals(garch11_fit, standardize = TRUE) |> 
+  as.zoo() |> 
+  plot()
+```
+
+```{r}
+egarch11_spec <- 
+  rugarch::ugarchspec(
+    variance.model = 
+      list(
+        model = "eGARCH", 
+        garchOrder = c(1,1), 
+        variance.targeting = FALSE 
+      ),
+    mean.model = 
+      list(
+        armaOrder = c(ar,ma), 
+        include.mean = FALSE
+      ),
+    distribution.model = "sged" 
+  )
+```
+
+```{r}
+egarch11_fit <- 
+  rugarch::ugarchfit(
+    egarch11_spec,
+    rend_dj 
+  )
+
+egarch11_fit
+```
+
+```{r}
+rugarch::persistence(egarch11_fit)
+```
+
+```{r}
+rugarch::halflife(egarch11_fit)
+```
+
+```{r}
+plot(egarch11_fit, which = 9)
+```
+
+
+```{r}
+rugarch::sigma(egarch11_fit) |> 
+  as.zoo() |> 
+  plot()
+
+```
+
+```{r}
+rugarch::residuals(egarch11_fit, standardize = TRUE) |> 
+  as.zoo() |> 
+  plot()
+```
+```{r}
+gjr_garch11_spec <- 
+  rugarch::ugarchspec(
+    variance.model = 
+      list(
+        model = "gjrGARCH", 
+        garchOrder = c(1,1), 
+        variance.targeting = FALSE 
+      ),
+    mean.model = 
+      list(
+        armaOrder = c(ar,ma), 
+        include.mean = FALSE
+      ),
+    distribution.model = "sstd" 
+  )
+```
+
+```{r}
+gjr_garch11_fit <- 
+  rugarch::ugarchfit(
+    gjr_garch11_spec,
+    rend_dj 
+  )
+
+gjr_garch11_fit
+```
+
+```{r}
+rugarch::persistence(gjr_garch11_fit)
+```
+
+```{r}
+rugarch::halflife(gjr_garch11_fit)
+```
+
+```{r}
+plot(gjr_garch11_fit, which = 9)
+```
+
+
+```{r}
+rugarch::sigma(gjr_garch11_fit) |> 
+  as.zoo() |> 
+  plot()
+
+```
+
+```{r}
+rugarch::residuals(gjr_garch11_fit, standardize = TRUE) |> 
+  as.zoo() |> 
+  plot()
+```
+
+```{r}
+tibble(
+  criterion = c("Akaike", "Bayes", "Shibata", "Hannan-Quinn"),
+  garch_11 = rugarch::infocriteria(garch11_fit) |> as.numeric(),
+  egarch_11 = rugarch::infocriteria(egarch11_fit) |> as.numeric(),
+  gjr_garch_11 = rugarch::infocriteria(gjr_garch11_fit) |> as.numeric()
+)
+```
+
+```{r}
+VaR_VCov <- (-(mean(rend_dj)+sd(rend_dj)*qnorm(t_couv))) |> print()
+```
+
+```{r}
+plot(as.zoo(rend_dj),
+      main = "Rendements et Value at Risk variance-covariance",
+      xlab = "Temps",
+      ylab = "Rendements")
+  abline(h= -VaR_VCov, col="cornflowerblue")
+  points(as.zoo(rend_dj[as.numeric(rend_dj) < -VaR_VCov]), pch=20, col="cornflowerblue")
+  legend("topright", legend = c("VaR Vcov","Dépassements de la VaR Vcov"), 
+         pch = c(NA,20), lty = c(1, NA), col = "cornflowerblue")
+```
+
+```{r}
+VaR_VCov_estimation <- (-(mean(sample_estimation)+sd(sample_estimation)*qnorm(t_couv)))
+
+test_VaR_VCov <- 
+  rugarch::VaRTest(
+    alpha = t_couv, 
+    actual = sample_backtest, 
+    VaR = rep(-VaR_VCov_estimation, times = length(sample_backtest)),
+    conf.level = 0.95 
+  )
+
+tibble(
+  name = names(unlist(test_VaR_VCov)), 
+  value = unlist(test_VaR_VCov) 
+) |> 
+  print(n = 20)
+```
+
+```{r}
+HIT_VCov <- 
+  if_else(sample_backtest < -VaR_VCov_estimation, 1, 0)
+
+HIT_centre_VCov <- HIT_VCov - t_couv
+
+stats::Box.test(HIT_centre_VCov, lag = 5, type = "Ljung-Box")
+```
+
+
+```{r}
+df <- tibble(
+  HIT_centre = HIT_centre_VCov, 
+  rend = sample_backtest |> as.numeric(), 
+  rend2 = sample_backtest**2 |> as.numeric()
+) 
+
+ARDL::ardl( 
+  HIT_centre ~ rend + rend2, 
+  data = df,
+  order = 5 
+) |> 
+  summary()
+```
+
+```{r}
+VaR_GARCH11 <- -(as.numeric(quantile(garch11_fit, probs = t_couv)))
+
+plot(
+  as.zoo(cbind(rend_dj,-VaR_GARCH11)),
+  screens=1,
+  col = c("black","lightseagreen"),
+  main="VaR ARMA-GARCH(1)", 
+  xlab = "Temps", 
+  ylab = "Rendements"
+)
+points(as.zoo(rend_dj[as.numeric(rend_dj) < -VaR_GARCH11]), pch=20, col="red")
+legend("bottom",c("Rendements","VaR GARCH", "Dépassements de la VaR"),
+         col = c("black","lightseagreen", 'red'),lty = c(1,1,NA),lwd = c(2,2,NA),pch = c(NA,NA,20))
+```
+
+
+```{r}
+garch11_estimation_fit <- 
+  rugarch::ugarchfit(
+    garch11_spec, 
+    rend_dj, 
+    out.sample = n_backtest 
+  )
+
+forecast_garch11 <- 
+  rugarch::ugarchforecast(
+    garch11_estimation_fit, 
+    data = rend_dj,
+    n.roll = n_backtest-1,
+    n.ahead = 1 
+  )
+
+VaR_GARCH_backtest <- -(as.numeric(quantile(forecast_garch11, probs = 0.01)))
+
+test_VaR_GARCH<- 
+  rugarch::VaRTest(
+    alpha = t_couv, 
+    actual = sample_backtest,
+    VaR = -VaR_GARCH_backtest,
+    conf.level = 0.95 
+  )
+
+tibble(
+  name = names(unlist(test_VaR_GARCH)), 
+  value = unlist(test_VaR_GARCH) 
+) |> 
+  print(n = 20)
+```
+
+```{r}
+HIT <- if_else(sample_backtest < -VaR_GARCH_backtest, 1, 0)
+
+HIT_centre <- HIT - 0.01
+
+stats::Box.test(HIT_centre, lag = 5, type = "Ljung-Box")
+```
+
+
+```{r}
+df <- 
+  tibble(
+    HIT_centre = HIT_centre,
+    rend = sample_backtest,
+    rend2 = sample_backtest**2
+  )
+
+ARDL::ardl(
+  HIT_centre ~ rend + rend2,
+  data = df,
+  order = 5
+) |>  
+  summary()
+```
+
+```{r}
+VaR_EGARCH11 <- -(as.numeric(quantile(egarch11_fit, probs = t_couv)))
+
+plot(
+  as.zoo(cbind(rend_dj,-VaR_EGARCH11)),
+  screens=1,
+  col = c("black","lightseagreen"),
+  main="VaR ARMA-EGARCH(1)", 
+  xlab = "Temps", 
+  ylab = "Rendements"
+)
+points(as.zoo(rend_dj[as.numeric(rend_dj) < -VaR_EGARCH11]), pch=20, col="red")
+legend("bottom",c("Rendements","VaR EGARCH", "Dépassements de la VaR"),
+         col = c("black","lightseagreen", 'red'),lty = c(1,1,NA),lwd = c(2,2,NA),pch = c(NA,NA,20))
+```
+
+
+```{r}
+egarch11_estimation_fit <- 
+  rugarch::ugarchfit(
+    egarch11_spec, 
+    rend_dj, 
+    out.sample = n_backtest 
+  )
+
+forecast_egarch11 <- 
+  rugarch::ugarchforecast(
+    egarch11_estimation_fit, 
+    data = rend_dj,
+    n.roll = n_backtest-1,
+    n.ahead = 1 
+  )
+
+VaR_EGARCH_backtest <- -(as.numeric(quantile(forecast_egarch11, probs = 0.01)))
+
+test_VaR_EGARCH<- 
+  rugarch::VaRTest(
+    alpha = t_couv, 
+    actual = sample_backtest,
+    VaR = -VaR_EGARCH_backtest,
+    conf.level = 0.95 
+  )
+
+tibble(
+  name = names(unlist(test_VaR_EGARCH)), 
+  value = unlist(test_VaR_EGARCH) 
+) |> 
+  print(n = 20)
+```
+
+```{r}
+HIT <- if_else(sample_backtest < -VaR_EGARCH_backtest, 1, 0)
+
+HIT_centre <- HIT - 0.01
+
+stats::Box.test(HIT_centre, lag = 5, type = "Ljung-Box")
+```
+
+
+```{r}
+df <- 
+  tibble(
+    HIT_centre = HIT_centre,
+    rend = sample_backtest,
+    rend2 = sample_backtest**2
+  )
+
+ARDL::ardl(
+  HIT_centre ~ rend + rend2,
+  data = df,
+  order = 5
+) |>  
+  summary()
+```
+
+```{r}
+VaR_GJR_GARCH11 <- -(as.numeric(quantile(gjr_garch11_fit, probs = t_couv)))
+
+plot(
+  as.zoo(cbind(rend_dj,-VaR_GJR_GARCH11)),
+  screens=1,
+  col = c("black","lightseagreen"),
+  main="VaR ARMA-GJR-GARCH(1)", 
+  xlab = "Temps", 
+  ylab = "Rendements"
+)
+points(as.zoo(rend_dj[as.numeric(rend_dj) < -VaR_GJR_GARCH11]), pch=20, col="red")
+legend("bottom",c("Rendements","VaR GJR-GARCH", "Dépassements de la VaR"),
+         col = c("black","lightseagreen", 'red'),lty = c(1,1,NA),lwd = c(2,2,NA),pch = c(NA,NA,20))
+```
+
+
+```{r}
+gjr_garch11_estimation_fit <- 
+  rugarch::ugarchfit(
+    gjr_garch11_spec, 
+    rend_dj, 
+    out.sample = n_backtest 
+  )
+
+forecast_gjr_garch11 <- 
+  rugarch::ugarchforecast(
+    gjr_garch11_estimation_fit, 
+    data = rend_dj,
+    n.roll = n_backtest-1,
+    n.ahead = 1 
+  )
+
+VaR_GJR_GARCH_backtest <- -(as.numeric(quantile(forecast_gjr_garch11, probs = 0.01)))
+
+test_VaR_GJR_GARCH<- 
+  rugarch::VaRTest(
+    alpha = t_couv, 
+    actual = sample_backtest,
+    VaR = -VaR_GJR_GARCH_backtest,
+    conf.level = 0.95 
+  )
+
+tibble(
+  name = names(unlist(test_VaR_GJR_GARCH)), 
+  value = unlist(test_VaR_GJR_GARCH) 
+) |> 
+  print(n = 20)
+```
+
+```{r}
+HIT <- if_else(sample_backtest < -VaR_GJR_GARCH_backtest, 1, 0)
+
+HIT_centre <- HIT - 0.01
+
+stats::Box.test(HIT_centre, lag = 5, type = "Ljung-Box")
+```
+
+
+```{r}
+df <- 
+  tibble(
+    HIT_centre = HIT_centre,
+    rend = sample_backtest,
+    rend2 = sample_backtest**2
+  )
+
+ARDL::ardl(
+  HIT_centre ~ rend + rend2,
+  data = df,
+  order = 5
+) |>  
+  summary()
+```
+
+```{r}
+df_VaR <- 
+  tibble(
+    VaR_VCov = VaR_VCov,
+    VaR_GARCH11 = VaR_GARCH11,
+    VaR_EGARCH11 = VaR_EGARCH11,
+    VaR_GJR_GARCH11 = VaR_GJR_GARCH11
+  ) |> 
+  drop_na() 
+
+df_VaR_long <- 
+  df_VaR |>
+  mutate(temps = row_number()) |> 
+  pivot_longer(
+    cols = -temps,
+    names_to = "model",
+    values_to = "VaR"
+  ) |> 
+  mutate(
+    .by = temps,
+    moyenne_VaR = mean(VaR)
+  ) |> 
+  mutate(
+    ecart = (VaR - moyenne_VaR) / moyenne_VaR
+  ) |> 
+  summarize(
+    .by = model,
+    MRB = abs(mean(ecart))
+  ) |> 
+  print()
+```
