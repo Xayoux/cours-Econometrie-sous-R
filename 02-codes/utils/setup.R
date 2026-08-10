@@ -32,6 +32,7 @@ library(fDMA)
 library(runner)
 library(sandwich)
 library(urca)
+library(furrr)
 
 # PAckage pour les ARDl
 library(dynlm)
@@ -77,7 +78,8 @@ display <-
     )
 )
 
-
+# Préparer les sessions parallèles -------------------------------------------
+plan(multisession, workers = availableCores()-1)
 
 
 
