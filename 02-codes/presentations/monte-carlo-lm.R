@@ -13,7 +13,7 @@ source(here::here("02-codes", "utils", "setup.R"))
 spec1_function <- function(n, alpha, beta1, sigma_epsilon){
   df <-
     tibble(
-      x1 = runif(n, min = 0, max = 10),
+      x1 = runif(n, min = 1, max = 10),
       epsilon = rnorm(n, mean =  0, sd = sigma_epsilon),
       y = alpha + beta1 * x1 + epsilon
     )
@@ -55,6 +55,25 @@ spec2_function <- function(n, alpha, beta1){
       sigma_beta1_MCO = res_lm_summary_MCO$coefficients["x1", "Std. Error"],
       beta1_MCP = res_lm_summary_MCP$coefficients["x1", "Estimate"],
       sigma_beta1_MCP = res_lm_summary_MCP$coefficients["x1", "Std. Error"]
+    )
+  return(df_res)
+}
+
+
+
+spec3_function <- function(n, alpha, beta1, sigma_x, sigma_epsilon){
+  df <-
+    tibble(
+      x1 = rnorm(n, mean =  4, sd = sigma_x),
+      epsilon = rnorm(n, mean =  0, sd = sigma_epsilon),
+      y = alpha + beta1 * x1 + epsilon
+    )
+  res_lm <- lm(y ~ x1, data = df)
+  res_lm_summary <- summary(res_lm)
+  df_res <-
+    tibble(
+      beta1 = res_lm_summary$coefficients["x1", "Estimate"],
+      sigma_beta1 = res_lm_summary$coefficients["x1", "Std. Error"]
     )
   return(df_res)
 }
@@ -254,6 +273,109 @@ MC_sigma_epsilon_1 |>
         specifiction = "sigma_epsilon = 4"
       )
   )
+
+
+
+# Effet de la variance de X
+set.seed(123)
+MC_sigma_x_1 <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec3_function(n = 1000,  alpha = 1, beta1 = 2, sigma_x = 1, sigma_epsilon = 1),
+    .options = furrr_options(seed=123)
+  ) |>
+  print()
+
+set.seed(123)
+MC_sigma_x_2 <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec3_function(n = 1000,  alpha = 1, beta1 = 2, sigma_x = 2, sigma_epsilon = 1),
+    .options = furrr_options(seed=123)
+  ) |>
+  print()
+
+set.seed(123)
+MC_sigma_x_3 <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec3_function(n = 1000,  alpha = 1, beta1 = 2, sigma_x = 3, sigma_epsilon = 1),
+    .options = furrr_options(seed=123)
+  ) |>
+  print()
+
+set.seed(123)
+MC_sigma_x_4 <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec3_function(n = 1000,  alpha = 1, beta1 = 2, sigma_x = 4, sigma_epsilon = 1),
+    .options = furrr_options(seed=123)
+  ) |>
+  print()
+
+
+ggplot() +
+  geom_density(data = MC_sigma_x_1, aes(x = beta1, color = "s1"), linewidth = 1, key_glyph = "path") +
+  geom_density(data = MC_sigma_x_2, aes(x = beta1, color = "s2"), linewidth = 1, key_glyph = "path") +
+  geom_density(data = MC_sigma_x_3, aes(x = beta1, color = "s3"), linewidth = 1, key_glyph = "path") +
+  geom_density(data = MC_sigma_x_4, aes(x = beta1, color = "s4"), linewidth = 1, key_glyph = "path") +
+  scale_color_manual(
+    breaks = c("s1", "s2", "s3", "s4"),
+    values = c(
+      "s1" = "blue",
+      "s2" = "red",
+      "s3" = "purple",
+      "s4" = "gold"
+    ),
+    labels = c(
+      expression(sigma[X] == 1),
+      expression(sigma[X] == 2),
+      expression(sigma[X] == 3),
+      expression(sigma[X] == 4)
+    )
+  ) +
+  labs(
+    x = expression(beta[1]),
+    y = expression(paste("Distribution de ", beta[1], " sur l'ensemble des échantillons")),
+    color = NULL
+  )
+
+
+MC_sigma_epsilon_1 |> 
+  summarize(
+    beta1_mean = mean(beta1),
+    se_beta1_mean = mean(sigma_beta1),
+    specifiction = "sigma_epsilon = 1"
+  ) |> 
+  full_join(
+    MC_sigma_epsilon_2 |> 
+      summarize(
+        beta1_mean = mean(beta1),
+        se_beta1_mean = mean(sigma_beta1),
+        specifiction = "sigma_epsilon = 2"
+      )
+  ) |> 
+  full_join(
+    MC_sigma_epsilon_3 |> 
+      summarize(
+        beta1_mean = mean(beta1),
+        se_beta1_mean = mean(sigma_beta1),
+        specifiction = "sigma_epsilon = 3"
+      )
+  ) |> 
+  full_join(
+    MC_sigma_epsilon_4 |> 
+      summarize(
+        beta1_mean = mean(beta1),
+        se_beta1_mean = mean(sigma_beta1),
+        specifiction = "sigma_epsilon = 4"
+      )
+  )
+
+
+
+
+
 
 
 

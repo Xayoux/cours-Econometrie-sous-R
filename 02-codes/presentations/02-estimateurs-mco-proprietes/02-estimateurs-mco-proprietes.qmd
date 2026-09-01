@@ -1,0 +1,849 @@
+---
+title: "Propriétés des estimateurs MCO"
+author: "Romain CAPLIEZ"
+format:
+  html:
+    embed-resources: true
+    code-overflow: wrap
+    toc: true
+    toc-location: left
+    toc-depth: 5
+    toc-expand: 2
+    include-in-header:
+      text: |
+        <style>
+          p {
+            text-align: justify
+          }
+        </style>
+  pdf:
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines=true, breaksymbol=, commandchars=\\\{\}}
+        \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true, breaksymbol=,commandchars=\\\{\}}
+editor: source
+---
+
+```{r}
+#| eval: false
+#| include: false
+# A UTILISER POUR RENDER EN HTML ET PDF
+quarto::quarto_render(
+    here::here(
+        "02-codes", 
+        "presentations",
+        "02-estimateurs-mco-proprietes", 
+        "02-estimateurs-mco-proprietes.qmd"
+    ), 
+    output_format = "all"
+)
+```
+
+```{r}
+#| message: false
+#| warning: false
+# Exécute le script setup.R pour charger tous les éléments importants
+source(here::here("02-codes", "utils", "setup.R"))
+```
+
+
+# Processus Générateur de Données
+
+## Régression sans erreurs
+
+On souhaite analyser la relation entre le temps de travail (variable indépendante) et le score à un test (variable dépendante). Comme nous sommes dans un environnement contrôlé, nous sommes maître de cette relation et pouvons la définir comme suit :
+
+$$
+\begin{aligned}
+\text{Score}_i = 1 + 2 \times \text{Temps}_i  
+\end{aligned}
+$$
+
+On appelle cette fonction le *Processus Générateur de Données* (Data Generating Process en anglais : DGP). Ici, le DGP nous indique que lorsque l'individu $i$ passe $0$ heures à travailler, sa note au test est de $1$. Pour chaque heure travaillée supplémentaire, il aura $2$ points en plus sur le score de son test. 
+
+Le Processus Générateur de données n'est pas connu en pratique. On peut simplement supposer que la relation entre le Score et le Temps de travail est une fonction linéaire de la forme suivante : 
+
+$$
+\begin{aligned}
+  \text{Score}_i = \alpha + \beta \times \text{Temps}_i  
+\end{aligned}
+$$
+
+En récoltant suffisamment de données, on peut obtenir un jeu de données que l'on va utiliser pour estimer les coefficients $\alpha$ et $\beta$. Si l'estimateur est convaincant, on devrait obtenir des valeurs similaires. 
+
+
+Si l'on crée un jeu de données qui respecte exactement ce DGP, et que l'on estime la régression linéaire entre les deux variables, on va retrouver exactement la valeur de nos deux coefficients. Il n'y a pas d'erreurs et donc pas de perturbations qui viennent entraver la précision de nos estimateurs. L'exemple suivant va créer un jeu de données respectant ce GDP pour 100 individus puis estimer la régression linéaire. On va ainsi créer un jeu de données mais de manière contrôlée afin de pouvoir comparer les résultats obtenus avec les résultats théoriques. 
+
+```{r}
+# Créer le jeu de données
+df <-
+  tibble(
+    # Générer la variable Temps de manière aléatoire pour 100 individus à partir d'une loi uniforme allant de 0 à 10
+    temps = runif(100, min = 1, max = 10),
+    # Générer la variable score en suivant le processus générateur de données
+    score = 1 + 2 * temps
+  ) |> 
+  # Afficher les données créées
+  print()
+```
+
+```{r}
+# Estimer la régression linéaire
+lm(score ~ temps, data = df) |> 
+  summary()
+```
+
+
+```{r}
+# Afficher graphiquement la relation et la régresion linéaire
+df |> 
+  ggplot(aes(x = temps, y = score)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = F, formula = y ~ x)
+```
+
+On peut voir que les coefficients estimés (moyennant les approximations de calculs) sont les mêmes que ceux du GDP. Le coefficient d'ajustement est quant à lui égal à $1$, signifiant qu'il y a un ajustement parfait entre les données. Cet ajustement parfait est dû à l'absence d'erreurs, de perturbations dans notre jeu de données. 
+
+## Régression avec erreurs
+
+Ajouter des erreurs va perturber l'estimation et va nous permettre de nous rapprocher davantage d'une situation réelle. L'exemple suivant va intégrer des erreurs normales de moyenne nulle et d'écart-type 4 : 
+
+
+```{r}
+# Créer le jeu de données
+set.seed(12345)
+df <-
+  tibble(
+    # Générer la variable Temps de manière aléatoire pour 100 individus à partir d'une loi uniforme allant de 0 à 10
+    temps = runif(100, min = 1, max = 10),
+    # Créer des erreurs normales de moyenne nulle et d'écart-type 4 pour les 100 individus
+    erreur = rnorm(100, mean = 0, sd = 4),
+    # Générer la variable score en suivant le processus générateur de données
+    score = 1 + 2 * temps + erreur
+  ) |> 
+  # Afficher les données créées
+  print()
+```
+
+```{r}
+# Estimer la régression linéaire
+lm(score ~ temps, data = df) |> 
+  summary()
+```
+
+```{r}
+# Afficher graphiquement la relation et la régresion linéaire
+df |> 
+  ggplot(aes(x = temps, y = score)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = F, formula = y ~ x)
+```
+
+Comme on peut le voir, intégrer des erreurs conséquentes va brouiller la valeur des coefficients. l'ajustement de notre droite de régression n'est plus que de $55\%$ tandis que la valeur du coefficient associé à la variable exogène est de $1.8721$ et non pas $2$ comme défini par le processus générateur de données. Cette différence est due à l'erreur aléatoire qui a été introduite. Or, comme cette erreur est aléatoire, le résultat que l'on va obtenir va changer selon le tirage aléatoire effectué : 
+
+
+```{r}
+# Utiliser une seed différente afin d'obtenir un tirage aléatoire différent
+set.seed(4567)
+# Créer le jeu de données
+df <-
+  tibble(
+    # Générer la variable Temps de manière aléatoire pour 100 individus à partir d'une loi uniforme allant de 0 à 10
+    temps = runif(100, min = 1, max = 10),
+    # Créer des erreurs normales de moyenne nulle et d'écart-type 4 pour les 100 individus
+    erreur = rnorm(100, mean = 0, sd = 4),
+    # Générer la variable score en suivant le processus générateur de données
+    score = 1 + 2 * temps + erreur
+  ) |> 
+  # Afficher les données créées
+  print()
+```
+
+```{r}
+# Estimer la régression linéaire
+lm(score ~ temps, data = df) |> 
+  summary()
+```
+
+En réalisant un autre tirage aléatoire, on peut voir que les résultats changent. Le coefficient d'ajustement est de $58\%$ et le coefficient estimé est de $2.0373$. On va obtenir un résultat différent pour chaque jeu de données différent. 
+
+
+# Propriétés des estimateurs
+
+## Simulations de Monte Carlo : Explication
+
+En fonction de l'échantillon aléatoire que l'on va obtenir, on pourra avoir une estimation du coefficient $\beta$ proche de 2 ou alors assez éloignée. Comment peut-on alors définir si l'estimateur utilisé est un bon estimateur ou non si chaque échantillon change le résultat ? La réponse est que l'on va simuler de nombreux échantillon différents et regarder comment se comporte l'estimateur de manière générale. Il est possible que sur quelques échantillons la valeur du coefficient $\beta$ obtenue ne soit pas correcte, mais si de manière générale, l'estimateur obtenu donne la bonne valeur alors il n'y a pas de problème. 
+
+De manière générale, on va chercher à obtenir un estimateur qui répond aux critères suivants : 
+- Sans biais : On dit qu'un estimateur est sans biais lorsqu'en moyenne la valeur estimée correspond à la vraie valeur du Processus Générateur de Données. 
+- Convergent : On dit qu'un estimateur est convergent lorsque la valeur de l'estimation se rapproche de la vraie valeur du Processus Générateur de Données à mesure que l'on augmente la taille de l'échantillon.
+- De variance minimale : On souhaite que la dispersion des estimations soit la plus faible possible afin d'éviter les mauvaises estimations extrêmes et d'avoir le plus de précision possible. 
+
+
+Pour illustrer ces concepts, on va procéder de la manière suivante. On va simuler un jeu de données à partir du Processus Générateur de Données en incluant un terme d'erreur. On va estimer une régression linéaire par les MCO sur ce jeu de données et stocker la valeur du coefficient $\beta$ obtenu. On va ensuite répéter ce processus un grand nombre de fois afin d'obtenir une distribution du coefficient $\beta$ à travers tous ces échantillons. L'idée de ce processus que l'on appelle *Processus de Monte Carlo* est de simuler l'incertitude que représente le monde réel tout en restant dans un environnement contrôlé. En effet, on connaît le Processus Générateur de Données, ce qui permet de comparer les résultats obtenus avec les vrais valeurs. Chose que l'on ne peut pas faire dans la réalité (même en obtenant de nombreux échantillons). L'introduction de termes d'erreurs différents permet d'observer le comportement de l'estimateur en fonction de ces erreurs. Enfin, la répétition permet de s'assurer que les résultats obtenus ne soient pas le fruit du hasard et correspond à de l'analyse fréquentiste. Cette analyse considère qu'il existe une vraie valeur de paramètre (ici la valeur du Processus générateur de Données) et que la répétition d'évènement en grand nombre (ici la répétition de création de jeu de données et de régressions linéaires) permet d'approcher ce nombre en probabilité. Cette méthode de Monte Carlo permet de tester diverses spécification et de regarder le comportement de l'estimateur en fonction de différents éléments. 
+
+
+La première étape consiste à créer une fonction qui va créer un jeu de données qui va répondre à notre Processus Générateur de données, estimer la régression linéaire associée et stocker le résultat. 
+
+```{r}
+#' Création d'un procesus générateur de données de type 
+#' Y = alpha + beta * X + epsilon , avec epsilon suivant une loi normale
+#'
+#' @param n Nombre d'observations dans l'échantillon
+#' @param alpha Coefficient de la constante dans le DGP
+#' @param beta1 Coefficient de pente dans le DGP
+#' @param sigma_epsilon Ecart-type de loi normale suivie par les erreurs
+#'
+#' @returns Un tibble avec la valeur du coefficient de régression linéaire 
+#' estimé et son écart-type
+spec1_function <- function(n, alpha, beta1, sigma_epsilon){
+  # Créer le tibble contenant les données
+  df <-
+    tibble(
+      # Créer la variable indépendante X qui provient du tirage d'une loi uniforme entre 1 et 10
+      x1 = runif(n, min = 1, max = 10),
+      # Création des erreurs pour chaque individu qui proviennent du tirage d'une loi normale de moyenne nulle et d'écart-type sd
+      epsilon = rnorm(n, mean =  0, sd = sigma_epsilon),
+      # Création de la variable dépendante Y tel que : Y = alpha + beta * X + epsilon
+      y = alpha + beta1 * x1 + epsilon
+    )
+  
+  # Estimer la régression linéaire et stocker le résultat obtenu
+  res_lm <- lm(y ~ x1, data = df)
+  res_lm_summary <- summary(res_lm)
+  df_res <-
+    tibble(
+      # Coefficient beta estimé
+      beta1 = res_lm_summary$coefficients["x1", "Estimate"],
+      # Écart-type du coefficient beta estimé
+      sigma_beta1 = res_lm_summary$coefficients["x1", "Std. Error"]
+    )
+  
+  # Retourner la tibble contenant les résultats
+  return(df_res)
+}
+```
+
+
+Voici le résultat de cette fonction :
+
+```{r}
+set.seed(123456)
+spec1_function(n = 100, alpha = 1, beta = 2, sigma_epsilon = 4)
+```
+
+On va maintenant reproduire ce processus (donc exécuter la fonction) 10000 fois afin de regarder la distribution de l'estimateur. Pour cela, on va utiliser la fonction `furrr::future_map_dfr()`. Cette fonction prend un vecteur de données et une fonction. Elle va exécuter cette fonction pour chaque élément du vecteur de données puis retourner le résultat sous forme de tibble. Il s'agit de la même fonction que `purrr::map_dfr()` à la différence quelle permet de paralléliser les opérations afin d'améliorer le temps de calcul. 
+
+```{r}
+MC_exemple <-
+  furrr::future_map_dfr(
+    # Appliquer la fonction 10000 fois
+    1:10000,
+    # Fonction à appliquer
+    \(nb) spec1_function(n = 100,  alpha = 1, beta1 = 2, sigma_epsilon = 4),
+    # Intégrer une seed pour la reproductibilité des résultats aléatoires
+    .options = furrr_options(seed=123)
+  ) |>
+  print()
+```
+
+On obtient un tibble contenant 10000 estimations différentes du coefficient $\beta$. On peut représenter la distribution de ce coefficient ainsi que ses statistiques descriptives
+
+```{r}
+MC_exemple |> 
+  ggplot(aes(x = beta1)) +
+  geom_density() +
+  geom_vline(xintercept = mean(MC_exemple$beta1), color = "red") +
+  annotate(
+    "label",
+    x = Inf, y = Inf,
+    label = sprintf("Moyenne : %.2f\nÉcart-type : %.2f\n min : %.2f\nmax : %.2f", mean(MC_exemple$beta1), sd(MC_exemple$beta1), min(MC_exemple$beta1), max(MC_exemple$beta1)),
+    hjust = 1.1, vjust = 1.1
+  )+
+  labs(
+    x = expression(hat(beta)),
+    y = expression(paste("Distribution de ", hat(beta)))
+  ) +
+  scale_x_continuous(breaks = sort(c(pretty(MC_exemple$beta1), round(mean(MC_exemple$beta1), 2))))
+```
+
+```{r}
+MC_exemple |> 
+  filter(beta1 == 2) 
+```
+
+On peut remarquer que même si aucune estimation individuelle n'est égale à 2 précisément, en moyenne sur l'ensemble des estimations réalisées, on trouve un coefficient de 2 comme dans le processus Générateur de données signifiant ainsi que l'estimateur est sans biais. L'écart-type des estimations est de $0.16$ signifiant que la majorité des données sont comprises dans l'intervalle $[1.84;2.16]$. Cette information ne permet pas directement de définir si l'estimateur est de variance minimale, mais nous pourrons l'utiliser pour effectuer des comparaisons. 
+
+```{r}
+moments::jarque.test(MC_exemple$beta1)
+```
+
+Enfin, on peut remarquer que la distribution des estimateurs semble suivre une loi normale ce qui est utile afin de dériver les différents tests statistiques. 
+
+## Variance des estimateurs
+### Définition
+
+Dans la réalité, on ne peut pas observer cette distribution puisque nous n'avons pas accès à autant d'échantillons différents permettant de répéter l’expérience des milliers de fois. Nous n'avons généralement qu'un seul jeu de données, à partir duquel nous devons estimer les coefficients. Or, comme nous l'avons vu, à cause des erreurs l'estimation est incertaine et peut très bien donner un résultat proche de $2$, de $1.6$ ou bien de $2.4$ dépendemment du tirage. L'erreur standard du coefficient $\beta$ permet de rendre compte de cette incertitude. On ne sait peut-être pas la valeur exacte du coefficient, mais on peut essayer de définir un intervalle plausible dans lequel il pourrait se trouver à partir de certaines hypothèses. Il y a toujours un certain risque de se tromper puisque l'on ne sait pas si nous avons obtenu un résultat standard ou bien un résultat qui tombe dans les valeurs extrêmes des queues de distribution.
+
+
+Rappel que la variance du coefficient $\beta$, notée $\hat{\sigma}^{2}_{\hat{\beta}}$ est donnée par :
+
+$$
+\begin{aligned}
+  \hat{\sigma}^{2}_{\hat{\beta}} &= \frac{\hat{\sigma}_{u}^2}{N \times V(X)} \\
+  
+  \hat{\sigma}_{u}^2 &= \displaystyle \frac{\sum_{i=1}^N \hat{u}_i^2}{N-2}
+\end{aligned}
+$$
+
+Avec, $\hat{\sigma}_{u}^2$ la variance des résidus du modèle ; $\hat{u}_i$ le résidu pour l'individu $i$ ; $N$ le nombre d'observations dans l'échantillon ; $V(X)$ la variance de la variable indépendante. 
+
+Selon cette formule, la variance de l'estimateur de $\beta$ est d'autant plus faible que : 
+- La variance des résidus est faible
+- Le nombre d'observations est grand
+- La variance de la variable indépendante est grande. 
+
+On peut tester cela, en effectuant différentes simulations de Monte Carlo, de la même manière que précédemment, en changeant la valeur des paramètres d'intérêt. 
+
+### Influence de la variance de l'erreur
+
+On va commencer par observer l'influence de la variance des résidus (ou de l'erreur). On va effectuer 4 blocs de simulations dans lesquels les erreurs seront distribuées selon une loi normale d'écart-type $\{1,2,3,4\}$. 
+
+```{r}
+# Effet de la variance des erreurs
+set.seed(123)
+MC_sigma_epsilon_1 <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec1_function(n = 1000,  alpha = 1, beta1 = 2, sigma_epsilon = 1),
+    .options = furrr_options(seed=123)
+  )
+
+set.seed(123)
+MC_sigma_epsilon_2 <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec1_function(n = 1000,  alpha = 1, beta1 = 2, sigma_epsilon = 2),
+    .options = furrr_options(seed=123)
+  )
+
+set.seed(123)
+MC_sigma_epsilon_3 <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec1_function(n = 1000,  alpha = 1, beta1 = 2, sigma_epsilon = 3),
+    .options = furrr_options(seed=123)
+  )
+
+set.seed(123)
+MC_sigma_epsilon_4 <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec1_function(n = 1000,  alpha = 1, beta1 = 2, sigma_epsilon = 4),
+    .options = furrr_options(seed=123)
+  )
+```
+
+```{r}
+ggplot() +
+  geom_density(data = MC_sigma_epsilon_1, aes(x = beta1, color = "s1"), linewidth = 1, key_glyph = "path") +
+  geom_density(data = MC_sigma_epsilon_2, aes(x = beta1, color = "s2"), linewidth = 1, key_glyph = "path") +
+  geom_density(data = MC_sigma_epsilon_3, aes(x = beta1, color = "s3"), linewidth = 1, key_glyph = "path") +
+  geom_density(data = MC_sigma_epsilon_4, aes(x = beta1, color = "s4"), linewidth = 1, key_glyph = "path") +
+  scale_color_manual(
+    breaks = c("s1", "s2", "s3", "s4"),
+    values = c(
+      "s1" = "blue",
+      "s2" = "red",
+      "s3" = "purple",
+      "s4" = "gold"
+    ),
+    labels = c(
+      expression(sigma[epsilon] == 1),
+      expression(sigma[epsilon] == 2),
+      expression(sigma[epsilon] == 3),
+      expression(sigma[epsilon] == 4)
+    )
+  ) +
+  labs(
+    x = expression(hat(beta)),
+    y = expression(paste("Distribution de ", hat(beta))),
+    color = NULL
+  )
+```
+
+```{r}
+MC_sigma_epsilon_1 |> 
+  summarize(
+    beta1_mean = mean(beta1),
+    beta1_sd = sd(sigma_beta1),
+    specification = "sigma_epsilon = 1"
+  ) |> 
+  full_join(
+    MC_sigma_epsilon_2 |> 
+      summarize(
+        beta1_mean = mean(beta1),
+        beta1_sd = sd(sigma_beta1),
+        specification = "sigma_epsilon = 2"
+      ),
+    join_by(beta1_mean, beta1_sd, specification)
+  ) |> 
+  full_join(
+    MC_sigma_epsilon_3 |> 
+      summarize(
+        beta1_mean = mean(beta1),
+        beta1_sd = sd(sigma_beta1),
+        specification = "sigma_epsilon = 3"
+      ),
+    join_by(beta1_mean, beta1_sd, specification)
+  ) |> 
+  full_join(
+    MC_sigma_epsilon_4 |> 
+      summarize(
+        beta1_mean = mean(beta1),
+        beta1_sd = sd(sigma_beta1),
+        specification = "sigma_epsilon = 4"
+      ),
+    join_by(beta1_mean, beta1_sd, specification)
+  )
+
+```
+
+
+Comme attendu, les estimations sont en moyenne égales à 2 peut importe la valeur de l'écart-type des erreurs. En revanche, plus cet écart-type est élevé, plus la dispersion des estimations est grande. Plus les erreurs sont dispersées, plus il y a de bruit et moins la relation observée dans le jeu de données est similaire à la relation du Processus Générateur de Données. En pratique, on ne peut pas faire grand chose contre cette dispersion des erreurs. On peut simplement essayer de rajouter des variables afin d'essayer de prendre un maximum de facteurs pertinents en compte. 
+
+
+### Influence du nombre d'observations
+
+Regardons maintenant l'influence du nombre d'observations dans le jeu de données. Nous allons réaliser 4 blocs de simulation dans lesquels le nombre d'observations sera de $\{50 ; 100 ; 1000 ; 2000\}$. Les erreurs sont normalement distribuées, de moyennne nulle et d'écart-type 1.
+
+```{r}
+# Effets du nombre d'observations dans l'échantillon 
+MC_50_obs <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec1_function(n = 50,  alpha = 1, beta1 = 2, sigma_epsilon = 1),
+    .options = furrr_options(seed=123)
+  ) 
+
+MC_100_obs <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec1_function(n = 100,  alpha = 1, beta1 = 2, sigma_epsilon = 1),
+    .options = furrr_options(seed=123)
+  )
+
+MC_1000_obs <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec1_function(n = 1000,  alpha = 1, beta1 = 2, sigma_epsilon = 1),
+    .options = furrr_options(seed=123)
+  )
+
+MC_2000_obs <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec1_function(n = 2000,  alpha = 1, beta1 = 2, sigma_epsilon = 1),
+    .options = furrr_options(seed=123)
+  )
+```
+
+
+```{r}
+ggplot() +
+  geom_density(data = MC_50_obs, aes(x = beta1, color = "n = 50"), linewidth = 1, key_glyph = "path") +
+  geom_density(data = MC_100_obs, aes(x = beta1, color = "n = 100"), linewidth = 1, key_glyph = "path") +
+  geom_density(data = MC_1000_obs, aes(x = beta1, color = "n = 1000"), linewidth = 1, key_glyph = "path") +
+  geom_density(data = MC_2000_obs, aes(x = beta1, color = "n = 2000"), linewidth = 1, key_glyph = "path") +
+  scale_color_manual(
+    breaks = c("n = 50", "n = 100", "n = 1000", "n = 2000"),
+    values = c(
+      "n = 50" = "blue",
+      "n = 100" = "red",
+      "n = 1000" = "purple",
+      "n = 2000" = "gold"
+      )
+    ) +
+  labs(
+    x = expression(hat(beta)),
+    y = expression(paste("Distribution de ", hat(beta), " sur l'ensemble des échantillons")),
+    colour = NULL
+  )
+```
+
+```{r}
+MC_50_obs |> 
+  summarize(
+    beta1_mean = mean(beta1),
+    beta1_sd = mean(sigma_beta1),
+    specification = "n = 50"
+  ) |> 
+  full_join(
+    MC_100_obs |> 
+      summarize(
+        beta1_mean = mean(beta1),
+        beta1_sd = sd(sigma_beta1),
+        specification = "n = 100"
+      ),
+    join_by(beta1_mean, beta1_sd, specification)
+  ) |> 
+  full_join(
+    MC_1000_obs |> 
+      summarize(
+        beta1_mean = mean(beta1),
+        beta1_sd = sd(sigma_beta1),
+        specification = "n = 1000"
+      ),
+    join_by(beta1_mean, beta1_sd, specification)
+  ) |> 
+  full_join(
+    MC_2000_obs |> 
+      summarize(
+        beta1_mean = mean(beta1),
+        beta1_sd = sd(sigma_beta1),
+        specification = "n = 2000"
+      ),
+    join_by(beta1_mean, beta1_sd, specification)
+  )
+```
+
+Les estimations sont toujours en moyenne égales à 2 indiquant que l'estimateur n'est pas biaisé. On remarque que plus le nombre d'observations dans l'échantillon augmente, plus la dispersion des estimations diminue. Plus nous avons d'observations disponibles (ou de degrés de liberté), plus nous avons d'information permettant de trouver la meilleure relation entre les données. Ce surplus d'information permet d'améliorer la précision de nos estimations. En pratique on cherchera généralement à obtenir le plus d'observations possible. Il faut cependant faire attention, car plus le nombre d'observation est élevé, plus il y a de chances de capter des relations entre les variables, certes statistiquement significatives, mais peu intéressantes économiquement, puisque la moindre variation pourra être captée. 
+
+
+### Influence de la variance de X
+
+Regardons maintenant l'influence de la variance de la variable indépendante. Pour cela, les données de la variable $X$ seront tirées d'une loi normale de moyenne nulle et d'un écart-type $\{1 ; 2; 3; 4\}$ à travers 4 blocs de simulations de Monte Carlo. Les erreurs seront tirées d'une loi normale de moyenne nulle et d'écart-type 1.
+
+```{r}
+#' Création d'un procesus générateur de données de type 
+#' Y = alpha + beta * X + epsilon , avec epsilon suivant une loi normale
+#'
+#' @param n Nombre d'observations dans l'échantillon
+#' @param alpha Coefficient de la constante dans le DGP
+#' @param beta1 Coefficient de pente dans le DGP
+#' @param sigma_x Ecart-type de la loi normale suivie par la variable X1
+#' @param sigma_epsilon Ecart-type de loi normale suivie par les erreurs
+#'
+#' @returns Un tibble avec la valeur du coefficient de régression linéaire 
+#' estimé et son écart-type
+spec2_function <- function(n, alpha, beta1, sigma_x, sigma_epsilon){
+  df <-
+    tibble(
+      x1 = rnorm(n, mean =  4, sd = sigma_x),
+      epsilon = rnorm(n, mean =  0, sd = sigma_epsilon),
+      y = alpha + beta1 * x1 + epsilon
+    )
+  res_lm <- lm(y ~ x1, data = df)
+  res_lm_summary <- summary(res_lm)
+  df_res <-
+    tibble(
+      beta1 = res_lm_summary$coefficients["x1", "Estimate"],
+      sigma_beta1 = res_lm_summary$coefficients["x1", "Std. Error"]
+    )
+  return(df_res)
+}
+```
+
+```{r}
+# Effet de la variance de X
+MC_sigma_x_1 <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec2_function(n = 1000,  alpha = 1, beta1 = 2, sigma_x = 1, sigma_epsilon = 1),
+    .options = furrr_options(seed=123)
+  )
+
+MC_sigma_x_2 <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec2_function(n = 1000,  alpha = 1, beta1 = 2, sigma_x = 2, sigma_epsilon = 1),
+    .options = furrr_options(seed=123)
+  )
+
+MC_sigma_x_3 <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec2_function(n = 1000,  alpha = 1, beta1 = 2, sigma_x = 3, sigma_epsilon = 1),
+    .options = furrr_options(seed=123)
+  )
+
+MC_sigma_x_4 <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec2_function(n = 1000,  alpha = 1, beta1 = 2, sigma_x = 4, sigma_epsilon = 1),
+    .options = furrr_options(seed=123)
+  )
+```
+
+```{r}
+ggplot() +
+  geom_density(data = MC_sigma_x_1, aes(x = beta1, color = "s1"), linewidth = 1, key_glyph = "path") +
+  geom_density(data = MC_sigma_x_2, aes(x = beta1, color = "s2"), linewidth = 1, key_glyph = "path") +
+  geom_density(data = MC_sigma_x_3, aes(x = beta1, color = "s3"), linewidth = 1, key_glyph = "path") +
+  geom_density(data = MC_sigma_x_4, aes(x = beta1, color = "s4"), linewidth = 1, key_glyph = "path") +
+  scale_color_manual(
+    breaks = c("s1", "s2", "s3", "s4"),
+    values = c(
+      "s1" = "blue",
+      "s2" = "red",
+      "s3" = "purple",
+      "s4" = "gold"
+    ),
+    labels = c(
+      expression(sigma[X] == 1),
+      expression(sigma[X] == 2),
+      expression(sigma[X] == 3),
+      expression(sigma[X] == 4)
+    )
+  ) +
+  labs(
+    x = expression(beta[1]),
+    y = expression(paste("Distribution de ", beta[1], " sur l'ensemble des échantillons")),
+    color = NULL
+  )
+```
+
+```{r}
+MC_sigma_x_1 |> 
+  summarize(
+    beta1_mean = mean(beta1),
+    beta1_sd = sd(sigma_beta1),
+    specification = "sigma_X = 1"
+  ) |> 
+  full_join(
+    MC_sigma_x_2 |> 
+      summarize(
+        beta1_mean = mean(beta1),
+        beta1_sd = sd(sigma_beta1),
+        specification = "sigma_X = 2"
+      ),
+    join_by(beta1_mean, beta1_sd, specification)
+  ) |> 
+  full_join(
+    MC_sigma_x_3 |> 
+      summarize(
+        beta1_mean = mean(beta1),
+        beta1_sd = sd(sigma_beta1),
+        specification = "sigma_X = 3"
+      ),
+    join_by(beta1_mean, beta1_sd, specification)
+  ) |> 
+  full_join(
+    MC_sigma_x_4 |> 
+      summarize(
+        beta1_mean = mean(beta1),
+        beta1_sd = sd(sigma_beta1),
+        specification = "sigma_X = 4"
+      ),
+    join_by(beta1_mean, beta1_sd, specification)
+  )
+```
+
+Les estimations sont en moyenne égale à 2 indiquant que l'estimateur n'est pas biaisé. Plus la variance de la variable indépendante est grande, plus la dispersion des estimations est faible. Avoir une plus grande dispersion dans la variable indépendante, permet d'avoir accès à une plus grande variété de situations au sein de l'échantillon et donc d'avoir une plus grande marge de manœuvre pour tester la relation souhaitée. En pratique il faut donc essayer d'obtenir des variables avec une forte dispersion et éviter les variables dont la valeur varie peu au cours du temps ou entre les individus. 
+
+
+## Le biais de l'estimateur MCO
+
+Nous avons pu voir que l'estimateur MCO à partir du DGP précédent était sans biais. En moyenne, sur de nombreuses répétitions, la valeur du coefficient estimé est égale à la vraie valeur du paramètre dans le DGP. Globalement on estime bien le paramètre. 
+
+On rappelle que la condition pour que l'estimateur MCO soit sans biais est l'indépendance de la variable explicative avec le terme d'erreur. La variable $X$ doit être certaine, non-aléatoire : $E \left( u_i | x_i \right) = 0$. Il ne doit exister aucun lien statistique entre les erreurs et la variable explicative. Dit autrement, il ne faut pas avoir omis une variable qui serait corrélée avec la varriable $X_1$.
+
+Supposons le DGP suivant : 
+
+$$
+\begin{aligned}
+  \text{Score}_i = 1 + 2 \times \text{Temps}_i + 3 \times \text{Présence} + u_i  
+\end{aligned}
+$$
+Ce DGP indique qu'une heure passée à réviser en plus augmente la note de 2, tandis qu'une heure supplémentaire à assister au cours augmente la note de 3. 
+
+On va uniquement s'intéresser au comportement du paramètre associé à la variable $\text{Temps}$. Reproduisons donc une simulation de Monte Carlo avec ce DGP. 
+
+
+```{r}
+#' Création d'un procesus générateur de données de type 
+#' Y = alpha + beta1 * X1 + beta2 * X2 + epsilon , avec epsilon suivant une loi normale
+#'
+#' @param n Nombre d'observations dans l'échantillon
+#' @param alpha Coefficient de la constante dans le DGP
+#' @param beta1 Coefficient de pente dans le DGP
+#' @param beta2 Coefficient de pente dans le GDP
+#' @param sigma_epsilon Ecart-type de loi normale suivie par les erreurs
+#'
+#' @returns Un tibble avec la valeur du coefficient de régression linéaire 
+#' estimé et son écart-type
+spec3_function <- function(n, alpha, beta1, beta2, sigma_epsilon){
+  # Créer le tibble contenant les données
+  df <-
+    tibble(
+      # Créer la variable indépendante X1 qui provient du tirage d'une loi uniforme entre 1 et 10
+      x1 = runif(n, min = 1, max = 10),
+      # Créer la variable indépendante X2 qui provient du tirage d'une loi uniforme entre 3 et 20
+      x2 = runif(n, min = 3, max = 20),
+      # Création des erreurs pour chaque individu qui proviennent du tirage d'une loi normale de moyenne nulle et d'écart-type sd
+      epsilon = rnorm(n, mean =  0, sd = sigma_epsilon),
+      # Création de la variable dépendante Y tel que : Y = alpha + beta1 * X1 + beta2 * X2 + epsilon
+      y = alpha + beta1 * x1 + beta2 * x2 + epsilon
+    )
+  
+  # Estimer la régression linéaire et stocker le résultat obtenu
+  res_lm <- lm(y ~ x1 + x2, data = df)
+  res_lm_summary <- summary(res_lm)
+  
+  res_lm_omise <- lm(y ~ x1, data = df)
+  res_lm_omise_summary <- summary(res_lm_omise)
+  df_res <-
+    tibble(
+      # Coefficient beta1 estimé
+      beta1 = res_lm_summary$coefficients["x1", "Estimate"],
+      # Coefficient beta2 estimé
+      beta2 = res_lm_summary$coefficients["x2", "Estimate"],
+      beta1_omise = res_lm_omise_summary$coefficients["x1", "Estimate"]
+    )
+  
+  # Retourner la tibble contenant les résultats
+  return(df_res)
+}
+```
+
+```{r}
+spec3_function(n = 1000,  alpha = 1, beta1 = 2, beta2 = 3, sigma_epsilon = 4)
+```
+
+
+```{r}
+MC_2_var <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec3_function(n = 1000,  alpha = 1, beta1 = 2, beta2 = 3, sigma_epsilon = 4),
+    .options = furrr_options(seed=123)
+  )
+```
+
+
+```{r}
+MC_2_var |> 
+  ggplot() +
+  geom_density(aes(x = beta1, color = "beta1"), key_glyph = "path") +
+  geom_vline(xintercept = mean(MC_2_var$beta1), color = "blue") +
+  geom_density(aes(x = beta2, color = "beta2"), key_glyph = "path") +
+  geom_vline(xintercept = mean(MC_2_var$beta2), color = "red") +
+  geom_hline(yintercept = 0, color = "black") +
+  labs( 
+    x = expression(hat(beta)),
+    y = expression(paste("Distribution de ", hat(beta))),
+    color = NULL
+  ) +
+  scale_x_continuous(breaks = seq(1.8, 3.4, by = 0.2)) +
+  scale_color_manual(
+    values = c("beta1" = "blue", "beta2" = "red"),
+    labels = c(
+      expression(beta[1]),
+      expression(beta[2])
+      )
+  )
+```
+
+```{r}
+MC_2_var |> 
+  summarize(
+    beta1_mean = mean(beta1),
+    beta1_sd = sd(beta1),
+    beta2_mean = mean(beta2),
+    beta2_sd = sd(beta2)
+  )
+```
+
+
+L'ajout d'une variable dans la régression ne change pas le caractère non biaisé de nos estimateurs. Maintenant, nous allons refaire une simulation de Monte Carlo en omettant la variable $\text{Présence}$ de la régression tout en continuant de supposer que cette variable n'est corrélée d'aucune manière que ce soit avec la variable $\text{Temps}$. Cela correspond à une situation où l'on a oublié, ou délibérément mis de côté une variable qui n'est pas corrélée avec notre variable d'intérêt. 
+
+
+```{r}
+MC_2_var |> 
+  ggplot() +
+  geom_density(aes(x = beta1, color = "beta1"), key_glyph = "path") +
+  geom_density(aes(x = beta1_omise, color = "beta1_omise"), key_glyph = "path") +
+  labs( 
+    x = expression(hat(beta)),
+    y = expression(paste("Distribution de ", hat(beta))),
+    color = NULL
+  ) +
+  scale_color_manual(
+    values = c("beta1" = "blue", "beta1_omise" = "red"),
+    labels = c(
+      expression(beta[1]),
+      expression(paste(beta[1], "omis"))
+      )
+  ) +
+  scale_x_continuous(breaks = sort(c(pretty(MC_2_var$beta1_omise))))
+```
+
+
+```{r}
+MC_2_var |> 
+  summarize(
+    beta1_mean = mean(beta1),
+    beta1_sd = sd(beta1),
+    beta1_omise_mean = mean(beta1_omise),
+    beta1_omise_sd = sd(beta1_omise)
+  )
+```
+
+Omettre une variable qui n'est pas corrélée avec la variable explicative ne biaise pas cette variable. En moyenne, la valeur estimée correspond à la vraie valeur du DGP. Cependant, puisque l'on omet une variable faisant partie du processus générateur de donnée, cela va augmenter la variance des résidus. Une plus faible partie des données est expliquée. La précision de l'estimateur diminue donc. 
+
+Regardonc maintenant ce qu'il se passe lorsque l'on omet une variable qui est corrélée à notre variable d'intérêt. 
+
+
+```{r}
+spec5_function <- function(n, alpha, beta1, beta2, rho, sigma_epsilon){
+  # Créer le tibble contenant les données
+  df <-
+    tibble(
+      # Créer la variable indépendante X qui provient du tirage d'une loi uniforme entre 1 et 10
+      x1 = runif(n, min = 1, max = 10),
+      x2 = runif(n, min = 3, max = 20),
+      # Création des erreurs pour chaque individu qui proviennent du tirage d'une loi normale de moyenne nulle et d'écart-type sd
+      epsilon = rnorm(n, mean =  0, sd = sigma_epsilon),
+      # Création de la variable dépendante Y tel que : Y = alpha + beta * X + epsilon
+      y = alpha + beta1 * x1 + beta2 * x2 + epsilon
+    )
+  
+  # Estimer la régression linéaire et stocker le résultat obtenu
+  res_lm <- lm(y ~ x1, data = df)
+  res_lm_summary <- summary(res_lm)
+  df_res <-
+    tibble(
+      # Coefficient beta estimé
+      beta1 = res_lm_summary$coefficients["x1", "Estimate"],
+      beta2 = res_lm_summary$coefficients["x2", "Estimate"]
+    )
+  
+  # Retourner la tibble contenant les résultats
+  return(df_res)
+}
+```
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
