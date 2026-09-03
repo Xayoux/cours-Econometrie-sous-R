@@ -47,12 +47,34 @@ quarto::quarto_render(
 source(here::here("02-codes", "utils", "setup.R"))
 ```
 
+Les hypothèses de Gauss-Markov sont un jeu d'hypothèses qui assurent que les coefficients estimés par la méthode des Moindres Carrés Ordinaires sont sais biais, de variance minimale et permttent de mener une inférence statistique. La violation de chaque hypothèse entraine des problématiques différentes sur l'estimateur MCO et nécessite des réponses différentes. Pour rappel voici les hypothèses de Gauss-Markov 
 
-# Processus Générateur de Données
+-   H1 : $E(u) = 0$. L'espérance de l'erreur est nulle. En moyenne le modèle ne commet pas d'erreur. Il ne sous-estime ni ne surestime la valeur de la variable endogène de manière systématique. Cette hypothèse est nécessaire pour les tests d'hypothèse et prouver l'absence de biais des estimateurs MCO.
+
+-   H2 : $X$ est une matrice certaine, c'est à dire non aléatoire, elle est observée sans erreur. On note cette hypothèse : $E \left( u_i | x_i \right) = 0$. Cela signifie qu'il n'y a aucun lien statistique entre les erreurs et la variable explicative. On n'a oublié aucune variable (qui se retrouverait donc dans les erreurs) qui soit corrélée de quelque manière que ce soit avec une variable explicative. Si cette hypothèse est violée, l'estimateur MCO n'est plus convergent et devient biaisé.
+
+-   H3 : $\text{Rang} \left( X \right) = K+1$. Les variables explicatives sont linéairement indépendantes. Aucune variable ne doit pouvoir être expliquée parfaitement par une combinaison linéaire d'autres variables. Par exemple, on ne peut pas inclure le poids en Kg et le poids en gramme, puisque ces deux variables sont parfaitement liées par une combinaison linéaire : $1 \text{Kg} = 1000 \text{g}$. Cette hypothèse si elle est violée empêche l'identification du modèle et donc de trouver des estimateurs uniques.
+
+    Pour cette troisième hypothèse, il faut également satisfaire la condition suivante : $N>K+1$. Le nombre d'observations doit être supérieur au nombre de variables explicatives (ici $K+1$ si l'on considère que l'on a une constante, $K$ sinon). Si cette condition n'est pas remplie, le modèle n'est pas estimable.
+
+-   H4 : $E \left( uu' \right) = \sigma^2_u I_T$. Les erreurs ne doivent pas être autocorrélées dans le temps (dans le cas de séries temporelles) ou entre les individus (dans le cas d'une coupe transversale). Les erreurs doivent également avoir une variance constante, et cette variance ne doit pas dépendre des variables explicatives. Si cette hypothèse est violée, les estimateurs MCO ne sont plus de variance minimale.
+
+-   H5 : Cette hypothèse suppose que les résidus sont normalement distribués : $u_i \sim N(0,\sigma_u^2)$. Cette hypothèse permet de faire des tests de faire de l'inférence statistique.
+
+Ben qu'il soit aisé de démontrer que sous ces hypothèses les estimateurs MCO sont non biaisés et de variance minimale, il est parfois plus compliqué de se représenter ce que cela signifie concrètement. Ce document vise à illustrer ces propriétés à travers des simulations. L'objectif va être de simuler des données dont on connaît parfaitement lees propriétés puis de regarder l'influence de ces différentes propriétés sur les estimateurs MCO. 
+
+Nous allons dans un premier temps illustrer le concept de générateur de données et présenter la méthode des simulations de Monte Carlo que nous allons utiliser dans la suite du document. 
+
+
+# Processus Générateur de Données et Simulations de Monte Carlo
+
+Le *Processus Générateur de Données* (Data Generating Process : DGP en anglais) est le processus qui permet de créer les données. Il s'agit d'une relation reliant différentes variables entres elles. Dans la pratique ce Processus Générateur de données est inconnu. Il nous faut donc supposer sa forme d'une manière simplifiée mais également suffisament convaincante afin de ne pas oublier des éléments clés de la relation. Généralement on supposera une relation linéaire entre les variables mais ces relation speuvent très largement se complexifier. 
+
+Nous avons ici l'avantage de recourir à des simulations. C'est à dire que nous pouvons créer nos propres données et donc connaître exactement le Processus Générateur des Données associé. Il sera insi possible possible de comparer les résultats obtenus avec les vraies valeurs spécifiées dans le GDP.  
 
 ## Régression sans erreurs
 
-On souhaite analyser la relation entre le temps de travail (variable indépendante) et le score à un test (variable dépendante). Comme nous sommes dans un environnement contrôlé, nous sommes maître de cette relation et pouvons la définir comme suit :
+Prenons un exemple concret afin d'ilustrer le concept de GDP. Supposons que l'on souhaite analyser la relation entre le temps de travail (variable indépendante) et le score à un test (variable dépendante). Comme nous sommes dans un environnement contrôlé, nous sommes maître de cette relation et pouvons la définir comme suit :
 
 $$
 \begin{aligned}
@@ -60,9 +82,9 @@ $$
 \end{aligned}
 $$
 
-On appelle cette fonction le *Processus Générateur de Données* (Data Generating Process en anglais : DGP). Ici, le DGP nous indique que lorsque l'individu $i$ passe $0$ heures à travailler, sa note au test est de $1$. Pour chaque heure travaillée supplémentaire, il aura $2$ points en plus sur le score de son test. 
+Ici, le DGP nous indique que lorsque l'individu $i$ passe $0$ heures à travailler, sa note au test est de $1$. Pour chaque heure travaillée supplémentaire, il aura $2$ points en plus sur le score de son test. 
 
-Le Processus Générateur de données n'est pas connu en pratique. On peut simplement supposer que la relation entre le Score et le Temps de travail est une fonction linéaire de la forme suivante : 
+Le Processus Générateur de données n'est pas connu en pratique. On peut simplement essayer de définir théoriquement la relation entre les variables et par la suite estimer les coeffcients à partir de données récoltées. Ainsi si l'on souhaite étudier la relation entre le temps de travail et la note à un test sans connaître le GDP, le plus simple consiste à supposer une relation linéaire entre les deux variables de la forme : 
 
 $$
 \begin{aligned}
@@ -72,14 +94,13 @@ $$
 
 En récoltant suffisamment de données, on peut obtenir un jeu de données que l'on va utiliser pour estimer les coefficients $\alpha$ et $\beta$. Si l'estimateur est convaincant, on devrait obtenir des valeurs similaires. 
 
-
-Si l'on crée un jeu de données qui respecte exactement ce DGP, et que l'on estime la régression linéaire entre les deux variables, on va retrouver exactement la valeur de nos deux coefficients. Il n'y a pas d'erreurs et donc pas de perturbations qui viennent entraver la précision de nos estimateurs. L'exemple suivant va créer un jeu de données respectant ce GDP pour 100 individus puis estimer la régression linéaire. On va ainsi créer un jeu de données mais de manière contrôlée afin de pouvoir comparer les résultats obtenus avec les résultats théoriques. 
+Afin d'estimer ces coefficients, créons donc un jeu de données de 100 observtions qui respecte exactementle GDP présenté plus haut. 
 
 ```{r}
 # Créer le jeu de données
 df <-
   tibble(
-    # Générer la variable Temps de manière aléatoire pour 100 individus à partir d'une loi uniforme allant de 0 à 10
+    # Générer la variable Temps de manière aléatoire pour 100 individus à partir d'une loi uniforme allant de 1 à 10
     temps = runif(100, min = 1, max = 10),
     # Générer la variable score en suivant le processus générateur de données
     score = 1 + 2 * temps
@@ -87,6 +108,9 @@ df <-
   # Afficher les données créées
   print()
 ```
+
+Puisqu'il n'y a pas d'erreurs et donc pas de perturbations qui viennent entraver la précision de nos estimateurs, l'estimation de la régression linéaire entre les deux variables va nous donner un ajustement parfait.
+
 
 ```{r}
 # Estimer la régression linéaire
@@ -103,11 +127,18 @@ df |>
   geom_smooth(method = "lm", se = F, formula = y ~ x)
 ```
 
-On peut voir que les coefficients estimés (moyennant les approximations de calculs) sont les mêmes que ceux du GDP. Le coefficient d'ajustement est quant à lui égal à $1$, signifiant qu'il y a un ajustement parfait entre les données. Cet ajustement parfait est dû à l'absence d'erreurs, de perturbations dans notre jeu de données. 
 
 ## Régression avec erreurs
 
-Ajouter des erreurs va perturber l'estimation et va nous permettre de nous rapprocher davantage d'une situation réelle. L'exemple suivant va intégrer des erreurs normales de moyenne nulle et d'écart-type 4 : 
+Il est fort probable (voir certain) que dans la réalité le GDP ne soit pas quelque chose d'aussi simpliste. La relation n'est pas forcément linéaire, fait probablement intervenir de nombreuses variables. Il est également probable que chaque individu dispose de caractéristiues propres qui vont entrainer des perturbation dans la relation. Tous ces éléments qui ne sont ou ne peuvent pas être pris en compte sont appelés "erreurs". Chaque individu dispose d'une erreur personnelle, ce qui va transformer le DGP de la façon suivante :
+
+$$
+\begin{aligned}
+\text{Score}_i = 1 + 2 \times \text{Temps}_i + u_i
+\end{aligned}
+$$
+
+L'exeemple suivant montre la création de données suivant ce GDP dans lequel les erreurs suivent une loi norrmale de moyenne nulle et d'écart-type 4. 
 
 
 ```{r}
@@ -140,7 +171,11 @@ df |>
   geom_smooth(method = "lm", se = F, formula = y ~ x)
 ```
 
-Comme on peut le voir, intégrer des erreurs conséquentes va brouiller la valeur des coefficients. l'ajustement de notre droite de régression n'est plus que de $55\%$ tandis que la valeur du coefficient associé à la variable exogène est de $1.8721$ et non pas $2$ comme défini par le processus générateur de données. Cette différence est due à l'erreur aléatoire qui a été introduite. Or, comme cette erreur est aléatoire, le résultat que l'on va obtenir va changer selon le tirage aléatoire effectué : 
+Intégrer des erreurs conséquentes brouille la valeur des coefficients. l'ajustement de notre droite de régression n'est plus que de $55\%$ tandis que la valeur du coefficient associé à la variable exogène est de $1.8721$ et non pas $2$ comme défini par le processus générateur de données. Cette différence est due à l'erreur aléatoire qui a été introduite. Or, comme cette erreur est aléatoire, le résultat que l'on va obtenir va changer selon le tirage aléatoire effectué. 
+
+## Simulations de Monte Carlo : Principe
+
+Ainsi si l'on crée un jeu de données différent et que l'on estime la même relation, on trouve un résultat différent.
 
 
 ```{r}
@@ -166,25 +201,22 @@ lm(score ~ temps, data = df) |>
   summary()
 ```
 
-En réalisant un autre tirage aléatoire, on peut voir que les résultats changent. Le coefficient d'ajustement est de $58\%$ et le coefficient estimé est de $2.0373$. On va obtenir un résultat différent pour chaque jeu de données différent. 
+En réalisant un autre tirage aléatoire, on peut voir que les résultats changent. Le coefficient d'ajustement est de $58\%$ et le coefficient estimé est de $2.0373$. On va obtenir un résultat différent pour chaque jeu de données différent. On retrouve cela dans la réalité. Chaque fois que l'on va obtenir un nouvel échantillon, on va obtenir des résultats différents. On espère obtenir des résutats proches les uns des autres mais chaque échantillon, de part sa nature aléatoire, va donner un résultat différent. Ainsi certains échantillons donneront une valeur proche de 2, tandis que d'autres donneront une valeur éloignée à la hausse ou à la baisse. 
+
+L'idéal serait de pouvoir obtenir de nombreux échantillons différents sur lesquels estimer la relation et partant de là, obsever la distribution des estimations pour en déduire un comportement et la vraie valeur. Cependant, dans la réalité, il est très courant de ne disposer que d'un seul échantillon de donner, limitant ainsi la production de nombreuses estimations dnas le cadre d'études empiriques réelles. 
+
+Cette limite ne nous concerne cependant pas. Nous sommes dnas un environnement contrôlé et rien ne nous empêche de créer de nombreux jeu de données différents à partir du GDP et d'estimer une relation pour chaque jeu de données. Chaque résulat sera certes différents, mais avec assez d'estimations différente il devient possible d'observer comment en moyenne les estimations se comportent et si on estime en moyenne une valeur correspondant au GDP ou non et dans quel mesure nos estimations sont précises. 
+
+Ce processus de créer des jeux de données qui répondent à des critères précis et de comparer les estimations réalisées sur ces données avec les vraies valeurs de paramètre se nomme *Simulations de Monte Carlo*. Ces simulations sont très pratique afin de visualiser le comportement d'un estimateur ou pour découvrir ses propriétés car la dérivation mathématique devient trop complexe. 
 
 
-# Propriétés des estimateurs
+## Simulations de Monte Carlo : Exemple
 
-## Simulations de Monte Carlo : Explication
+Nous alons ici montrer un exemple de simulation de Monte Carlo sur l'estimateur MCO lorsque toutes les hypothèses de Gauss-Markov sont vérifiées. Nous allons simuler un jeu de données à partir du Processus Générateur de Données en incluant un terme d'erreur, puis estimer une régression linéaire sur ce jeu de données et stocker le résultat du coefficient $\beta$ obtenu.
 
-En fonction de l'échantillon aléatoire que l'on va obtenir, on pourra avoir une estimation du coefficient $\beta$ proche de 2 ou alors assez éloignée. Comment peut-on alors définir si l'estimateur utilisé est un bon estimateur ou non si chaque échantillon change le résultat ? La réponse est que l'on va simuler de nombreux échantillon différents et regarder comment se comporte l'estimateur de manière générale. Il est possible que sur quelques échantillons la valeur du coefficient $\beta$ obtenue ne soit pas correcte, mais si de manière générale, l'estimateur obtenu donne la bonne valeur alors il n'y a pas de problème. 
+On va ensuite répéter ce processus un grand nombre de fois afin d'obtenir une distribution du coefficient $\beta$ à travers tous ces échantillons. 
 
-De manière générale, on va chercher à obtenir un estimateur qui répond aux critères suivants : 
-- Sans biais : On dit qu'un estimateur est sans biais lorsqu'en moyenne la valeur estimée correspond à la vraie valeur du Processus Générateur de Données. 
-- Convergent : On dit qu'un estimateur est convergent lorsque la valeur de l'estimation se rapproche de la vraie valeur du Processus Générateur de Données à mesure que l'on augmente la taille de l'échantillon.
-- De variance minimale : On souhaite que la dispersion des estimations soit la plus faible possible afin d'éviter les mauvaises estimations extrêmes et d'avoir le plus de précision possible. 
-
-
-Pour illustrer ces concepts, on va procéder de la manière suivante. On va simuler un jeu de données à partir du Processus Générateur de Données en incluant un terme d'erreur. On va estimer une régression linéaire par les MCO sur ce jeu de données et stocker la valeur du coefficient $\beta$ obtenu. On va ensuite répéter ce processus un grand nombre de fois afin d'obtenir une distribution du coefficient $\beta$ à travers tous ces échantillons. L'idée de ce processus que l'on appelle *Processus de Monte Carlo* est de simuler l'incertitude que représente le monde réel tout en restant dans un environnement contrôlé. En effet, on connaît le Processus Générateur de Données, ce qui permet de comparer les résultats obtenus avec les vrais valeurs. Chose que l'on ne peut pas faire dans la réalité (même en obtenant de nombreux échantillons). L'introduction de termes d'erreurs différents permet d'observer le comportement de l'estimateur en fonction de ces erreurs. Enfin, la répétition permet de s'assurer que les résultats obtenus ne soient pas le fruit du hasard et correspond à de l'analyse fréquentiste. Cette analyse considère qu'il existe une vraie valeur de paramètre (ici la valeur du Processus générateur de Données) et que la répétition d'évènement en grand nombre (ici la répétition de création de jeu de données et de régressions linéaires) permet d'approcher ce nombre en probabilité. Cette méthode de Monte Carlo permet de tester diverses spécification et de regarder le comportement de l'estimateur en fonction de différents éléments. 
-
-
-La première étape consiste à créer une fonction qui va créer un jeu de données qui va répondre à notre Processus Générateur de données, estimer la régression linéaire associée et stocker le résultat. 
+La première étape consiste à écrire une fonction afin de créer un jeu de données qui va répondre à notre Processus Générateur de données, estimer la régression linéaire associée et stocker le résultat. 
 
 ```{r}
 #' Création d'un procesus générateur de données de type 
@@ -215,9 +247,7 @@ spec1_function <- function(n, alpha, beta1, sigma_epsilon){
   df_res <-
     tibble(
       # Coefficient beta estimé
-      beta1 = res_lm_summary$coefficients["x1", "Estimate"],
-      # Écart-type du coefficient beta estimé
-      sigma_beta1 = res_lm_summary$coefficients["x1", "Std. Error"]
+      beta1 = res_lm_summary$coefficients["x1", "Estimate"]
     )
   
   # Retourner la tibble contenant les résultats
@@ -226,14 +256,14 @@ spec1_function <- function(n, alpha, beta1, sigma_epsilon){
 ```
 
 
-Voici le résultat de cette fonction :
+Cette fonction renvoit un tibble contenant la valeur du coefficient $\beta$ eestimé pour un jeu de données particulier.
 
 ```{r}
 set.seed(123456)
 spec1_function(n = 100, alpha = 1, beta = 2, sigma_epsilon = 4)
 ```
 
-On va maintenant reproduire ce processus (donc exécuter la fonction) 10000 fois afin de regarder la distribution de l'estimateur. Pour cela, on va utiliser la fonction `furrr::future_map_dfr()`. Cette fonction prend un vecteur de données et une fonction. Elle va exécuter cette fonction pour chaque élément du vecteur de données puis retourner le résultat sous forme de tibble. Il s'agit de la même fonction que `purrr::map_dfr()` à la différence quelle permet de paralléliser les opérations afin d'améliorer le temps de calcul. 
+La simulation de Monte Carle implique de reproduire ce processus un grand nombre (ici 10000) fois afin de regarder la distribution de l'estimateur. Pour cela, on va utiliser la fonction `furrr::future_map_dfr()`. Cette fonction prend un vecteur de données et une fonction. Elle va exécuter cette fonction pour chaque élément du vecteur de données puis retourner le résultat sous forme de tibble. Il s'agit de la même fonction que `purrr::map_dfr()` à la différence quelle permet de paralléliser les opérations afin de réduire le temps de calcul. 
 
 ```{r}
 MC_exemple <-
@@ -248,7 +278,7 @@ MC_exemple <-
   print()
 ```
 
-On obtient un tibble contenant 10000 estimations différentes du coefficient $\beta$. On peut représenter la distribution de ce coefficient ainsi que ses statistiques descriptives
+On obtient un tibble contenant 10000 estimations différentes du coefficient $\beta$ à partir de 10000 jeux de données différents. On peut représenter la distribution de ce coefficient ainsi que ses statistiques descriptives
 
 ```{r}
 MC_exemple |> 
@@ -273,18 +303,53 @@ MC_exemple |>
   filter(beta1 == 2) 
 ```
 
-On peut remarquer que même si aucune estimation individuelle n'est égale à 2 précisément, en moyenne sur l'ensemble des estimations réalisées, on trouve un coefficient de 2 comme dans le processus Générateur de données signifiant ainsi que l'estimateur est sans biais. L'écart-type des estimations est de $0.16$ signifiant que la majorité des données sont comprises dans l'intervalle $[1.84;2.16]$. Cette information ne permet pas directement de définir si l'estimateur est de variance minimale, mais nous pourrons l'utiliser pour effectuer des comparaisons. 
+On peut remarquer que, même si aucune estimation individuelle n'est égale à 2 précisément, en moyenne sur l'ensemble des estimations réalisées, on trouve un coefficient de 2 comme dans le processus Générateur de données. L'écart-type des estimations est de $0.16$ signifiant que la majorité des données sont comprises dans l'intervalle $[1.84;2.16]$. Cete information peut servir de comparaison avec d'autres estimateurs afin de déterminer celui qui a la meilleure précision dans ses estimations.  
+
+
+## Analyse fréquentiste et propriétés des estimateurs
+
+Le principe de l'analyse fréquentiste (à l'opposé de l'analyse bayésiene) consiste à penser qu'il existe une vraie valeur d'un paramètre qui est considérée comme fixe. A travers la répétition d'une expérience un grand nombre de fois, on pourra se rapprocher de la vraie valeur de ce paramètre.  
+
+Dans la réalité comme nous l'avons mmentionné, il n'est généralement pas possible de répéter un grand nombre de fois une expérience afin d'en déduire la vraie valeur du paramètre. Nous n'aurons généralement qu'un seul jeu de données et donc qu'une seule estimation du paramètre d'intérêt. Il va donc falloir falloir définir les propriétés de l'estimateur utilisé afin de savoir si l'estimation est précise et si elle aura tendance en moyenne à estimer la bonne valeur du paramètre ou non. 
+
+De manière générale, on va chercher à obtenir un estimateur qui répond aux critères suivants : 
+
+- Sans biais : On dit qu'un estimateur est sans biais lorsqu'en moyenne la valeur estimée correspond à la vraie valeur du Processus Générateur de Données. Si lorsque l'on réplique un grand nombre de fois l'expérimentation la valeur moyenne estimée correspond à la vraie valeur du DGP, alors l'estimateur est défini comme sans biais. De manière générale, on estime correctement la vraie valeur du paramètre.
+
+- Convergent : On dit qu'un estimateur est convergent lorsque la valeur de l'estimation se rapproche de la vraie valeur du Processus Générateur de Données à mesure que l'on augmente la taille de l'échantillon. Plus le nombre d'observation va être élevé, plus on va converger rapidement vers la vraie valeur du paramètre lorsque l'on répète l'observation un grand nombre de fois.
+
+- De variance minimale : On souhaite que la dispersion des estimations soit la plus faible possible afin d'éviter les mauvaises estimations extrêmes et d'avoir le plus de précision possible. Plus la variance de l'estimateur est faible plus la dispersion des estimations du paramètre sera faible et plus l'estimation sera précise. On n'estimera donc pas la vraie valeur exacte du paramètre mais on ne s'en écartera ppap trop (si l'estimateur est sans biais, sinon on s'écartera peu d'une valeur biaisée). L'estimateeur sera dit de variance minimale si aucun estimateur de même catégorie n'est capable de donner une dispersion des estimations plus petite.
 
 ```{r}
-moments::jarque.test(MC_exemple$beta1)
+MC_exemple |> 
+  ggplot(aes(x = beta1)) +
+  geom_density() +
+  geom_vline(xintercept = mean(MC_exemple$beta1), color = "red") +
+  annotate(
+    "label",
+    x = Inf, y = Inf,
+    label = sprintf("Moyenne : %.2f\nÉcart-type : %.2f\n min : %.2f\nmax : %.2f", mean(MC_exemple$beta1), sd(MC_exemple$beta1), min(MC_exemple$beta1), max(MC_exemple$beta1)),
+    hjust = 1.1, vjust = 1.1
+  )+
+  labs(
+    x = expression(hat(beta)),
+    y = expression(paste("Distribution de ", hat(beta)))
+  ) +
+  scale_x_continuous(breaks = sort(c(pretty(MC_exemple$beta1), round(mean(MC_exemple$beta1), 2))))
 ```
+ 
+ Si l'on reprend notre simulation effectuée précédement, on remarque qu'en moyenne, sur un grand nombre de répétition de l'expérience, on estime correctement la vraie valeur du paramètre. En moyenne, on estime $\beta = 2$ comme dans le DGP, même si aucune estimation individuelle n'est égale à 2 précisément. C'est à cela que l'on pense lorsque l'on dit que l'estimateur est sans biais. En moyenne, sur pleins de répétitions différentes, il donne le bon résultat. 
+ 
+Ce graphique ne montre pas que l'estimateur est de variance minimale. Cependant (et on le montrera) on sait qu'aucun estimateur de la même classe ne donne une dispersion des estimations plus faible que cet estimateur puisque les hypothèses de Gauss-Marko sont respectées.
 
-Enfin, on peut remarquer que la distribution des estimateurs semble suivre une loi normale ce qui est utile afin de dériver les différents tests statistiques. 
+En pratique, on ne peut pas obtenir de tels graphiques. Nous sommes donc obligés de nous réfugier derrière le respect ou non des hypothèses ainsi que de la création d'intervalle de confiance et de tests statistiques afin d'essayer de déterminer si le coefficient estimé est une estimation plausible et s'il n'est pas trop éloigné de la potentielle vraie valeur du pramètre dans le DGP. Les simulations et dérivations mathématiques nous servent à comprendre les impacts d'une violation des hypothèses ou d'un changement dans le processus générateur de données et permettent donc d'apporter des éléments critiques à l'analyse des coeffcients empiriques.
 
-## Variance des estimateurs
-### Définition
 
-Dans la réalité, on ne peut pas observer cette distribution puisque nous n'avons pas accès à autant d'échantillons différents permettant de répéter l’expérience des milliers de fois. Nous n'avons généralement qu'un seul jeu de données, à partir duquel nous devons estimer les coefficients. Or, comme nous l'avons vu, à cause des erreurs l'estimation est incertaine et peut très bien donner un résultat proche de $2$, de $1.6$ ou bien de $2.4$ dépendemment du tirage. L'erreur standard du coefficient $\beta$ permet de rendre compte de cette incertitude. On ne sait peut-être pas la valeur exacte du coefficient, mais on peut essayer de définir un intervalle plausible dans lequel il pourrait se trouver à partir de certaines hypothèses. Il y a toujours un certain risque de se tromper puisque l'on ne sait pas si nous avons obtenu un résultat standard ou bien un résultat qui tombe dans les valeurs extrêmes des queues de distribution.
+# Variance des estimateurs MCO
+## Définition
+Comme expliqué précédement, dans la réalité il n'est pas possible de répéter l'expérience des milliers de fois pour observer la distribution du coefficient estimé. Nous n'avons généralement qu'un seul jeu de données, à partir duquel nous devons estimer les coefficients. Or, comme nous l'avons vu, à cause des erreurs l'estimation est incertaine et peut très bien donner un résultat proche de la vraie valeur ou alors asez éloigné dépendemment du tirage.
+
+L'erreur standard du coefficient $\beta$ noté $\hat{\sigma}_{\hat{\beta}}$ permet de rendre compte de cette incertitude. On ne sait peut-être pas la valeur exacte du coefficient, mais on peut essayer de définir un intervalle plausible dans lequel il pourrait se trouver à partir de certaines hypothèses. Il y a toujours un certain risque de se tromper puisque l'on ne sait pas si nous avons obtenu un résultat standard ou bien un résultat qui tombe dans les valeurs extrêmes des queues de distribution.
 
 
 Rappel que la variance du coefficient $\beta$, notée $\hat{\sigma}^{2}_{\hat{\beta}}$ est donnée par :
@@ -292,7 +357,6 @@ Rappel que la variance du coefficient $\beta$, notée $\hat{\sigma}^{2}_{\hat{\b
 $$
 \begin{aligned}
   \hat{\sigma}^{2}_{\hat{\beta}} &= \frac{\hat{\sigma}_{u}^2}{N \times V(X)} \\
-  
   \hat{\sigma}_{u}^2 &= \displaystyle \frac{\sum_{i=1}^N \hat{u}_i^2}{N-2}
 \end{aligned}
 $$
@@ -304,14 +368,17 @@ Selon cette formule, la variance de l'estimateur de $\beta$ est d'autant plus fa
 - Le nombre d'observations est grand
 - La variance de la variable indépendante est grande. 
 
-On peut tester cela, en effectuant différentes simulations de Monte Carlo, de la même manière que précédemment, en changeant la valeur des paramètres d'intérêt. 
+On peut tester cela, en effectuant différentes simulations de Monte Carlo, de la même manière que précédemment, en changeant la valeur des paramètres d'intérêt. Dans toutes ces simulations nous allons imposer le respect des hypothèses de Gauss-Markov afin d'obtenir des estimateurs sans biais et de variance minimale. Nous allons simplement changer la valeur de différents paramètres afin de voir l'influence des différents éléments cité ci-dessus.
 
-### Influence de la variance de l'erreur
+## Influence de la variance de l'erreur
 
-On va commencer par observer l'influence de la variance des résidus (ou de l'erreur). On va effectuer 4 blocs de simulations dans lesquels les erreurs seront distribuées selon une loi normale d'écart-type $\{1,2,3,4\}$. 
+On va commencer par observer l'influence de la variance des résidus (ou de l'erreur). Une petite variance de l'erreur indiqque des facteurs individuels ou oubliés relativement faible. Ainsi l'écart entre la droite de régression et les observations sera assez faible. Une forte variance de l'erreur indique au contraire de forts facteurs individuels ou oubliés. On aura donc davantage de difficultés à faire coller la droite aux données.
+
+On va effectuer 4 blocs de simulations dans lesquels les erreurs seront distribuées selon une loi normale d'écart-type $\{1,2,3,4\}$. Le nombre d'observations sera de 1000 à chaque fois. 
 
 ```{r}
-# Effet de la variance des erreurs
+# Effet de la variance des erreurs sur la variance de l'estimateur
+# Bloc 1 : sigma = 1
 set.seed(123)
 MC_sigma_epsilon_1 <-
   future_map_dfr(
@@ -320,6 +387,7 @@ MC_sigma_epsilon_1 <-
     .options = furrr_options(seed=123)
   )
 
+# Bloc 1 : sigma = 2
 set.seed(123)
 MC_sigma_epsilon_2 <-
   future_map_dfr(
@@ -328,6 +396,7 @@ MC_sigma_epsilon_2 <-
     .options = furrr_options(seed=123)
   )
 
+# Bloc 1 : sigma = 3
 set.seed(123)
 MC_sigma_epsilon_3 <-
   future_map_dfr(
@@ -336,6 +405,7 @@ MC_sigma_epsilon_3 <-
     .options = furrr_options(seed=123)
   )
 
+# Bloc 1 : sigma = 4
 set.seed(123)
 MC_sigma_epsilon_4 <-
   future_map_dfr(
@@ -346,6 +416,7 @@ MC_sigma_epsilon_4 <-
 ```
 
 ```{r}
+# Graphique représentant la distribution des estimateurs 
 ggplot() +
   geom_density(data = MC_sigma_epsilon_1, aes(x = beta1, color = "s1"), linewidth = 1, key_glyph = "path") +
   geom_density(data = MC_sigma_epsilon_2, aes(x = beta1, color = "s2"), linewidth = 1, key_glyph = "path") +
@@ -374,44 +445,37 @@ ggplot() +
 ```
 
 ```{r}
-MC_sigma_epsilon_1 |> 
+# Moyenne et écart-types du coefficient beta selon les simulation
+# Imrbiquer les différents tibble les uns en dessous des autres en indiquant leur spécification
+full_join(
+  MC_sigma_epsilon_1 |> mutate(specification = "sigma_epsilon = 1"),
+  MC_sigma_epsilon_2 |> mutate(specification = "sigma_epsilon = 2"),
+  by = join_by(specification, beta1)
+) |> 
+  full_join(
+    MC_sigma_epsilon_3 |> mutate(specification = "sigma_epsilon = 3"),
+    by = join_by(specification, beta1)
+  ) |>
+  full_join(
+    MC_sigma_epsilon_4 |> mutate(specification = "sigma_epsilon = 4"),
+    by = join_by(specification, beta1)
+  ) |> 
+  # Calculer la moyenne et l'écart-type des beta estimés pour chaque specification
   summarize(
+    .by = specification,
     beta1_mean = mean(beta1),
-    beta1_sd = sd(sigma_beta1),
-    specification = "sigma_epsilon = 1"
-  ) |> 
-  full_join(
-    MC_sigma_epsilon_2 |> 
-      summarize(
-        beta1_mean = mean(beta1),
-        beta1_sd = sd(sigma_beta1),
-        specification = "sigma_epsilon = 2"
-      ),
-    join_by(beta1_mean, beta1_sd, specification)
-  ) |> 
-  full_join(
-    MC_sigma_epsilon_3 |> 
-      summarize(
-        beta1_mean = mean(beta1),
-        beta1_sd = sd(sigma_beta1),
-        specification = "sigma_epsilon = 3"
-      ),
-    join_by(beta1_mean, beta1_sd, specification)
-  ) |> 
-  full_join(
-    MC_sigma_epsilon_4 |> 
-      summarize(
-        beta1_mean = mean(beta1),
-        beta1_sd = sd(sigma_beta1),
-        specification = "sigma_epsilon = 4"
-      ),
-    join_by(beta1_mean, beta1_sd, specification)
+    beta1_sd = sd(beta1)
   )
-
 ```
 
 
-Comme attendu, les estimations sont en moyenne égales à 2 peut importe la valeur de l'écart-type des erreurs. En revanche, plus cet écart-type est élevé, plus la dispersion des estimations est grande. Plus les erreurs sont dispersées, plus il y a de bruit et moins la relation observée dans le jeu de données est similaire à la relation du Processus Générateur de Données. En pratique, on ne peut pas faire grand chose contre cette dispersion des erreurs. On peut simplement essayer de rajouter des variables afin d'essayer de prendre un maximum de facteurs pertinents en compte. 
+Comme attendu, les estimations sont en moyenne égales à 2 peut importe la valeur de l'écart-type des erreurs. La variance de l'erreur n'a aucun impact sur l'hypothèse d'exogénéité et donc n'a pas d'infuence sur le biais des estimateurs. Comme l'hypothèse d'exogénéité est respectée, l'estimateur des MCO n'est pas biaisé. En moyenne on estime la vraie vaeur du paramètre beta. 
+
+En revanche, plus la variance de l'erreur est élevée, plus la dispersion des estimations est grande. Plus les erreurs sont dispersées, plus il y a de bruit et moins la relation observée dans le jeu de données est similaire à la relation du Processus Générateur de Données (erreur exclue). Plus a variance de l'erreur est élevée toute chose égale par ailleurs, plus on a de chance d'obtenir une estimation particulière qui soit éloignée de la vraie valeur du paramètre beta. 
+
+Il faut bien distinguer le fait qu'en moyenne on estime la bonne valeur du coefficient beta et la fait que sur une etimation particulière, sur un jeu de données particulier, on trouve une valeur dfférente de cette vraie valeur. L'erreur standard du coefficient $\beta$ sert ainsi à essayer de définir l'intervalle dans lequel pourrait se trouver la vraie valeur du oefficient à partir de l'estimation particulière. 
+
+En pratique, on ne peut pas faire grand chose contre cette dispersion des erreurs. On peut simplement essayer de rajouter des variables afin d'essayer de prendre un maximum de facteurs pertinents en compte et donc de limiter les facteurs inobservés. Plus ces facteurs inobservés sont nombreux, plus grande sera la variance de l'erreur. 
 
 
 ### Influence du nombre d'observations
@@ -420,6 +484,7 @@ Regardons maintenant l'influence du nombre d'observations dans le jeu de donnée
 
 ```{r}
 # Effets du nombre d'observations dans l'échantillon 
+# Bloc 1 : 50 observations
 MC_50_obs <-
   future_map_dfr(
     1:10000,
@@ -427,6 +492,7 @@ MC_50_obs <-
     .options = furrr_options(seed=123)
   ) 
 
+# Bloc 2 : 100 observations
 MC_100_obs <-
   future_map_dfr(
     1:10000,
@@ -434,6 +500,7 @@ MC_100_obs <-
     .options = furrr_options(seed=123)
   )
 
+# Bloc 3 : 1000 observations
 MC_1000_obs <-
   future_map_dfr(
     1:10000,
@@ -441,6 +508,7 @@ MC_1000_obs <-
     .options = furrr_options(seed=123)
   )
 
+# Bloc 4 : 2000 observations
 MC_2000_obs <-
   future_map_dfr(
     1:10000,
@@ -792,21 +860,25 @@ MC_2_var |>
 
 Omettre une variable qui n'est pas corrélée avec la variable explicative ne biaise pas cette variable. En moyenne, la valeur estimée correspond à la vraie valeur du DGP. Cependant, puisque l'on omet une variable faisant partie du processus générateur de donnée, cela va augmenter la variance des résidus. Une plus faible partie des données est expliquée. La précision de l'estimateur diminue donc. 
 
-Regardonc maintenant ce qu'il se passe lorsque l'on omet une variable qui est corrélée à notre variable d'intérêt. 
+Regardonc maintenant ce qu'il se passe lorsque l'on omet une variable $X_2$ qui est corrélée à notre variable d'intérêt $X_1$. Pour cela, nous allons tirer aléatoirement deux variables $X_1$ et $Z$ qui suivent une loi normale. Nous allons ensuite les combiner à partir de la formule suivante, $\rho$ étant le coefficient de corrélation souhaité entre nos deux variables.  
+
+$$
+\begin{aligned}
+  X_2 = \rho \times X_1 + \sqrt{1-\rho^2} \times Z
+\end{aligned}
+$$
 
 
 ```{r}
-spec5_function <- function(n, alpha, beta1, beta2, rho, sigma_epsilon){
+spec4_function <- function(n, alpha, beta1, beta2, rho, sigma_epsilon){
   # Créer le tibble contenant les données
   df <-
     tibble(
-      # Créer la variable indépendante X qui provient du tirage d'une loi uniforme entre 1 et 10
-      x1 = runif(n, min = 1, max = 10),
-      x2 = runif(n, min = 3, max = 20),
-      # Création des erreurs pour chaque individu qui proviennent du tirage d'une loi normale de moyenne nulle et d'écart-type sd
+      x1 = rnorm(n, mean = 0, sd = 1),
+      z = rnorm(n, mean = 1, sd = 1),
+      x2 = rho * x1 + sqrt(1 - rho^2)*z,
       epsilon = rnorm(n, mean =  0, sd = sigma_epsilon),
-      # Création de la variable dépendante Y tel que : Y = alpha + beta * X + epsilon
-      y = alpha + beta1 * x1 + beta2 * x2 + epsilon
+      y = alpha + beta1 *  x1 + beta2 * x2 + epsilon
     )
   
   # Estimer la régression linéaire et stocker le résultat obtenu
@@ -815,34 +887,275 @@ spec5_function <- function(n, alpha, beta1, beta2, rho, sigma_epsilon){
   df_res <-
     tibble(
       # Coefficient beta estimé
-      beta1 = res_lm_summary$coefficients["x1", "Estimate"],
-      beta2 = res_lm_summary$coefficients["x2", "Estimate"]
+      beta1 = res_lm_summary$coefficients["x1", "Estimate"]
     )
   
   # Retourner la tibble contenant les résultats
   return(df_res)
 }
 ```
+
+
+```{r}
+MC_2_var_omis_rho_07 <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec4_function(n = 1000,  alpha = 1, beta1 = 2, beta2 = 3, rho = 0.7, sigma_epsilon = 4),
+    .options = furrr_options(seed=123)
+  )
+
+MC_2_var_omis_rho_02 <-
+  future_map_dfr(
+    1:10000,
+    \(nb) spec4_function(n = 1000,  alpha = 1, beta1 = 2, beta2 = 3, rho = 0.2, sigma_epsilon = 4),
+    .options = furrr_options(seed=123)
+  )
 ```
 
 
+```{r}
+ggplot() +
+  geom_density(aes(x = beta1, color = "rho = 0.7"), key_glyph = "path", data = MC_2_var_omis_rho_07) +
+  geom_vline(xintercept = mean(MC_2_var_omis_rho_07$beta1), color = "blue") +
+  geom_density(aes(x = beta1, color = "rho = 0.2"), key_glyph = "path", data = MC_2_var_omis_rho_02) +
+  geom_vline(xintercept = mean(MC_2_var_omis_rho_02$beta1), color = "red") +
+  geom_vline(xintercept = 2, linetype = "dashed") +
+  geom_hline(yintercept = 0, color = "black") +
+  labs( 
+    x = expression(hat(beta)),
+    y = expression(paste("Distribution de ", hat(beta))),
+    color = NULL
+  ) +
+  scale_color_manual(
+    values = c("rho = 0.7" = "blue", "rho = 0.2" = "red"),
+    labels = c(
+      expression(rho = 0.7),
+      expression(rho = 0.2)
+      )
+  )
+```
+
+```{r}
+MC_2_var_omis_rho_02 |> 
+  rename(beta_rho_02 = beta1) |> 
+  cbind(
+    MC_2_var_omis_rho_07 |> 
+      rename(beta_rho_07 = beta1)
+  ) |> 
+  summarize(
+    mean_beta_rho_02 = mean(beta_rho_02),
+    sd_beta_rho_02 = sd(beta_rho_02),
+    mean_beta_rho_07 = mean(beta_rho_07),
+    sd_beta_rho_07 = sd(beta_rho_07)
+  )
+```
+
+Omettre une variable corrélée à la fois avec la variable dépendante et la variable indépendante va entrainer un biais dans l'esimation des coefficients. En moyenne, on n'estime plus la vraie valeur du paramètre. Omttre une variable corrélée à la fois avec la variable dépendante et indépendante signifie que lorsque l'on observe une variation de la variable indépendante qui va influer sur la variable dépendante, on ne sait pasquelle proportion de la variation est due à la variable omise. Comme on ne contrôle pas par la variable omise, nous sommes incapble de déterminer le réel effet de notre variable d'intérêt. 
+
+On peut remaquer que l'intensité du biais est d'autant plus forte que la corrélation entre la variable indépendante et la variable omise est forte (cela vaut également pour les corrélation négatives). On remarque cependante que l'intensité de la corrélation ne joue pas sur la dispersion des estimaions autour de la moyenne. Il est donc tout à fait possible d'avoir un estimateur à faible variance mais biaisé. 
+
+Le signe du biais va dépendre du signe de l'impact de la variable omise sur la variable dépendante et du signe de la corrélation entre la variable omise et la variable indépendante. Si les deux signes sont du même signe, alors le biais sera  positif (sur-estimation), s'ils sont de signes opposés alors le biais sera négatif (sous-estimation)
 
 
+## Variance minimale de l'estimateur MCO
+
+Les hypothèses de Gauss-Markov indiquent que les Moindres Carrés Ordinaires sont de variance minimale lorsque  la variance de l'erreur est constante entre les individus (ou dans le temps). Cela signifie qu'il n'existe pas d'estimateur sans biais présentant une dispersion des estimations plus faible que celle donnée par le MCO. Cela signifie également qu'en présence de variance non-constante, il est possible de trouver des estimateurs présentants une dispersion plus faible des estimations. C'est le cas des Moindres Carrés Pondérés où la somme des carrés des résidus va être pondérée par un certain poids afin de tenir compte de la variance non-constante de l'erreur. Si ces poids sont correctement spécifiés alors la variance de l'estimateur MCP est plus faible que cellle de l'estimateur MCO. Généralement, on va chercher des poids égaux à l'invrse de la variance de l'erreur.
+
+```{r}
+spec5_function <- function(n, alpha, beta1){
+  df <-
+    tibble(
+      x1 = runif(n, min = 1, max = 10),
+      epsilon_hetero = rnorm(n, mean =  0, sd = 1*x1),
+      epsilon_homo = rnorm(n, mean =  0, sd = 1),
+      y_hetero = alpha + beta1 * x1 + epsilon_hetero,
+      y_homo = alpha + beta1 * x1 + epsilon_homo
+    )
+  
+  res_lm_MCO_hetero <- lm(y_hetero ~ x1, data = df)
+  res_lm_summary_MCO_hetero <- summary(res_lm_MCO_hetero)
+  
+  res_lm_MCP_hetero <- lm(y_hetero ~ x1, data = df, weights = 1/(df$x1^2))
+  res_lm_summary_MCP_hetero <- summary(res_lm_MCP_hetero)
+  
+  res_lm_MCO_homo <- lm(y_homo ~ x1, data = df)
+  res_lm_summary_MCO_homo <- summary(res_lm_MCO_homo)
+  
+  res_lm_MCP_homo <- lm(y_homo ~ x1, data = df, weights = 1/(df$x1^2))
+  res_lm_summary_MCP_homo <- summary(res_lm_MCP_homo)
+  
+  df_res <-
+    tibble(
+      beta1_MCO_hetero = res_lm_summary_MCO_hetero$coefficients["x1", "Estimate"],
+      beta1_MCP_hetero = res_lm_summary_MCP_hetero$coefficients["x1", "Estimate"],
+      beta1_MCO_homo = res_lm_summary_MCO_homo$coefficients["x1", "Estimate"],
+      beta1_MCP_homo = res_lm_summary_MCP_homo$coefficients["x1", "Estimate"],
+    )
+  return(df_res)
+}
+
+```
+
+```{r}
+MC_heteroscedasticite <- 
+  future_map_dfr(
+    1:10000,
+    \(nb) spec5_function(n = 1000,  alpha = 1, beta1 = 2),
+    .options = furrr_options(seed=123)
+  )
+```
 
 
+Commençons par examiner le cas où la variance de l'erreur est constante : ell est égale à 1 pour tous les individus. Nous allons comparer l'estimateur MCo classique avec l'estimateur MCP dans lequel les poids sont égaux à $w_i = \frac{1}{X_i^2}$. 
+
+```{r}
+MC_heteroscedasticite |> 
+  ggplot() +
+  geom_density(aes(x = beta1_MCO_homo, color = "MCO"), key_glyph = "path") +
+  geom_density(aes(x = beta1_MCP_homo, color = "MCP"), key_glyph = "path") +
+  geom_hline(yintercept = 0, color = "black") +
+  labs( 
+    x = expression(hat(beta)),
+    y = expression(paste("Distribution de ", hat(beta))),
+    color = NULL
+  ) +
+  scale_color_manual(
+    values = c("MCO" = "blue", "MCP" = "red"),
+    labels = c(
+      "MCO",
+      "MCP"
+      )
+  )
+```
 
 
+```{r}
+MC_heteroscedasticite |> 
+  summarize(
+    mean_beta_MCO_homo = mean(beta1_MCO_homo),
+    sd_beta_MCO_homo = sd(beta1_MCO_homo),
+    mean_beta_MCP_homo = mean(beta1_MCP_homo),
+    sd_beta_MCP_homo = sd(beta1_MCP_homo)
+  )
+```
+
+On remarque que les coefficients estimés par les deux méthodes ne sont pas biaisés. En moyenne, ils sont égaux à 2. Cependant, les poids des Moindres carrés étant mal spécifiés, la précision des estimaztions diminue. Il y a davantage de dispersion dans les estimations en utilisant les MCP que les MCO dans ce cas là. Ainsi, mal spécifier les poids va réduire notre précision et notre capacité à définir précisément l'intervalle dans lequel peut se trouver le coefficient, mais ne change pas le fait qu'en moyenne on estime le bon coeffcient. 
 
 
+Supposons maintenant que les erreurs ont une variance non constante qui dépend de la valeur de $X_1$ tel que les erreurs soient tirées de la loi normale suivante : $u_i \sim N(0; 1 \times X_i)$. On va définir les poids comme étant l'inverse de la variance des erreurs : $w_i = \frac{1}{X_i^2}$. 
+
+```{r}
+MC_heteroscedasticite |> 
+  ggplot() +
+  geom_density(aes(x = beta1_MCO_hetero, color = "MCO"), key_glyph = "path") +
+  geom_density(aes(x = beta1_MCP_hetero, color = "MCP"), key_glyph = "path") +
+  geom_hline(yintercept = 0, color = "black") +
+  labs( 
+    x = expression(hat(beta)),
+    y = expression(paste("Distribution de ", hat(beta))),
+    color = NULL
+  ) +
+  scale_color_manual(
+    values = c("MCO" = "blue", "MCP" = "red"),
+    labels = c(
+      "MCO",
+      "MCP"
+      )
+  )
+```
+
+```{r}
+MC_heteroscedasticite |> 
+  summarize(
+    mean_beta_MCO_hetero = mean(beta1_MCO_hetero),
+    sd_beta_MCO_hetero = sd(beta1_MCO_hetero),
+    mean_beta_MCP_hetero = mean(beta1_MCP_hetero),
+    sd_beta_MCP_hetero = sd(beta1_MCP_hetero)
+  )
+```
+
+Le constat concernant le biais est toujours le même, les deux estimateurs ne sont pas biaisés. Ils estiment bien tous les deux en moyenne la même valeur. En revanche, on peut remarquer que la dispersion des estimations de l'estimateur MCO est plus grande que pour l'estimateur MCP dont les poids ont été correctement spécifiés. Dans le cas où lees erreurs ne sont pas de variance constante, l'estimateur MCO n'est pus de variance minimale; IL est possible de trouver un estimateur non-biaisé dont la dispersion des estimations est plus faible que celle de l'estimateur MCO. 
 
 
+## Erreurs non-normales
+
+L'hypothèse de normalité des erreurs signifie que l'on suppose que les erreurs suivent une loi normale. Lorsque les erreurs suivent une loi normale, la distribution des coefficients estimés par les MCO suivent une loi normale. Le fait que la distribution des estimateurs suive une loi normale permet par la suite de dériver les lois suivies par les tests statistiques et donc d'obtenir des valeurs critiques exactes.
+
+```{r}
+spec6_function <- function(n, alpha, beta1, df_epsilon){
+  # Créer le tibble contenant les données
+  df <-
+    tibble(
+      # Créer la variable indépendante X qui provient du tirage d'une loi uniforme entre 1 et 10
+      x1 = runif(n, min = 1, max = 10),
+      # Création des erreurs pour chaque individu qui proviennent du tirage d'une loi normale de moyenne nulle et d'écart-type sd
+      epsilon_student = rt(n, df = df_epsilon),
+      epsilon_norm = rnorm(n, mean = 0, sd = 1),
+      # Création de la variable dépendante Y tel que : Y = alpha + beta * X + epsilon
+      y_student = alpha + beta1 * x1 + epsilon_student,
+      y_norm = alpha + beta1 * x1 + epsilon_norm
+    )
+  
+  # Estimer la régression linéaire et stocker le résultat obtenu
+  res_lm_student <- lm(y_student ~ x1, data = df)
+  res_lm_summary_student <- summary(res_lm_student)
+  
+  res_lm_norm <- lm(y_norm ~ x1, data = df)
+  res_lm_summary_norm <- summary(res_lm_norm)
+  
+  df_res <-
+    tibble(
+      # Coefficient beta estimé
+      beta1_student = res_lm_summary_student$coefficients["x1", "Estimate"],
+      beta1_norm = res_lm_summary_norm$coefficients["x1", "Estimate"],
+    )
+  
+  # Retourner la tibble contenant les résultats
+  return(df_res)
+}
+```
+
+```{r}
+MC_erreur_non_normale <- 
+  future_map_dfr(
+    1:10000,
+    \(nb) spec6_function(n = 1000,  alpha = 1, beta1 = 2, df_epsilon = 3),
+    .options = furrr_options(seed=123)
+  )
+```
 
 
+```{r}
+MC_erreur_non_normale |> 
+  ggplot() +
+  geom_density(aes(x = beta1_student, color = "student"), key_glyph = "path") +
+  geom_density(aes(x = beta1_norm, color = "norm"), key_glyph = "path") +
+  geom_hline(yintercept = 0, color = "black") +
+  labs( 
+    x = expression(hat(beta)),
+    y = expression(paste("Distribution de ", hat(beta))),
+    color = NULL
+  ) +
+  scale_color_manual(
+    values = c("student" = "blue", "norm" = "red"),
+    labels = c(
+      "Student",
+      "Normale"
+      )
+  )
+```
 
+```{r}
+jarque.test(MC_erreur_non_normale$beta1_student)
+```
 
+```{r}
+jarque.test(MC_erreur_non_normale$beta1_norm)
+```
 
+Si l'on suppose que les erreurs suivent une loi normale, on remarque bien que la distribution des estimations suit une loi normale. En revanche, lorsque l'on suppose que les erreurs suivent une loi de Student à 3 degrés de libertés, la distribution suivie par les estimations ne suit plus une loi normale. Dans un tel cas, les valeurs critiques des tests statistiques ne sont plus valides puisque celles-ci ont été dérivées à partir de distribution suivant une loi nomale. Il devient donc compliqué de faire de l'inférence statistique. 
 
-
+Cependant, en pratique, on va utiliser les propriétés asymptotiques des MCO qui nous indiquent que lorsque le nombre d'observation devient suffisament grand, la distribution suivie par les estimations de $\beeta$ converge vers une loi normale, nous permettant ainsi de continuer à utiliser les valeurs critiques usuelles. 
 
 
 
